@@ -1,0 +1,19 @@
+{
+  "name": "@uncool-pro/orbito-vite-plugin",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./index.d.mts",
+      "default": "./index.mjs"
+    }
+  },
+  "peerDependencies": {
+    "vite": ">=7"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@uncool-pro/orbito-cli": "*",
+    "@uncool-pro/orbito-core": "*"
+  }
+}

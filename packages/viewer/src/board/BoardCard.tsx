@@ -1,0 +1,84 @@
+import { memo } from 'react';
+import type { ComponentType } from 'react';
+
+import type { Card, Screen, StatusEntry, Viewport } from '@uncool-pro/orbito-core';
+import { FrameContext, screenHash } from '@uncool-pro/orbito-runtime';
+
+import { ErrorBoundary } from '../app/ErrorBoundary';
+import { StatusChip } from '../app/StatusChip';
+import { useT } from '../i18n';
+
+/**
+ * The live screen inside a card. It is `inert`: the board never lets a screen react to the pointer (no hover states,
+ * no focus, no navigation), so a click on a card is always a click on the board. Memoised: panning never re-renders it.
+ */
+export const LiveScreen = memo(({ screen, viewport, card }: { screen: Screen<ComponentType>; viewport: Viewport; card: Pick<Card, 'frame'> }) => {
+  const S = screen.component;
+
+  return (
+    <div className="pd-card__viewport" style={{ width: card.frame.w, height: card.frame.h }}>
+      <div
+        className="pd-card__inner"
+        inert
+        data-pd-page-scroll={viewport.kind === 'page' ? '' : undefined}
+        style={{ width: viewport.width, height: viewport.height, transform: `scale(${card.frame.scale})`, overflowY: viewport.kind === 'page' ? 'auto' : 'hidden' }}
+      >
+        <FrameContext.Provider value={{ mode: 'board', viewport }}>
+          <ErrorBoundary name={screen.code ?? screen.id}>
+            <S />
+          </ErrorBoundary>
+        </FrameContext.Provider>
+      </div>
+    </div>
+  );
+});
+
+type Props = {
+  card: Card;
+  screen: Screen<ComponentType>;
+  viewport: Viewport;
+  live: boolean;
+  state: 'idle' | 'hl' | 'dim';
+  active: boolean;
+  status: StatusEntry;
+  findingTitles?: Record<number, string>;
+};
+
+export const BoardCard = memo(({ card, screen, viewport, live, state, active, status, findingTitles }: Props) => {
+  const t = useT();
+
+  return (
+    <div
+      className={`pd-card pd-card--${state}${active ? ' pd-card--active' : ''}${card.version ? ' pd-card--version' : ''}`}
+      data-card={card.key}
+      data-screen={card.screenId}
+      style={{ left: card.x, top: card.y, width: card.w, height: card.h }}
+    >
+      <div className="pd-card__head">
+        <div className="pd-card__title">
+          <b>{screen.code ?? screen.id}</b>
+          <span>{screen.title}</span>
+        </div>
+        <div className="pd-card__tools">
+          {screen.code && <StatusChip id={screen.id} entry={status} />}
+          <a data-pd-ui className="pd-card__open" href={screenHash(screen.id)} title={t.open} aria-label={t.open}>
+            ↗
+          </a>
+        </div>
+      </div>
+      {card.version && (
+        <div className="pd-card__badges">
+          {!card.version.replaces && <i className="pd-badge pd-badge--new">{t.newScreen}</i>}
+          {card.version.findings.map((n) => (
+            <i key={n} className="pd-badge" title={findingTitles?.[n]}>
+              #{n}
+            </i>
+          ))}
+        </div>
+      )}
+      <div className="pd-card__frame" style={{ left: card.frame.x - card.x, top: card.frame.y - card.y }}>
+        {live ? <LiveScreen screen={screen} viewport={viewport} card={card} /> : <div className="pd-card__placeholder" style={{ width: card.frame.w, height: card.frame.h }} />}
+      </div>
+    </div>
+  );
+});

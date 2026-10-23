@@ -1,0 +1,8 @@
+node_modules
+dist
+*.local
+*.local.*
+*.log
+.DS_Store
+exports/
+.tmp-*/

@@ -1,0 +1,9 @@
+{
+  "name": "create-orbito",
+  "version": "0.0.0",
+  "description": "Start a mockups-as-code project for Orbito: npm create orbito",
+  "type": "module",
+  "bin": { "create-orbito": "./src/index.ts" },
+  "engines": { "node": ">=22.18" },
+  "license": "MIT"
+}

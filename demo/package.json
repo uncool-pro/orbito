@@ -1,0 +1,21 @@
+{
+  "name": "demo-leafy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check:ds": "orbito check ds"
+  },
+  "dependencies": {
+    "@uncool-pro/orbito-core": "*",
+    "@uncool-pro/orbito-runtime": "*",
+    "@uncool-pro/orbito-viewer": "*",
+    "@uncool-pro/orbito-vite-plugin": "*",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "@uncool-pro/orbito-cli": "*"
+  },
+  "description": "Demo application: a fictional plant-care app built with Orbito. Safe to delete (see CLAUDE.md)."
+}

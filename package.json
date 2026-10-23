@@ -1,0 +1,33 @@
+{
+  "name": "orbito",
+  "private": true,
+  "description": "Mockups as code, reviewed as flows on a board. Built for product designers working with an AI agent in Claude Code.",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "demo",
+    "templates/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w demo",
+    "build": "npm run build -w demo",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check:ds": "npm run check:ds -w demo"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "license": "MIT"
+}

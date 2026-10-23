@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.base.json",
+  "include": [
+    "packages/*/src",
+    "packages/*/test",
+    "demo/src",
+    "demo/*.ts",
+    "demo/design-system",
+    "demo/screens",
+    "demo/flows",
+    "templates/base/src",
+    "templates/base/*.ts",
+    "templates/base/design-system",
+    "templates/base/screens",
+    "templates/base/flows"
+  ]
+}

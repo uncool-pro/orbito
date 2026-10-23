@@ -1,0 +1,12 @@
+{
+  "name": "@uncool-pro/orbito-runtime",
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "license": "MIT",
+  "peerDependencies": {
+    "react": ">=19"
+  }
+}
