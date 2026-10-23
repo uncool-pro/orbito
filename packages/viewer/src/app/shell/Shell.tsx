@@ -12,7 +12,10 @@ import { useViewer } from '../context';
 import { StatusChip } from '../StatusChip';
 import { useInspectorExtra, useShell, useZoom } from './state';
 
-export type Mode = 'board' | 'flows' | 'prototype' | 'ds';
+export type Mode = 'board' | 'flows' | 'prototype' | 'ds' | 'skills';
+
+/** Modes that are full pages of their own: no canvas island, no screen inspector. */
+const isPage = (mode: Mode) => mode === 'ds' || mode === 'skills';
 
 type ShellProps = { mode: Mode; page?: Page; flowKey?: string; dsSection?: string; children: ReactNode };
 
@@ -37,14 +40,14 @@ export const Shell = ({ mode, page, flowKey, dsSection, children }: ShellProps) 
   const { drawerOpen, inspectorOpen } = useShell();
 
   return (
-    <div className={`pd-shell${drawerOpen ? '' : ' no-drawer'}${inspectorOpen && mode !== 'ds' ? '' : ' no-inspector'}`}>
+    <div className={`pd-shell${drawerOpen ? '' : ' no-drawer'}${inspectorOpen && !isPage(mode) ? '' : ' no-inspector'}`}>
       <TopBar mode={mode} page={page} flowKey={flowKey} />
       {drawerOpen && <Drawer mode={mode} page={page} flowKey={flowKey} dsSection={dsSection} />}
       <main className="pd-main">
         {children}
-        {mode !== 'ds' && <Island mode={mode} page={page} flowKey={flowKey} />}
+        {!isPage(mode) && <Island mode={mode} page={page} flowKey={flowKey} />}
       </main>
-      {inspectorOpen && mode !== 'ds' && <Inspector mode={mode} />}
+      {inspectorOpen && !isPage(mode) && <Inspector mode={mode} />}
     </div>
   );
 };
@@ -69,10 +72,10 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
           <i className="pd-logo" aria-hidden />
           {project.config.title}
         </a>
-        {mode === 'ds' ? (
+        {mode === 'ds' || mode === 'skills' ? (
           <>
             <span>/</span>
-            <a href="#/ds">{t.designSystem}</a>
+            <a href={mode === 'ds' ? '#/ds' : '#/skills'}>{mode === 'ds' ? t.designSystem : t.skills}</a>
           </>
         ) : (
           page && (
@@ -91,11 +94,14 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
           )
         )}
       </nav>
+      <a className={`pd-topnav${mode === 'skills' ? ' is-on' : ''}`} href="#/skills" aria-current={mode === 'skills' ? 'page' : undefined}>
+        {t.skills}
+      </a>
       <Search mode={mode} />
       <a className={`pd-health-pill${issues ? ' is-warn' : ''}`} href="#/ds/health" title={t.health}>
         {issues ? `${issues} ${t.issuesShort}` : `✓ ${t.health}`}
       </a>
-      {mode !== 'ds' && (
+      {!isPage(mode) && (
         <button type="button" className="pd-iconbtn" onClick={() => togglePanel('inspector')} aria-label={t.toggleInspector} title={t.toggleInspector}>
           <Glyph d={PANEL_RIGHT} />
         </button>

@@ -8,6 +8,7 @@
     "preview": "vite preview",
     "check:ds": "orbito check ds",
     "export": "orbito export",
+    "update": "orbito update --pull",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

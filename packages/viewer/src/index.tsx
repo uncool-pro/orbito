@@ -2,7 +2,7 @@ import { StrictMode, useEffect, useState } from 'react';
 import type { ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import type { LinkMap, Project, ProjectProblem, StatusFile } from '@uncool-pro/orbito-core';
+import type { LinkMap, Project, ProjectProblem, StatusFile, Team } from '@uncool-pro/orbito-core';
 import { registerParents } from '@uncool-pro/orbito-runtime';
 
 import { App } from './app/App';
@@ -14,7 +14,7 @@ import { LOCALES, MessagesContext } from './i18n';
 import { initStatuses } from './status';
 import './viewer.css';
 
-export type LoadedProject = { project: Project<ComponentType>; problems: ProjectProblem[]; statuses: StatusFile; dev: boolean; ds: DsData };
+export type LoadedProject = { project: Project<ComponentType>; problems: ProjectProblem[]; statuses: StatusFile; dev: boolean; ds: DsData; team?: Team | null };
 
 const Root = ({ loaded }: { loaded: LoadedProject }) => {
   const [links, setLinks] = useState<LinkMap | null>(null);
@@ -35,7 +35,7 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
   }, [loaded]);
 
   return (
-    <ViewerContext.Provider value={{ project: loaded.project, problems: loaded.problems, ds: loaded.ds, links }}>
+    <ViewerContext.Provider value={{ project: loaded.project, problems: loaded.problems, ds: loaded.ds, team: loaded.team ?? null, links }}>
       <MessagesContext.Provider value={LOCALES[loaded.project.config.locale ?? 'en']}>
         <ShellProvider>
           <App />

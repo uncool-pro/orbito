@@ -8,19 +8,20 @@
 //      design-system/tokens.json         tokens -> CSS variables (injected by the viewer)
 //      design-system/fonts.css           optional: @font-face / @import of the typefaces the tokens name (injected too)
 //      design-system/**/*.docs.tsx       component docs and variants for the catalog
+//      .claude/skills, .claude/agents    the team (Orbito → agents → skills) for the skills map; in the tool repo: skills/, agents/
 //    plus the design-system report (`orbito check ds`), recomputed when design-system/ or screens/ change.
 // 2. Dev endpoints (never in a build):
 //      GET  /__orbito/status                 the status file
 //      POST /__orbito/status  {id,status,note?}  writes that one entry, nothing else
 //      GET  /__orbito/file?path=<rel>        a .md / .txt / .json file inside the project (e.g. a review report)
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { searchForWorkspaceRoot } from 'vite';
 
 import { analyzeProject } from '@uncool-pro/orbito-cli/analyze';
-import { tokensToCss } from '@uncool-pro/orbito-core';
+import { buildTeam, parseFrontmatter, tokensToCss } from '@uncool-pro/orbito-core';
 
 // keep in sync with packages/core/src/status.ts (the tool owns the list)
 const STATUSES = ['todo', 'wip', 'review', 'changes', 'approved', 'onHold', 'dropped'];
@@ -36,6 +37,39 @@ const inside = (dir, file) => {
   const rel = relative(dir, file);
 
   return !!rel && !rel.startsWith('..') && !isAbsolute(rel);
+};
+
+/** Where the team lives: the project's .claude/ folder, or (in the tool repository, e.g. the demo) the nearest skills/ + agents/ above. */
+const teamDirs = (root) => {
+  if (existsSync(resolve(root, '.claude/skills'))) return { skills: resolve(root, '.claude/skills'), agents: resolve(root, '.claude/agents') };
+  for (let dir = root, i = 0; i < 4; i++, dir = dirname(dir)) {
+    if (existsSync(resolve(dir, 'skills')) && existsSync(resolve(dir, 'agents'))) return { skills: resolve(dir, 'skills'), agents: resolve(dir, 'agents') };
+  }
+
+  return undefined;
+};
+
+/** Reads skills and agents from their markdown files (front matter + the skills each agent's instructions name). */
+const readTeam = (root) => {
+  const dirs = teamDirs(root);
+
+  if (!dirs) return null;
+  const skills = (existsSync(dirs.skills) ? readdirSync(dirs.skills, { withFileTypes: true }) : [])
+    .filter((d) => d.isDirectory() && existsSync(resolve(dirs.skills, d.name, 'SKILL.md')))
+    .map((d) => {
+      const { data } = parseFrontmatter(readFileSync(resolve(dirs.skills, d.name, 'SKILL.md'), 'utf8'));
+
+      return { name: data.name || d.name, description: data.description || '' };
+    });
+  const agents = (existsSync(dirs.agents) ? readdirSync(dirs.agents) : [])
+    .filter((f) => f.endsWith('.md'))
+    .map((f) => {
+      const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.agents, f), 'utf8'));
+
+      return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, body };
+    });
+
+  return buildTeam(skills, agents);
 };
 
 const readJson = (file, fallback) => {
@@ -101,7 +135,8 @@ export default function orbito(options = {}) {
         `const docs = Object.values(import.meta.glob('/design-system/**/*.docs.{tsx,jsx}', { eager: true })).map((m) => m.default).filter(Boolean);`,
         `const { project, problems } = loadProject(config, screens, pages);`,
         `const ds = { tokens: ${JSON.stringify(report.tokens)}, css: ${JSON.stringify(tokensToCss(report.tokens))}, report: ${JSON.stringify(report)}, fonts: ${JSON.stringify(existsSync(fontsPath) ? readFileSync(fontsPath, 'utf8') : '')}, docs };`,
-        `export default { project, problems, statuses: ${JSON.stringify(readJson(statusPath, {}))}, dev: ${dev}, ds };`,
+        `const team = ${JSON.stringify(readTeam(root))};`,
+        `export default { project, problems, statuses: ${JSON.stringify(readJson(statusPath, {}))}, dev: ${dev}, ds, team };`,
       ].join('\n');
     },
     configureServer(server) {

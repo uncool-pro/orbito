@@ -2,7 +2,7 @@ import { createContext, useContext } from 'react';
 
 import type { ComponentType, ReactNode } from 'react';
 
-import type { ComponentDocs, DsReport, LinkMap, Project, ProjectProblem, TokenFile } from '@uncool-pro/orbito-core';
+import type { ComponentDocs, DsReport, LinkMap, Project, ProjectProblem, Team, TokenFile } from '@uncool-pro/orbito-core';
 
 export type DsData = { tokens: TokenFile; css: string; report: DsReport; docs: ComponentDocs<ReactNode>[]; /** design-system/fonts.css, if the project has one */ fonts?: string };
 
@@ -10,6 +10,8 @@ export type ViewerState = {
   project: Project<ComponentType>;
   problems: ProjectProblem[];
   ds: DsData;
+  /** Orbito, its agents and their skills (from .claude/); `null` when the project has none. */
+  team: Team | null;
   /** Links found by the probe; `null` while it runs. */
   links: LinkMap | null;
 };

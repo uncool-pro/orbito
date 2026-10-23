@@ -49,5 +49,8 @@ The main session is Orbito, the lead: it uses the `orbito` skill to keep the str
 ## Feedback about Orbito
 When something goes against what the person wanted or the tool fails, add an anonymous note with `product-feedback` (`feedback.md`). Never change skills because of it unless the person asks.
 
+## Updating Orbito
+`npm run update` (or `/orbito-update`) pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; the project's own files are never changed. What changed is in Orbito's `CHANGELOG.md`: tell the person in plain words and ask before applying anything that touches the project template. The map of Orbito, its agents and skills is at `#/skills`.
+
 ## Recording decisions
 One line per decision under "Decisions" in `.orbito/process.md`: date, what, who decided, why. Approvals also go to the phase table.

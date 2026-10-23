@@ -1,6 +1,7 @@
 {
   "name": "orbito",
   "private": true,
+  "version": "0.9.1",
   "description": "Mockups as code, reviewed as flows on a board. Built for product designers working with an AI agent in Claude Code.",
   "type": "module",
   "workspaces": [

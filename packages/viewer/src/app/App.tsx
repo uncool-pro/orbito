@@ -5,6 +5,7 @@ import { findScreen } from '@uncool-pro/orbito-core';
 import { Board } from '../board/Board';
 import { Catalog } from '../ds/Catalog';
 import { FlowsView } from '../flows/FlowsView';
+import { SkillsMap } from '../skills/SkillsMap';
 import { useT } from '../i18n';
 import { useViewer } from './context';
 import { pageOfScreen, Shell } from './shell/Shell';
@@ -91,6 +92,13 @@ export const App = () => {
     return (
       <Shell mode="ds" dsSection={section}>
         <Catalog key={rest.join('/')} section={section} />
+      </Shell>
+    );
+  }
+  if (route === 'skills') {
+    return (
+      <Shell mode="skills">
+        <SkillsMap />
       </Shell>
     );
   }
