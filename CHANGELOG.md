@@ -2,6 +2,13 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
+## 0.9.2 — 2026-10-23
+- **Skills in three layers:** Orbito (the lead) runs **processes** (`process-new-product`, `process-redesign`, `process-rapid-prototype`, `process-landing-page`), each a table of steps with the role, the competence, the output and where you decide; **roles** (agents) preload their own **competences** (`skills:` in the agent file).
+- **New competences:** UX — `information-architecture`, `user-flows`, `wireframes`, `ux-writing`, `ux-review` (from the former `ux-design`); BA — `user-stories` (good-practice stories: INVEST, given/when/then, splitting, definition of ready; checks and completes what you bring), `prototype-scope`, `requirements-sync`; UI — `ui-design` (hi-fi screens).
+- **Stories ↔ flows:** the UX designer builds flows from the analyst's stories and links them (`requirements` on a flow, `meta.requirements` on a screen, `requirements/coverage.md`).
+- **Skills map** shows the three layers: Orbito, the processes with their steps, the roles with their competences.
+- Removed and replaced by the above: `ux-design`, `requirements`, `rapid-prototyping`, `landing-page` (`orbito update` removes them).
+
 ## 0.9.1 — 2026-10-23
 - **Skills map** (`#/skills`, "Skills" in the top bar): Orbito, the agents under it, and the skills each agent uses, with what they are for — read from the project's `.claude/` folder.
 - **Updates from GitHub:** `orbito update [--pull]`, the `npm run update` script (added to older projects on the first update) and the `/orbito-update` command.

@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { searchForWorkspaceRoot } from 'vite';
 
 import { analyzeProject } from '@uncool-pro/orbito-cli/analyze';
-import { buildTeam, parseFrontmatter, tokensToCss } from '@uncool-pro/orbito-core';
+import { buildTeam, listOf, parseFrontmatter, tokensToCss } from '@uncool-pro/orbito-core';
 
 // keep in sync with packages/core/src/status.ts (the tool owns the list)
 const STATUSES = ['todo', 'wip', 'review', 'changes', 'approved', 'onHold', 'dropped'];
@@ -57,16 +57,16 @@ const readTeam = (root) => {
   const skills = (existsSync(dirs.skills) ? readdirSync(dirs.skills, { withFileTypes: true }) : [])
     .filter((d) => d.isDirectory() && existsSync(resolve(dirs.skills, d.name, 'SKILL.md')))
     .map((d) => {
-      const { data } = parseFrontmatter(readFileSync(resolve(dirs.skills, d.name, 'SKILL.md'), 'utf8'));
+      const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.skills, d.name, 'SKILL.md'), 'utf8'));
 
-      return { name: data.name || d.name, description: data.description || '' };
+      return { name: data.name || d.name, description: data.description || '', body };
     });
   const agents = (existsSync(dirs.agents) ? readdirSync(dirs.agents) : [])
     .filter((f) => f.endsWith('.md'))
     .map((f) => {
       const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.agents, f), 'utf8'));
 
-      return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, body };
+      return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, skills: listOf(data.skills), body };
     });
 
   return buildTeam(skills, agents);

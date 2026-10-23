@@ -421,3 +421,22 @@
 .pd-team__skills li { display: grid; gap: 2px; padding-top: 8px; border-top: 1px solid var(--pd-line); }
 .pd-team__skills code { font: 600 12px ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--pd-accent); }
 .pd-team__skills span { font-size: 12px; line-height: 1.45; color: var(--pd-ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pd-team__layer { max-width: 1240px; margin: 40px auto 0; }
+.pd-team__layer h2 { font-size: 20px; margin: 0 0 6px; }
+.pd-team__layer-lead { margin: 0 0 16px; color: var(--pd-muted); font-size: 14px; line-height: 1.5; max-width: 760px; }
+.pd-team__layer .pd-team__agents { border-top: 0; padding-top: 0; }
+.pd-team__lead::after { display: none; }
+.pd-team__tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.pd-team__tabs button { display: inline-flex; align-items: baseline; gap: 8px; border: 1px solid var(--pd-line); background: var(--pd-surface); border-radius: 999px; padding: 7px 14px; font: 600 13px var(--pd-font); color: var(--pd-ink); cursor: pointer; }
+.pd-team__tabs button small { font-weight: 500; color: var(--pd-muted); }
+.pd-team__tabs button.is-on { border-color: var(--pd-accent); background: var(--pd-accent-soft); color: var(--pd-accent); }
+.pd-team__id { margin-left: auto; font: 600 11px ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--pd-muted); }
+.pd-team__steps { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 0; }
+.pd-team__steps li { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 9px 0; border-top: 1px solid var(--pd-line); }
+.pd-team__n { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--pd-bg); font: 700 12px var(--pd-font); color: var(--pd-muted); }
+.pd-team__step { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; }
+.pd-team__step b { min-width: 180px; }
+.pd-team__step code { font: 600 12px ui-monospace, SFMono-Regular, Consolas, monospace; color: var(--pd-accent); }
+.pd-team__chip { border: 0; border-radius: 999px; padding: 3px 9px; font: 600 12px var(--pd-font); font-style: normal; background: #e6eefb; color: #2a5bb0; cursor: pointer; }
+.pd-team__chip.is-lead { background: var(--pd-accent-soft); color: var(--pd-accent); cursor: default; }
+.pd-team__gate { margin-left: auto; font-size: 12px; font-style: normal; color: var(--pd-muted); }

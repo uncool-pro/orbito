@@ -58,6 +58,8 @@ export type Flow = {
    * (detours, interruptions, other ways round), then `negative` ones (errors, dead ends, cancellations). Default `happy`.
    */
   path?: FlowPath;
+  /** Stories this flow delivers (ids from `requirements/`, e.g. `REQ-03`), linked by the UX designer when drawing it. */
+  requirements?: string[];
   /** Alternative versions of this flow's screens, shown as lanes under it. */
   versions?: FlowVersion[];
 };

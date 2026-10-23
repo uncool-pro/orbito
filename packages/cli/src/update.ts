@@ -13,7 +13,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** Skills renamed or removed in Orbito: deleted from projects so two versions do not compete. */
-const RETIRED_SKILLS = ['orbito-lead'];
+const RETIRED_SKILLS = ['orbito-lead', 'ux-design', 'requirements', 'rapid-prototyping', 'landing-page'];
 
 /** The Orbito folder (the repository with skills/, agents/, templates/) this CLI runs from. */
 export const toolRoot = (): string => resolve(dirname(fileURLToPath(import.meta.url)), '../../..');

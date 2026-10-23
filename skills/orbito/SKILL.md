@@ -34,27 +34,40 @@ The person may start anywhere: only flows, only a UI audit, a quick prototype, a
 
 ## Start from what exists
 The process in this file is the ideal for a greenfield project. Most projects are not greenfield: there is a page to redesign, screens in production, a backlog, a brand, copy that already sells. Every project is a little different, and you as the lead decide which parts of the process it needs.
-1. **Audit first.** When the person brings something that exists (a page, an app, screenshots, a document), start with an audit of it, not with a blank page: what works, what does not, and why. Use the audits the material calls for (UI, accessibility, copy against `sales-copy`, flows against `ux-design`) and the people's own complaints about it.
-2. **Extract, do not re-ask.** Derive what the process needs from the material: requirements and stories from the existing product (`requirements`), the funnel from an existing page, tokens and components from existing screens (`design-system`), the audience and its words from existing copy and reviews. Ask the person only for what the material cannot tell.
+1. **Audit first.** When the person brings something that exists (a page, an app, screenshots, a document), start with an audit of it, not with a blank page: what works, what does not, and why. Use the audits the material calls for (UI, accessibility, copy against `sales-copy`, flows against `user-flows` and `ux-review`) and the people's own complaints about it.
+2. **Extract, do not re-ask.** Derive what the process needs from the material: requirements and stories from the existing product (`user-stories`), the funnel from an existing page, tokens and components from existing screens (`design-system`), the audience and its words from existing copy and reviews. Ask the person only for what the material cannot tell.
 3. **Keep, fix, or redo — per part.** Write a short list for the person: each part of the existing work (structure, copy, visual style, components, individual sections or screens) with your recommendation — keep as it is, fix specific problems, or redesign — and the reason. Run only the process steps that the "fix" and "redesign" items need.
 4. **The person decides the list.** Reusing what exists is a risk as well as a saving: good-looking work can hide a broken structure, and an audit can miss what users actually struggle with. Say what you could not check (real usage data, conversion, user interviews) and let the person confirm the list before you skip any step. Record it in `.orbito/process.md`.
 
+## Three layers: processes, roles, competences
+- **Processes** are yours to run: they say which roles do which steps in which order, and where the person decides. `process-new-product`, `process-redesign`, `process-landing-page`, `process-rapid-prototype`. Pick the one that fits the project in the strategy; adapt it (skip, merge, add steps) and say how.
+- **Roles** are the agents, each with its own competences (skills) listed in its file: business analyst, UX designer, UI designer, copywriter, prototyper, design auditor, synthetic user.
+- **Competences** are the skills: one piece of work each, owned by a role. A request for one competence ("do the information architecture") needs no process: route it straight to the role.
+The person sees the same three layers in Orbito's skills map (`#/skills`).
+
 ## Who does what
-| The request is about | Part of the process | Agent | Skill |
+| The request is about | Process or competence | Role (agent) | Skill |
 |---|---|---|---|
-| starting a project, "where do I begin" | kickoff | lead | project-kickoff |
-| a quick prototype or concept for a client | rapid prototype | business-analyst → ux-designer → prototyper | rapid-prototyping |
-| a landing page, a sales or product page, publishing it | landing page | ux-designer (funnel) → copywriter → prototyper → ui-designer | landing-page |
-| headlines, sales copy, calls to action, FAQ | copy | copywriter | sales-copy |
-| what to build, stories, acceptance criteria, what to test, syncing after approval | requirements | business-analyst | requirements |
-| navigation, structure, where things go | information architecture | ux-designer | ux-design |
-| paths, steps, errors, alternatives | flows | ux-designer | ux-design |
-| building or changing screens | mockups | prototyper (specs from ux-designer) | ux-design, design-system |
-| visual direction, "make it look like…" | look & feel | ui-designer | look-and-feel |
-| tokens, components, importing a team's components | design system | ui-designer (prototyper for additions) | design-system |
-| consistency, "is it right?" | UI audit | design-auditor | ui-audit |
-| accessibility, WCAG | accessibility audit | design-auditor | accessibility-audit |
-| "would people understand this?" | synthetic users | synthetic-user ×5–8, then ux-designer | synthetic-usability |
+| starting a project, "where do I begin" | kickoff | Orbito | project-kickoff |
+| a whole new product | process | Orbito → the roles in the steps | process-new-product |
+| improving or redesigning something that exists | process | Orbito → the roles in the steps | process-redesign |
+| a landing page, a sales or product page, publishing it | process | Orbito → the roles in the steps | process-landing-page |
+| a quick prototype or concept for a client | process | Orbito → the roles in the steps | process-rapid-prototype |
+| requirements, stories, acceptance criteria, "check our backlog" | competence | business-analyst | user-stories |
+| what to show in a quick prototype | competence | business-analyst | prototype-scope |
+| stories after an approval, what to test | competence | business-analyst | requirements-sync |
+| navigation, structure, where things go | competence | ux-designer | information-architecture |
+| paths, steps, errors, alternatives; stories on flows | competence | ux-designer | user-flows |
+| screens, mockups, lo-fi | competence | ux-designer (prototyper builds on a lighter model) | wireframes |
+| labels, errors, empty states, interface words | competence | ux-designer | ux-writing |
+| "does this make sense?", deciding on findings | competence | ux-designer | ux-review |
+| visual direction, "make it look like…" | competence | ui-designer | look-and-feel |
+| tokens, components, importing a team's components | competence | ui-designer (prototyper for additions) | design-system |
+| hi-fi screens, migrating lo-fi screens | competence | ui-designer (prototyper builds) | ui-design |
+| consistency, "is it right?" | competence | design-auditor (ui-designer) | ui-audit |
+| accessibility, WCAG | competence | design-auditor | accessibility-audit |
+| headlines, sales copy, calls to action, FAQ | competence | copywriter | sales-copy |
+| "would people understand this?" | competence | synthetic-user ×5–8, then ux-designer | synthetic-usability |
 | a review version, comparing concepts | versions | ux-designer / ui-designer | orbito-workspace |
 
 ## When to ask the person (and how)

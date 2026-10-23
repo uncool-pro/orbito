@@ -19,7 +19,7 @@ On a landing page the words are the design: layout can make good copy easier to 
 9. **Tone of voice.** Ask for the brand's voice (examples of texts the person likes and dislikes). Without one, write plainly: short sentences, concrete words, no hype.
 
 ## How much the visitor knows (awareness)
-Decide it from the traffic source (`landing-page` brief), because it sets where the page starts:
+Decide it from the traffic source (`process-landing-page` brief), because it sets where the page starts:
 | The visitor… | Start with | The page is |
 |---|---|---|
 | does not see the problem yet | a situation they recognise | long: situation → problem → solution → proof → offer |

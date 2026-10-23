@@ -17,7 +17,7 @@ People bring material the way they have it: a folder of files, a zip of an old s
 3. **Propose the distribution, then do it.** Show the person the plan in short: what goes where, what you will not use and why, what looks confidential. After they agree, **copy** (never move) the material into place:
    | Material | Goes to |
    |---|---|
-   | requirements, backlog exports, stories | `requirements/` (as stories with ids, via `requirements`) |
+   | requirements, backlog exports, stories | `requirements/` (checked and completed as stories by the business analyst, `user-stories`) |
    | texts, copy, reviews, the audience's words | `content/` (research and existing copy, via `sales-copy`) |
    | logo, photos, illustrations | `public/images/` (web-ready sizes) |
    | font files (with a licence for web use) | `public/fonts/` + `design-system/fonts.css` |
@@ -30,10 +30,10 @@ People bring material the way they have it: a folder of files, a zip of an old s
 If `raw/` is empty and the person has nothing yet, skip this and ask as below.
 
 ## First question: which kind of project
-- **New product (greenfield)** — nothing designed yet. Full path: requirements → information architecture and flows → lo-fi mockups → look & feel → design system → hi-fi.
-- **Existing product** — screens, components or documents already exist. Start from the sources, not from scratch: rebuild the design system and the screens "as they are", then design changes as versions. A redesign starts with an audit and a keep / fix / redo list the person confirms (`orbito` → "Start from what exists"); the same goes for an existing landing page.
-- **Landing page** — a static marketing or sales page whose approved mockup is exported as the real site: hand over to `landing-page` (funnel of sections → copy → lo-fi → look & feel → hi-fi → check → export). Collect its brief as that skill lists (the one conversion, who arrives and from where, the offer, real proof, brand assets).
-- **Quick prototype** — show an idea fast: hand over to `rapid-prototyping` (the business analyst picks the 1–2 paths that show the concept best). A product demo will get its own skill.
+- **New product (greenfield)** — nothing designed yet: `process-new-product` (requirements → information architecture → flows → lo-fi wireframes → review and sync → look & feel → design system → hi-fi → audits).
+- **Existing product** — screens, components or documents already exist. `process-redesign`. Start from the sources, not from scratch: rebuild the design system and the screens "as they are", then design changes as versions. A redesign starts with an audit and a keep / fix / redo list the person confirms (`orbito` → "Start from what exists"); the same goes for an existing landing page.
+- **Landing page** — a static marketing or sales page whose approved mockup is exported as the real site: run `process-landing-page` (funnel of sections → copy → lo-fi → look & feel → hi-fi → check → export). Collect its brief as that skill lists (the one conversion, who arrives and from where, the offer, real proof, brand assets).
+- **Quick prototype** — show an idea fast: run `process-rapid-prototype` (the business analyst picks the 1–2 paths that show the concept best). A product demo will get its own skill.
 
 ## What to collect (only what `raw/` did not answer; ask 1–2 questions at a time)
 - **The product in a few sentences**: who it is for, what problem it solves, for whom we design (client, own product).
@@ -47,7 +47,7 @@ If `raw/` is empty and the person has nothing yet, skip this and ask as below.
 Do not run a discovery workshop here: if the product idea itself is unclear (problem, users, appetite of the client), say so and propose a workshop with the client first.
 
 ## Output
-Fill `.orbito/process.md`: project type, platforms, sources (what and where), the phase table with the first phase marked, open questions. Remove the template's placeholder screen and flow once the first real ones exist. Then hand over: stories exist → `ux-designer`; stories missing → `business-analyst`.
+Fill `.orbito/process.md`: project type, platforms, sources (what and where), the phase table with the first phase marked, open questions. Remove the template's placeholder screen and flow once the first real ones exist. Then hand over to the first step of the chosen process (Orbito writes the strategy with `orbito`): usually the `business-analyst` checks and completes the requirements the person brought (`user-stories`) before the `ux-designer` starts.
 
 ## Quality bar
 - Nothing assumed silently: every assumption is listed under open questions.

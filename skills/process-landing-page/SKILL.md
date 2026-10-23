@@ -1,23 +1,27 @@
 ---
-name: landing-page
-description: The process for a landing page or a marketing page in Orbito — a static page that is both the mockup and the product. Funnel of sections → sales copy → lo-fi page → look & feel → hi-fi page → check with the target group → static export ready for any host. Use when the project type is a landing page, or someone asks for a landing, a sales page, a product page, a "strona sprzedażowa" or "landing".
+name: process-landing-page
+description: Orbito's process for a landing page or a marketing page — a static page that is both the mockup and the product. Funnel of sections → sales copy → lo-fi page → look & feel → hi-fi page → check with the target group → static export ready for any host. Use when the project type is a landing page, or someone asks for a landing, a sales page, a product page, a "strona sprzedażowa" or "landing".
 ---
 
-# Landing page
+# Process: landing page
+
+Run by **Orbito** (the lead).
 
 A landing page is product design with a different centre of gravity: little interface, a lot of argument. Its job is one conversion (buy, sign up, book a call, download), and its flow runs between **sections** of one page, not between screens. Because the page is static, the approved mockup is exported as the real site: no handover, no rebuild.
 
-## The process
-| Step | Who | Skill | Output |
-|---|---|---|---|
-| 1. Brief | lead with the person | project-kickoff | goal, audience, offer, brand sources in `.orbito/process.md` |
-| 2. Funnel of sections | ux-designer | this skill (below) | `content/funnel.md` |
-| 3. Copy | copywriter | sales-copy | `content/copy.md` |
-| 4. Lo-fi page | prototyper | this skill, ux-design | the page on the base kit, real copy |
-| 5. Look & feel | ui-designer | look-and-feel (+ `references/pages.md`) | five variants of the page |
-| 6. Hi-fi page | ui-designer, prototyper | design-system | the chosen direction on every section, desktop and mobile |
-| 7. Check | synthetic-user ×5–8, then copywriter and ux-designer; design-auditor | synthetic-usability, accessibility-audit | `reviews/` |
-| 8. Publish | prototyper with the person | this skill (below) | `npm run export` → `site/` |
+## Steps
+| # | Step | Role | Skill | Output | Gate |
+|---|---|---|---|---|---|
+| 1 | Brief | orbito | project-kickoff | goal, audience, offer, brand sources in `.orbito/process.md` | person confirms the brief and the depth |
+| 2 | Funnel of sections | ux-designer | user-flows | `content/funnel.md` | **person approves the funnel** |
+| 3 | Copy | copywriter | sales-copy | `content/research.md`, `content/copy.md` | **person approves the copy** |
+| 4 | Lo-fi page | ux-designer | wireframes | the page on the base kit with the real copy, desktop and `mobile-web` | UX review |
+| 5 | Visual direction | ui-designer | look-and-feel | five (light: three) variants of the page | **person picks a direction** |
+| 6 | Design system | ui-designer | design-system | tokens, fonts, section components | `check:ds` clean |
+| 7 | Hi-fi page | ui-designer | ui-design | the chosen direction on every section | — |
+| 8 | Accessibility | design-auditor | accessibility-audit | findings | high findings fixed |
+| 9 | Five-second test | synthetic-user | synthetic-usability | signals on the first screenful and the whole page | copywriter and UX fix, defend or ask |
+| 10 | Publish | orbito | process-landing-page | `npm run export` → `site/` | **person publishes** |
 
 The person approves the funnel, the copy, the chosen direction and the final page. Every approval goes to `.orbito/process.md`. Conversion data after launch is not part of Orbito yet; say so when the person asks how to measure the page.
 
@@ -31,7 +35,7 @@ Seven roles are worth it for a large page with a lot at stake; for a small one t
 
 Start light when unsure and add a step only where the result was weak (for example, copy that does not convince → a full `copywriter` round with research). Record the chosen depth in `.orbito/process.md`, and add a `product-feedback` note on whether it was right: too heavy, too light, or fine. That is how this process learns its default.
 
-## 1. Brief (what the kickoff must collect for a landing)
+## Brief (step 1): what the kickoff must collect
 - **The one conversion**: what the visitor should do, and where that action leads (a checkout link, a form service, a calendar). One page, one goal; secondary actions only if they lead to the same goal.
 - **Who arrives and from where**: the audience, and the traffic source (an ad, a post, a search, a recommendation). The source tells how much the visitor already knows (see awareness in `sales-copy`).
 - **The offer**: what exactly the person gets, the price, the terms, what makes it different from the alternatives.
@@ -39,7 +43,7 @@ Start light when unsure and add a step only where the result was weak (for examp
 - **Brand**: logo, colours, fonts (files and licences), photographs, tone of voice, an existing site.
 - **Where it will be hosted**: any static host works; ask only so the person knows `site/` is what goes there.
 
-## 2. Funnel of sections (UX)
+## Funnel of sections (step 2, UX)
 The funnel is the information architecture of a landing: the order of sections, each answering the next question the visitor has. Write `content/funnel.md`:
 
 ```
@@ -59,7 +63,7 @@ Rules:
 - Navigation is optional: a long page with a menu helps returning visitors; a short sales page often works better without one. Decide with the person.
 - Plan the phone first: on a phone the funnel is a single column read top to bottom.
 
-## 3–6. Building the page in Orbito
+## Building the page (steps 4–7)
 - **One page = one screen.** `screens/landing/landing.screen.tsx` with `viewport: 'desktop'` (or `'laptop'`), wrapped in `PageScreen`. For the phone view on the board add `landing-mobile.screen.tsx` that re-exports the same component with `viewport: 'mobile-web'` (a phone-wide page that scrolls as a whole) (`export { default } from './landing.screen';` plus its own `meta`), so both widths are reviewed side by side. Put both in a flow (`flows/landing.flow.ts`) so the board shows them; variants of look & feel are `versions` of that flow.
 - **Sections** are design-system components built on `Section` (each with an `id` from the funnel). A section type that repeats with different content (a feature row, a testimonial) is its own organism with docs.
 - **Links** use `href`: `href="#offer"` for a section of the page, a full address for anything that leaves it. `to` (other screens) has no meaning on a static page and is dropped in the export.
@@ -69,13 +73,13 @@ Rules:
 - **Fonts** go into `design-system/fonts.css` (`@font-face` with `url('./fonts/…')`, or an `@import` of a font service) and their files into `public/fonts/`. Check the licence allows web use. Pictures go into `public/` and are referenced as `./images/…`.
 - **The lo-fi page** uses the base kit and the real copy, never lorem ipsum: on a landing the words are the design.
 
-## 7. Checking the page
+## Checking the page (steps 8–9)
 - **Five-second test** (synthetic users, each persona separately): after a glance at the first screenful, what is this, who is it for, what would you do next? Then the whole page: where did you stop reading, what is unclear, what would stop you from buying, what word did you not understand.
 - **Copy review** by the copywriter against the `sales-copy` checklists after the persona signals.
 - **Accessibility**: contrast, headings in order (one h1, then h2 per section), link texts that make sense alone, alt texts for pictures, readable on a phone.
 - The person decides on each finding; record it in the review file.
 
-## 8. Publish
+## Publish (step 10)
 1. In `orbito.config.ts` set `site: { screen: 'landing', title, description, lang }`. The description is what search engines and link previews show: one or two sentences from the copy.
 2. `npm run check:ds` (0 errors), `npm run typecheck`, then `npm run export` → `site/index.html` with everything in `public/`.
 3. Open `site/index.html` in a browser at desktop and phone width; check every link (each `#id` exists, every external address is right).

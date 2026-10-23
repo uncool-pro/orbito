@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildTeam, parseFrontmatter, purposeOf } from '../src';
+import { buildTeam, listOf, parseFrontmatter, parseSteps, purposeOf } from '../src';
 
 describe('team', () => {
-  it('reads front matter and the body', () => {
-    const { data, body } = parseFrontmatter('---\nname: ux-designer\ndescription: Designs flows. Use for flows.\nmodel: opus\n---\n\nUse `ux-design`.\n');
+  it('reads front matter, YAML lists and the body', () => {
+    const { data, body } = parseFrontmatter('---\nname: ux-designer\ndescription: Designs flows. Use for flows.\nmodel: opus\nskills:\n  - user-flows\n  - wireframes\n---\n\nUse `user-flows`.\n');
 
-    expect(data).toEqual({ name: 'ux-designer', description: 'Designs flows. Use for flows.', model: 'opus' });
-    expect(body.trim()).toBe('Use `ux-design`.');
+    expect(data).toEqual({ name: 'ux-designer', description: 'Designs flows. Use for flows.', model: 'opus', skills: 'user-flows, wireframes' });
+    expect(listOf(data.skills)).toEqual(['user-flows', 'wireframes']);
+    expect(body.trim()).toBe('Use `user-flows`.');
   });
 
   it('keeps the purpose of a description without its triggers', () => {
@@ -15,19 +16,33 @@ describe('team', () => {
     expect(purposeOf('No trigger list')).toBe('No trigger list.');
   });
 
-  it('links agents to the skills their instructions name; the rest stays with the lead', () => {
-    const skills = ['orbito', 'orbito-workspace', 'ux-design', 'design-system', 'sales-copy'].map((name) => ({ name, description: `${name}.` }));
+  it('reads the steps of a process', () => {
+    const steps = parseSteps('# P\n\n## Steps\n| # | Step | Role | Skill | Output | Gate |\n|---|---|---|---|---|---|\n| 1 | Paths | ux-designer | user-flows | `flows/` | **person approves** |\n| 2 | Look | ui-designer | look-and-feel | variants | — |\n\n## Notes\n| 9 | not a step |');
+
+    expect(steps).toEqual([
+      { n: '1', step: 'Paths', role: 'ux-designer', skill: 'user-flows', output: 'flows/', gate: 'person approves' },
+      { n: '2', step: 'Look', role: 'ui-designer', skill: 'look-and-feel', output: 'variants', gate: '' },
+    ]);
+  });
+
+  it('gives agents their own skills list, falls back to the names in their text, and keeps processes apart', () => {
+    const skills = ['orbito', 'orbito-workspace', 'user-flows', 'wireframes', 'design-system', 'sales-copy', 'synthetic-usability', 'process-new-product'].map((name) => ({
+      name,
+      description: `${name}.`,
+      body: name === 'process-new-product' ? '## Steps\n| 1 | Paths | ux-designer | user-flows | flows | — |\n' : '',
+    }));
     const team = buildTeam(skills, [
-      { name: 'ux-designer', description: 'UX.', model: 'opus', body: 'Use `ux-design` and `orbito-workspace`; run `npm run check:ds`.' },
-      { name: 'prototyper', description: 'Builds.', model: 'sonnet', body: 'Use `ux-design`, `design-system`.' },
-      { name: 'persona', description: 'One persona. Use only through the sales-copy skill.', model: 'haiku', body: 'Stay in role.' },
+      { name: 'ux-designer', description: 'UX.', model: 'opus', skills: ['user-flows', 'wireframes', 'orbito-workspace'], body: 'Also mentions `design-system`.' },
+      { name: 'prototyper', description: 'Builds.', model: 'sonnet', body: 'Use `wireframes`, `design-system`; run `npm run check:ds`.' },
+      { name: 'persona', description: 'One persona. Use only through the synthetic-usability skill.', model: 'haiku', body: 'Stay in role.' },
     ]);
 
     expect(team.agents.map((a) => [a.name, a.skills])).toEqual([
-      ['persona', ['sales-copy']],
-      ['prototyper', ['ux-design', 'design-system']],
-      ['ux-designer', ['ux-design']],
+      ['persona', ['synthetic-usability']],
+      ['prototyper', ['wireframes', 'design-system']],
+      ['ux-designer', ['user-flows', 'wireframes']],
     ]);
-    expect(team.lead.skills).toEqual(['orbito', 'orbito-workspace']);
+    expect(team.lead.skills).toEqual(['orbito', 'orbito-workspace', 'sales-copy']);
+    expect(team.processes).toEqual([{ name: 'process-new-product', description: 'process-new-product.', steps: [{ n: '1', step: 'Paths', role: 'ux-designer', skill: 'user-flows', output: 'flows', gate: '' }] }]);
   });
 });
