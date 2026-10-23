@@ -8,3 +8,7 @@ exports/
 # raw materials from the client or the team: often confidential, never committed by default
 raw/*
 !raw/README.md
+
+# personal: each person's own Orbito settings and feedback notes
+.orbito/settings.local.json
+feedback.md

@@ -22,7 +22,8 @@ Orbito keeps a product's mockups as code and shows them as a board of flows, a f
 | requirements | `requirements/*.md` | stories with ids (`REQ-01`), the local mirror of the team's tracker |
 | reviews | `reviews/*.md` | findings tables (`\| # \| ... \|`) that versions point to |
 | statuses | `.orbito/status.json` | set on the board, one per screen |
-| model mode | `.orbito/settings.json` | `"models": "optimal"` or `"high"` — how the agents use models; switch with `npx orbito models <mode>` |
+| model mode | `.orbito/settings.local.json` (personal, not committed), `.orbito/settings.json` (team default, committed), `.orbito/models.json` (the two profiles, Orbito's) | `"models": "optimal"` or `"high"`; the personal one wins (the `ORBITO_MODELS` environment variable wins over both); `npx orbito models <mode> [--team]` |
+| personal files | `.orbito/settings.local.json`, `feedback.md` | in `.gitignore`: each person's own, never shared with the team |
 | page content | `content/*.md` | landing pages: the funnel of sections, the copy, the research (`process-landing-page`, `value-proposition`, `page-copy`) |
 | fonts, pictures | `design-system/fonts.css`, `public/` | `@font-face` / `@import` for the typefaces the tokens name; files served as they are and copied by the export |
 

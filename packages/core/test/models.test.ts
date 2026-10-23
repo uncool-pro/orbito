@@ -1,21 +1,24 @@
 import { describe, expect, it } from 'vitest';
 
-import { modelFor, withModel } from '../src';
+import { modelFor, resolveMode } from '../src';
+import type { ModelProfiles } from '../src';
 
-const agent = '---\nname: ui-designer\ndescription: UI.\nmodel: sonnet\nskills:\n  - ui-design\n---\n\nBody with model: words.\n';
+const profiles: ModelProfiles = {
+  optimal: { 'ui-designer': { model: 'sonnet', effort: 'medium' } },
+  high: { 'ui-designer': { model: 'opus', effort: 'medium' } },
+};
 
 describe('models', () => {
-  it('keeps the optimal settings, or takes the high ones for known roles', () => {
-    expect(modelFor('ui-designer', 'optimal', { model: 'sonnet', effort: 'medium' })).toEqual({ model: 'sonnet', effort: 'medium' });
-    expect(modelFor('ui-designer', 'high', { model: 'sonnet', effort: 'medium' })).toEqual({ model: 'opus', effort: 'high' });
-    expect(modelFor('my-agent', 'high', { model: 'haiku' })).toEqual({ model: 'haiku' });
+  it('resolves the mode per person: environment, then personal, then team, then optimal', () => {
+    expect(resolveMode({ env: 'high', local: { models: 'optimal' }, team: { models: 'optimal' } })).toEqual({ mode: 'high', source: 'env' });
+    expect(resolveMode({ local: { models: 'high' }, team: { models: 'optimal' } })).toEqual({ mode: 'high', source: 'local' });
+    expect(resolveMode({ env: 'nonsense', team: { models: 'high' } })).toEqual({ mode: 'high', source: 'team' });
+    expect(resolveMode({})).toEqual({ mode: 'optimal', source: 'default' });
   });
 
-  it('rewrites model and adds effort in the front matter only', () => {
-    const out = withModel(agent, { model: 'opus', effort: 'high' });
-
-    expect(out).toContain('model: opus\neffort: high\nskills:');
-    expect(out).toContain('Body with model: words.');
-    expect(withModel(out, { model: 'sonnet', effort: 'medium' })).toContain('model: sonnet\neffort: medium\nskills:');
+  it('reads a role from the profile of a mode; unknown roles have none', () => {
+    expect(modelFor(profiles, 'high', 'ui-designer')).toEqual({ model: 'opus', effort: 'medium' });
+    expect(modelFor(profiles, 'optimal', 'ui-designer')).toEqual({ model: 'sonnet', effort: 'medium' });
+    expect(modelFor(profiles, 'high', 'my-agent')).toBeUndefined();
   });
 });

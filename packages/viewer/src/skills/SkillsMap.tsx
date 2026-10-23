@@ -98,7 +98,7 @@ export const SkillsMap = () => {
         <h1>{t.skillsTitle}</h1>
         <p>{t.skillsLead}</p>
         <p className="pd-team__mode">
-          <b>{t.modelsBadge[team.models ?? 'optimal']}</b> — {t.modelsTip[team.models ?? 'optimal']} {t.modelsSwitch[team.models ?? 'optimal']}
+          <b>{t.modelsBadge[team.models ?? 'optimal']}</b> — {t.modelsTip[team.models ?? 'optimal']} {t.modelsSource[team.modelsSource ?? 'default']} {t.modelsSwitch[team.models ?? 'optimal']}
         </p>
       </header>
 

@@ -6,3 +6,4 @@ dist
 .DS_Store
 exports/
 .tmp-*/
+**/.orbito/settings.local.json

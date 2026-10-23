@@ -4,14 +4,16 @@
  *
  *   orbito check ds [--json] [--root <dir>] [--strict] [--verbose]   design-system rules; exit 1 on errors (--strict: also on warnings); --verbose also lists info
  *   orbito export [<screen-id>] [--out <dir>] [--root <dir>]          one screen as a static site (default: site.screen from orbito.config.ts)
- *   orbito models [optimal|high] [--root <dir>]                        show or switch how the agents use models (tokens vs. quality)
+ *   orbito models [optimal|high] [--team] [--root <dir>]               show or switch how the agents use models, for you (or --team: the team's default)
  *   orbito update [--pull] [--no-install] [--root <dir>]               refresh the project's Orbito skills, agents and commands (--pull: update Orbito from GitHub first)
  */
 import { resolve } from 'node:path';
 
 import { analyzeProject } from './analyze.ts';
 import { exportSite } from './export.ts';
-import { applyModels } from './models.ts';
+import type { ModelMode } from '@uncool-pro/orbito-core';
+
+import { currentMode, LOCAL_SETTINGS, readProfiles, saveMode, TEAM_SETTINGS } from './models.ts';
 import { toolRoot, updateProject } from './update.ts';
 
 const args = process.argv.slice(2);
@@ -83,11 +85,19 @@ const modelsCmd = (mode: string | undefined) => {
 
     return;
   }
-  const r = applyModels(resolve(opt('root') ?? process.cwd()), resolve(toolRoot(), 'agents'), mode as 'optimal' | 'high' | undefined);
+  const root = resolve(opt('root') ?? process.cwd());
+  const team = flag('team');
 
-  console.log(`models: ${r.mode}${mode ? ' (saved in .orbito/settings.json)' : ''}`);
-  r.agents.forEach((a) => console.log(`  ${a.name.padEnd(18)} ${a.choice.model}${a.choice.effort ? ` · ${a.choice.effort}` : ''}${a.changed ? paint(2, '  updated') : ''}`));
-  console.log(paint(2, 'Orbito itself (the main session) runs on the model you choose in Claude Code: use the strongest one.'));
+  if (mode) saveMode(root, mode as ModelMode, team);
+  const { mode: active, source } = currentMode(root);
+  const from = { env: 'ORBITO_MODELS environment variable', local: 'your setting, .orbito/settings.local.json', team: "the team's default, .orbito/settings.json", default: 'default' }[source];
+
+  if (mode) console.log(team ? `saved as the team's default (${TEAM_SETTINGS}, commit it to share)` : `saved for you only (${LOCAL_SETTINGS}, not shared through git)`);
+  console.log(`models: ${active} — ${from}`);
+  const profile = readProfiles(root, resolve(toolRoot(), 'agents'))?.[active] ?? {};
+
+  Object.entries(profile).forEach(([role, c]) => console.log(`  ${role.padEnd(18)} ${c.model}${c.effort ? ` · ${c.effort}` : ''}`));
+  console.log(paint(2, 'Orbito passes these to each agent it calls; agent files are not changed. Orbito itself runs on the model you pick in Claude Code.'));
 };
 
 const [cmd, sub] = args.filter((a) => !a.startsWith('--') && a !== opt('root') && a !== opt('out'));
@@ -97,6 +107,6 @@ else if (cmd === 'export') await exportCmd(sub);
 else if (cmd === 'update') updateCmd();
 else if (cmd === 'models') modelsCmd(sub);
 else {
-  console.log('Usage: orbito check ds [--json] [--root <dir>] [--strict] [--verbose]\n       orbito export [<screen-id>] [--out <dir>] [--root <dir>]\n       orbito models [optimal|high] [--root <dir>]\n       orbito update [--pull] [--no-install] [--root <dir>]');
+  console.log('Usage: orbito check ds [--json] [--root <dir>] [--strict] [--verbose]\n       orbito export [<screen-id>] [--out <dir>] [--root <dir>]\n       orbito models [optimal|high] [--team] [--root <dir>]\n       orbito update [--pull] [--no-install] [--root <dir>]');
   process.exitCode = cmd ? 1 : 0;
 }

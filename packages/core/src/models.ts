@@ -1,40 +1,33 @@
 /**
- * How the team's agents use models. The person picks the mode at the kickoff (and can change it any time);
- * it lives in `.orbito/settings.json` as `{ "models": "optimal" | "high" }`.
- * - `optimal`: each role on the model and effort its work needs — thinking on the strongest, building on the middle
- *   one, repeated checks and personas on the lightest. Fewer tokens. The tool's agent files hold these settings.
- * - `high`: quality first — the strongest model with high effort almost everywhere; the middle one with high effort
- *   only for the lightest work (repeated checks, personas). More tokens.
- * Orbito itself (the main session) runs on the strongest model in both modes.
+ * How the team's agents use models — a personal choice of each person, never a change to shared files.
+ *
+ * - Two profiles ship with Orbito in `agents/models.json` (copied to a project's `.orbito/models.json`):
+ *   `optimal` — each role on the model and effort its work needs, fewer tokens (the agent files carry these values);
+ *   `high` — the strongest model almost everywhere, with high effort where the work is strategic.
+ * - The mode in use is resolved per person, highest first: the `ORBITO_MODELS` environment variable →
+ *   `.orbito/settings.local.json` (personal, git-ignored) → `.orbito/settings.json` (the team's default, committed) → `optimal`.
+ * - Agent files are never rewritten. Orbito (the main session) passes the profile's model and effort each time it
+ *   calls an agent, which Claude Code applies over the agent file's own values.
  */
 
 export type ModelMode = 'optimal' | 'high';
 export const MODEL_MODES: ModelMode[] = ['optimal', 'high'];
-export type OrbitoSettings = { models?: ModelMode };
 export type ModelChoice = { model: string; effort?: string };
-
-/** The roles in the `high` mode; roles not listed (the project's own agents) keep their settings. */
-export const HIGH_MODELS: Record<string, ModelChoice> = {
-  'business-analyst': { model: 'opus', effort: 'high' },
-  'ux-designer': { model: 'opus', effort: 'high' },
-  'ui-designer': { model: 'opus', effort: 'high' },
-  'design-auditor': { model: 'sonnet', effort: 'high' },
-  'synthetic-user': { model: 'sonnet', effort: 'high' },
-};
-
-/** What an agent runs on in a mode, given its `optimal` settings (from the tool's agent file). */
-export const modelFor = (agent: string, mode: ModelMode, optimal: ModelChoice): ModelChoice => (mode === 'high' ? (HIGH_MODELS[agent] ?? optimal) : optimal);
-
-/** Rewrites the `model:` (and `effort:`, added after `model:` when missing) lines of an agent file's front matter. */
-export const withModel = (agentFile: string, choice: ModelChoice): string => {
-  const m = /^(---\r?\n)([\s\S]*?)(\r?\n---)/.exec(agentFile);
-
-  if (!m) return agentFile;
-  let head = m[2]!.replace(/^model:.*$/m, `model: ${choice.model}`);
-
-  if (choice.effort) head = /^effort:.*$/m.test(head) ? head.replace(/^effort:.*$/m, `effort: ${choice.effort}`) : head.replace(/^(model:.*)$/m, `$1\neffort: ${choice.effort}`);
-
-  return m[1] + head + agentFile.slice(m[1]!.length + m[2]!.length);
-};
+export type ModelProfiles = Record<ModelMode, Record<string, ModelChoice>>;
+export type OrbitoSettings = { models?: ModelMode };
+/** Where the mode in use comes from. */
+export type ModeSource = 'env' | 'local' | 'team' | 'default';
 
 export const isModelMode = (v: unknown): v is ModelMode => v === 'optimal' || v === 'high';
+
+/** The mode in use for this person, and where it comes from. */
+export const resolveMode = (sources: { env?: string; local?: OrbitoSettings; team?: OrbitoSettings }): { mode: ModelMode; source: ModeSource } => {
+  if (isModelMode(sources.env)) return { mode: sources.env, source: 'env' };
+  if (isModelMode(sources.local?.models)) return { mode: sources.local!.models!, source: 'local' };
+  if (isModelMode(sources.team?.models)) return { mode: sources.team!.models!, source: 'team' };
+
+  return { mode: 'optimal', source: 'default' };
+};
+
+/** The model and effort of a role in a mode; roles the profiles do not know (the project's own agents) get `undefined`. */
+export const modelFor = (profiles: ModelProfiles | undefined, mode: ModelMode, role: string): ModelChoice | undefined => profiles?.[mode]?.[role];

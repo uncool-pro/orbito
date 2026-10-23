@@ -126,6 +126,7 @@ export const ModelsBadge = () => {
       </a>
       <span id="pd-models-tip" role="tooltip" className="pd-models__tip">
         {t.modelsTip[mode]}
+        <em>{t.modelsSource[team.modelsSource ?? 'default']}</em>
         <b>{t.modelsSwitch[mode]}</b>
       </span>
     </span>

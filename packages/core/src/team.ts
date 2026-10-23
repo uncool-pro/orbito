@@ -10,7 +10,7 @@ export type SkillInfo = { name: string; description: string };
 export type AgentInfo = { name: string; description: string; model?: string; effort?: string; skills: string[] };
 export type ProcessStep = { n: string; step: string; role: string; skill: string; output: string; gate: string };
 export type ProcessInfo = { name: string; description: string; steps: ProcessStep[] };
-export type Team = { lead: { skills: string[] }; processes: ProcessInfo[]; agents: AgentInfo[]; skills: SkillInfo[]; models?: 'optimal' | 'high' };
+export type Team = { lead: { skills: string[] }; processes: ProcessInfo[]; agents: AgentInfo[]; skills: SkillInfo[]; models?: 'optimal' | 'high'; modelsSource?: 'env' | 'local' | 'team' | 'default' };
 
 /** What the files hold before they are linked. */
 export type AgentSource = { name: string; description: string; model?: string; effort?: string; skills?: string[]; body: string };

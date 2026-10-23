@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 import { searchForWorkspaceRoot } from 'vite';
 
 import { analyzeProject } from '@uncool-pro/orbito-cli/analyze';
-import { buildTeam, listOf, parseFrontmatter, tokensToCss } from '@uncool-pro/orbito-core';
+import { buildTeam, listOf, modelFor, parseFrontmatter, resolveMode, tokensToCss } from '@uncool-pro/orbito-core';
 
 // keep in sync with packages/core/src/status.ts (the tool owns the list)
 const STATUSES = ['todo', 'wip', 'review', 'changes', 'approved', 'onHold', 'dropped'];
@@ -69,9 +69,17 @@ const readTeam = (root) => {
       return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, effort: data.effort, skills: listOf(data.skills), body };
     });
 
-  const settings = readJson(resolve(root, '.orbito/settings.json'), {});
+  // the model mode of the person running the viewer: environment → personal settings → the team's default
+  const { mode, source } = resolveMode({
+    env: process.env.ORBITO_MODELS,
+    local: readJson(resolve(root, '.orbito/settings.local.json'), {}),
+    team: readJson(resolve(root, '.orbito/settings.json'), {}),
+  });
+  const profiles = readJson(resolve(root, '.orbito/models.json'), null) ?? readJson(resolve(dirs.agents, 'models.json'), null);
+  // each agent as Orbito will call it in this mode (the profile wins over the agent file's own values)
+  const inMode = agents.map((a) => ({ ...a, ...(modelFor(profiles ?? undefined, mode, a.name) ?? {}) }));
 
-  return { ...buildTeam(skills, agents), models: settings.models === 'high' ? 'high' : 'optimal' };
+  return { ...buildTeam(skills, inMode), models: mode, modelsSource: source };
 };
 
 const readJson = (file, fallback) => {
@@ -160,7 +168,7 @@ export default function orbito(options = {}) {
       }
       // a fonts.css or a settings file created while the server runs: rebuild the project module and reload
       server.watcher.on('add', (file) => {
-        if (resolve(file) !== resolve(root, FONTS_FILE) && resolve(file) !== resolve(root, '.orbito/settings.json')) return;
+        if (resolve(file) !== resolve(root, FONTS_FILE) && resolve(file) !== resolve(root, '.orbito/settings.json') && resolve(file) !== resolve(root, '.orbito/settings.local.json')) return;
         const mod = server.moduleGraph.getModuleById(RESOLVED);
 
         if (mod) server.moduleGraph.invalidateModule(mod);
@@ -217,7 +225,7 @@ export default function orbito(options = {}) {
       // a status write must not reload the page: the viewer already shows the new value
       if (file === resolve(root, STATUS_FILE)) return [];
       // the model mode shows in the top bar and on the skills map
-      if (rel === '.orbito/settings.json') {
+      if (rel === '.orbito/settings.json' || rel === '.orbito/settings.local.json' || rel === '.orbito/models.json') {
         const mod = ctx.server.moduleGraph.getModuleById(RESOLVED);
 
         if (mod) ctx.server.moduleGraph.invalidateModule(mod);

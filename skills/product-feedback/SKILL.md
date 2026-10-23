@@ -7,6 +7,8 @@ description: Collects anonymous feedback about Orbito itself while people work �
 
 Orbito gets better from what happens in real projects. This skill keeps short, anonymous notes about the tool and its skills — not about the person's product — in `feedback.md` at the project root, so the person can review them and send them to the Orbito team when they want.
 
+`feedback.md` is **personal**: it is in `.gitignore`, so in a team every person keeps their own notes and nothing they said in frustration reaches the team's repository. If it is already tracked by git in an older project, tell the person and offer to stop tracking it (`git rm --cached feedback.md`, after their yes) — never delete the file.
+
 ## When to write an entry
 Write one when it is worth it, not for every small correction:
 - the person was clearly unhappy with a result ("that's not it", "no, I wanted…", repeated corrections of the same thing);

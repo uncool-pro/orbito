@@ -75,7 +75,11 @@ const main = async () => {
   cpSync(TEMPLATE!, target, { recursive: true, filter: (src) => !/[\\/](node_modules|dist)([\\/]|$)/.test(src) });
   if (existsSync(join(target, 'gitignore'))) renameSync(join(target, 'gitignore'), join(target, '.gitignore'));
   if (SKILLS) cpSync(SKILLS, join(target, '.claude', 'skills'), { recursive: true, filter: (src) => !/README.md$/.test(src) || statSync(src).isDirectory() });
-  if (AGENTS) cpSync(AGENTS, join(target, '.claude', 'agents'), { recursive: true });
+  if (AGENTS) {
+    cpSync(AGENTS, join(target, '.claude', 'agents'), { recursive: true, filter: (src) => !src.endsWith('models.json') });
+    // the two model profiles are Orbito's, next to the settings that pick one
+    if (existsSync(join(AGENTS, 'models.json'))) cpSync(join(AGENTS, 'models.json'), join(target, '.orbito', 'models.json'));
+  }
 
   const fill = (file: string, map: Record<string, string>) => {
     const p = join(target, file);

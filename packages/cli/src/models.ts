@@ -1,75 +1,47 @@
 /**
- * `orbito models [optimal|high]` — shows or switches how the team's agents use models (see core `models.ts`).
- * The mode is stored in `.orbito/settings.json`; switching rewrites the `model:` and `effort:` lines of Orbito's
- * agents in `.claude/agents/` (agents the person added themselves keep their settings).
+ * `orbito models [optimal|high] [--team]` — shows or switches how the agents use models (see core `models.ts`).
+ * Without `--team` the choice is personal (`.orbito/settings.local.json`, git-ignored); with `--team` it becomes the
+ * team's default (`.orbito/settings.json`, committed). Nothing else changes: agent files stay as Orbito ships them.
  */
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { isModelMode, modelFor, parseFrontmatter, withModel } from '@uncool-pro/orbito-core';
-import type { ModelChoice, ModelMode, OrbitoSettings } from '@uncool-pro/orbito-core';
+import { MODEL_MODES, resolveMode } from '@uncool-pro/orbito-core';
+import type { ModelMode, ModelProfiles, ModeSource, OrbitoSettings } from '@uncool-pro/orbito-core';
 
-const SETTINGS = '.orbito/settings.json';
+export const TEAM_SETTINGS = '.orbito/settings.json';
+export const LOCAL_SETTINGS = '.orbito/settings.local.json';
+export const PROFILES = '.orbito/models.json';
 
-export const readSettings = (root: string): OrbitoSettings => {
+const readJson = <T>(file: string): T | undefined => {
   try {
-    return JSON.parse(readFileSync(join(root, SETTINGS), 'utf8')) as OrbitoSettings;
+    return JSON.parse(readFileSync(file, 'utf8')) as T;
   } catch {
-    return {};
+    return undefined;
   }
 };
 
-export const modelMode = (root: string): ModelMode => {
-  const m = readSettings(root).models;
+/** The profiles of the project (`.orbito/models.json`, refreshed by `orbito update`), or the tool's own. */
+export const readProfiles = (root: string, toolAgents: string): ModelProfiles | undefined =>
+  readJson<ModelProfiles>(join(root, PROFILES)) ?? readJson<ModelProfiles>(join(toolAgents, 'models.json'));
 
-  return isModelMode(m) ? m : 'optimal';
+/** The mode in use for the person running this, and where it comes from. */
+export const currentMode = (root: string): { mode: ModelMode; source: ModeSource } =>
+  resolveMode({
+    env: process.env.ORBITO_MODELS,
+    local: readJson<OrbitoSettings>(join(root, LOCAL_SETTINGS)),
+    team: readJson<OrbitoSettings>(join(root, TEAM_SETTINGS)),
+  });
+
+/** Saves a mode: personal by default, the team's default with `team`. */
+export const saveMode = (root: string, mode: ModelMode, team = false) => {
+  const file = join(root, team ? TEAM_SETTINGS : LOCAL_SETTINGS);
+  const current = readJson<OrbitoSettings>(file) ?? {};
+
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, JSON.stringify({ ...current, models: mode }, null, 2) + '\n');
 };
 
-/** The optimal settings an agent file of the tool declares. */
-const optimalOf = (toolFile: string): ModelChoice | undefined => {
-  const { data } = parseFrontmatter(toolFile);
+export const isMode = (v: unknown): v is ModelMode => MODEL_MODES.includes(v as ModelMode);
 
-  return data.model ? { model: data.model, effort: data.effort } : undefined;
-};
-
-/** An agent file from the tool, with the model and effort of the project's mode. */
-export const agentForMode = (toolFile: string, name: string, mode: ModelMode): string => {
-  const optimal = optimalOf(toolFile);
-
-  return optimal ? withModel(toolFile, modelFor(name, mode, optimal)) : toolFile;
-};
-
-export type ModelsResult = { mode: ModelMode; agents: { name: string; choice: ModelChoice; changed: boolean }[] };
-
-/**
- * Sets the mode (when given) and applies it to Orbito's agents in the project. `toolAgents` is the tool's `agents/`
- * folder: only agents that exist there are Orbito's; their optimal settings are read from it.
- */
-export const applyModels = (root: string, toolAgents: string, mode?: ModelMode): ModelsResult => {
-  if (mode) {
-    const file = join(root, SETTINGS);
-
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, JSON.stringify({ ...readSettings(root), models: mode }, null, 2) + '\n');
-  }
-  const active = mode ?? modelMode(root);
-  const agents: ModelsResult['agents'] = [];
-
-  for (const f of existsSync(toolAgents) ? readdirSync(toolAgents) : []) {
-    const target = join(root, '.claude/agents', f);
-
-    if (!f.endsWith('.md') || !existsSync(target)) continue;
-    const name = f.replace(/\.md$/, '');
-    const optimal = optimalOf(readFileSync(join(toolAgents, f), 'utf8'));
-
-    if (!optimal) continue;
-    const choice = modelFor(name, active, optimal);
-    const current = readFileSync(target, 'utf8');
-    const next = withModel(current, choice);
-
-    if (next !== current) writeFileSync(target, next);
-    agents.push({ name, choice, changed: next !== current });
-  }
-
-  return { mode: active, agents };
-};
+export const profilesExist = (root: string, toolAgents: string) => existsSync(join(root, PROFILES)) || existsSync(join(toolAgents, 'models.json'));
