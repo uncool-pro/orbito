@@ -27,7 +27,7 @@ Skills package the product design process of Orbito: what good work looks like a
 | `design-auditor` | light | `ui-audit` · `accessibility-audit` |
 | `synthetic-user` | light | one persona inside `synthetic-usability` (run by Orbito and the UX designer) |
 
-Model tiers are set in each agent's `model` field and nowhere else. Rule of thumb: thinking about the product (architecture, flows, decisions) → strongest; building → build tier; repeated checks and personas → light. Anything code can check (design-system rules, links, dead ends, contrast) is checked by code, not by a model.
+Model tiers are set in each agent's `model` and `effort` fields — the values in this repository are the **optimal** mode. A project can switch to the **high** mode (`orbito models high`: the strongest model with high effort for the analyst, UX and UI; the middle one with high effort for the auditor and personas), stored in `.orbito/settings.json` and kept by `orbito update`. Rule of thumb: thinking about the product (architecture, flows, decisions) → strongest; building → build tier; repeated checks and personas → light. Anything code can check (design-system rules, links, dead ends, contrast) is checked by code, not by a model.
 
 ## How the layers meet
 - A request for one competence ("do the information architecture") goes straight to its role; no process needed.

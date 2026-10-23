@@ -7,13 +7,13 @@
  */
 
 export type SkillInfo = { name: string; description: string };
-export type AgentInfo = { name: string; description: string; model?: string; skills: string[] };
+export type AgentInfo = { name: string; description: string; model?: string; effort?: string; skills: string[] };
 export type ProcessStep = { n: string; step: string; role: string; skill: string; output: string; gate: string };
 export type ProcessInfo = { name: string; description: string; steps: ProcessStep[] };
-export type Team = { lead: { skills: string[] }; processes: ProcessInfo[]; agents: AgentInfo[]; skills: SkillInfo[] };
+export type Team = { lead: { skills: string[] }; processes: ProcessInfo[]; agents: AgentInfo[]; skills: SkillInfo[]; models?: 'optimal' | 'high' };
 
 /** What the files hold before they are linked. */
-export type AgentSource = { name: string; description: string; model?: string; skills?: string[]; body: string };
+export type AgentSource = { name: string; description: string; model?: string; effort?: string; skills?: string[]; body: string };
 export type SkillSource = SkillInfo & { body?: string };
 
 /** Skills the main session uses itself (the lead); any competence no agent owns also stays with the lead. */
@@ -86,6 +86,7 @@ export const buildTeam = (skills: SkillSource[], agents: AgentSource[]): Team =>
       name: a.name,
       description: a.description,
       model: a.model,
+      effort: a.effort,
       // the agent's own `skills:` list when it has one; otherwise the skills its instructions name in backticks, or its
       // description names as a skill ("use only through the synthetic-usability skill")
       skills: (a.skills?.length

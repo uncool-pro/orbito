@@ -97,6 +97,9 @@ export const SkillsMap = () => {
       <header className="pd-team__head">
         <h1>{t.skillsTitle}</h1>
         <p>{t.skillsLead}</p>
+        <p className="pd-team__mode">
+          <b>{t.modelsBadge[team.models ?? 'optimal']}</b> — {t.modelsTip[team.models ?? 'optimal']} {t.modelsSwitch[team.models ?? 'optimal']}
+        </p>
       </header>
 
       <section className="pd-team__lead">
@@ -136,7 +139,12 @@ export const SkillsMap = () => {
             <article key={a.name} id={`role-${a.name}`} className="pd-team__card">
               <div className="pd-team__name">
                 <b>{label(a.name)}</b>
-                {a.model && <span className={`pd-team__model is-${tier(a.model)}`}>{a.model}</span>}
+                {a.model && (
+                  <span className={`pd-team__model is-${tier(a.model)}`}>
+                    {a.model}
+                    {a.effort ? ` · ${a.effort}` : ''}
+                  </span>
+                )}
               </div>
               <p className="pd-team__role" title={a.description}>
                 {purposeOf(a.description)}

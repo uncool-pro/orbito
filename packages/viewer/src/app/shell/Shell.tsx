@@ -97,6 +97,7 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
       <a className={`pd-topnav${mode === 'skills' ? ' is-on' : ''}`} href="#/skills" aria-current={mode === 'skills' ? 'page' : undefined}>
         {t.skills}
       </a>
+      <ModelsBadge />
       <Search mode={mode} />
       <a className={`pd-health-pill${issues ? ' is-warn' : ''}`} href="#/ds/health" title={t.health}>
         {issues ? `${issues} ${t.issuesShort}` : `✓ ${t.health}`}
@@ -107,6 +108,27 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
         </button>
       )}
     </header>
+  );
+};
+
+/** The model mode of the team (optimal or high), with what it means and how to change it. */
+export const ModelsBadge = () => {
+  const { team } = useViewer();
+  const t = useT();
+
+  if (!team) return null;
+  const mode = team.models ?? 'optimal';
+
+  return (
+    <span className="pd-models">
+      <a className={`pd-models__pill is-${mode}`} href="#/skills" aria-describedby="pd-models-tip">
+        {t.modelsBadge[mode]}
+      </a>
+      <span id="pd-models-tip" role="tooltip" className="pd-models__tip">
+        {t.modelsTip[mode]}
+        <b>{t.modelsSwitch[mode]}</b>
+      </span>
+    </span>
   );
 };
 

@@ -396,7 +396,7 @@
 .pd-topnav { margin-left: auto; padding: 6px 12px; border-radius: 8px; font: 600 13px var(--pd-font); color: var(--pd-ink); text-decoration: none; white-space: nowrap; }
 .pd-topnav:hover { background: var(--pd-bg); }
 .pd-topnav.is-on { background: var(--pd-accent-soft); color: var(--pd-accent); }
-.pd-topnav + .pd-search { margin-left: 0; }
+.pd-topnav + .pd-search, .pd-models + .pd-search { margin-left: 0; }
 
 /* skills map (#/skills): Orbito → agents → skills */
 .pd-team { height: 100%; overflow: auto; padding: 40px 32px 80px; font-family: var(--pd-font); color: var(--pd-ink); background: var(--pd-bg); }
@@ -440,3 +440,13 @@
 .pd-team__chip { border: 0; border-radius: 999px; padding: 3px 9px; font: 600 12px var(--pd-font); font-style: normal; background: #e6eefb; color: #2a5bb0; cursor: pointer; }
 .pd-team__chip.is-lead { background: var(--pd-accent-soft); color: var(--pd-accent); cursor: default; }
 .pd-team__gate { margin-left: auto; font-size: 12px; font-style: normal; color: var(--pd-muted); }
+
+/* model mode badge (top bar) with its explanation on hover or focus */
+.pd-models { position: relative; display: inline-flex; }
+.pd-models__pill { font: 600 12px var(--pd-font); padding: 5px 10px; border-radius: 999px; text-decoration: none; white-space: nowrap; background: var(--pd-bg); color: var(--pd-muted); }
+.pd-models__pill.is-high { background: var(--pd-accent-soft); color: var(--pd-accent); }
+.pd-models__tip { position: absolute; top: calc(100% + 8px); right: 0; width: 300px; padding: 12px 14px; border-radius: 10px; background: var(--pd-ink); color: #fff; font: 400 12.5px/1.5 var(--pd-font); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18); opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity 0.12s, transform 0.12s; z-index: 40; pointer-events: none; }
+.pd-models__tip b { display: block; margin-top: 8px; font-weight: 600; color: var(--pd-mint); }
+.pd-models:hover .pd-models__tip, .pd-models:focus-within .pd-models__tip { opacity: 1; visibility: visible; transform: none; }
+.pd-team__mode { margin-top: 12px !important; font-size: 13px; }
+.pd-team__mode b { color: var(--pd-accent); }

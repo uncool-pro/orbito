@@ -66,10 +66,12 @@ const readTeam = (root) => {
     .map((f) => {
       const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.agents, f), 'utf8'));
 
-      return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, skills: listOf(data.skills), body };
+      return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, effort: data.effort, skills: listOf(data.skills), body };
     });
 
-  return buildTeam(skills, agents);
+  const settings = readJson(resolve(root, '.orbito/settings.json'), {});
+
+  return { ...buildTeam(skills, agents), models: settings.models === 'high' ? 'high' : 'optimal' };
 };
 
 const readJson = (file, fallback) => {
@@ -156,9 +158,9 @@ export default function orbito(options = {}) {
           server.ws.send({ type: 'full-reload' });
         });
       }
-      // a fonts.css created while the server runs: rebuild the project module and reload
+      // a fonts.css or a settings file created while the server runs: rebuild the project module and reload
       server.watcher.on('add', (file) => {
-        if (resolve(file) !== resolve(root, FONTS_FILE)) return;
+        if (resolve(file) !== resolve(root, FONTS_FILE) && resolve(file) !== resolve(root, '.orbito/settings.json')) return;
         const mod = server.moduleGraph.getModuleById(RESOLVED);
 
         if (mod) server.moduleGraph.invalidateModule(mod);
@@ -214,6 +216,15 @@ export default function orbito(options = {}) {
 
       // a status write must not reload the page: the viewer already shows the new value
       if (file === resolve(root, STATUS_FILE)) return [];
+      // the model mode shows in the top bar and on the skills map
+      if (rel === '.orbito/settings.json') {
+        const mod = ctx.server.moduleGraph.getModuleById(RESOLVED);
+
+        if (mod) ctx.server.moduleGraph.invalidateModule(mod);
+        ctx.server.ws.send({ type: 'full-reload' });
+
+        return [];
+      }
       if (!/^(design-system|screens|flows)\//.test(rel)) return undefined;
       // the project module carries the tokens and the design-system report: rebuild it
       const mod = ctx.server.moduleGraph.getModuleById(RESOLVED);

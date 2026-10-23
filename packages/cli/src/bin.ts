@@ -4,13 +4,15 @@
  *
  *   orbito check ds [--json] [--root <dir>] [--strict] [--verbose]   design-system rules; exit 1 on errors (--strict: also on warnings); --verbose also lists info
  *   orbito export [<screen-id>] [--out <dir>] [--root <dir>]          one screen as a static site (default: site.screen from orbito.config.ts)
+ *   orbito models [optimal|high] [--root <dir>]                        show or switch how the agents use models (tokens vs. quality)
  *   orbito update [--pull] [--no-install] [--root <dir>]               refresh the project's Orbito skills, agents and commands (--pull: update Orbito from GitHub first)
  */
 import { resolve } from 'node:path';
 
 import { analyzeProject } from './analyze.ts';
 import { exportSite } from './export.ts';
-import { updateProject } from './update.ts';
+import { applyModels } from './models.ts';
+import { toolRoot, updateProject } from './update.ts';
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.includes(`--${name}`);
@@ -74,12 +76,27 @@ const updateCmd = () => {
   }
 };
 
+const modelsCmd = (mode: string | undefined) => {
+  if (mode && mode !== 'optimal' && mode !== 'high') {
+    console.error(paint(31, 'models: ') + 'use optimal or high');
+    process.exitCode = 1;
+
+    return;
+  }
+  const r = applyModels(resolve(opt('root') ?? process.cwd()), resolve(toolRoot(), 'agents'), mode as 'optimal' | 'high' | undefined);
+
+  console.log(`models: ${r.mode}${mode ? ' (saved in .orbito/settings.json)' : ''}`);
+  r.agents.forEach((a) => console.log(`  ${a.name.padEnd(18)} ${a.choice.model}${a.choice.effort ? ` · ${a.choice.effort}` : ''}${a.changed ? paint(2, '  updated') : ''}`));
+  console.log(paint(2, 'Orbito itself (the main session) runs on the model you choose in Claude Code: use the strongest one.'));
+};
+
 const [cmd, sub] = args.filter((a) => !a.startsWith('--') && a !== opt('root') && a !== opt('out'));
 
 if (cmd === 'check' && sub === 'ds') checkDs();
 else if (cmd === 'export') await exportCmd(sub);
 else if (cmd === 'update') updateCmd();
+else if (cmd === 'models') modelsCmd(sub);
 else {
-  console.log('Usage: orbito check ds [--json] [--root <dir>] [--strict] [--verbose]\n       orbito export [<screen-id>] [--out <dir>] [--root <dir>]\n       orbito update [--pull] [--no-install] [--root <dir>]');
+  console.log('Usage: orbito check ds [--json] [--root <dir>] [--strict] [--verbose]\n       orbito export [<screen-id>] [--out <dir>] [--root <dir>]\n       orbito models [optimal|high] [--root <dir>]\n       orbito update [--pull] [--no-install] [--root <dir>]');
   process.exitCode = cmd ? 1 : 0;
 }

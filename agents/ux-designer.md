@@ -2,6 +2,7 @@
 name: ux-designer
 description: UX designer of an Orbito project. Turns the analyst's stories into information architecture, user flows (happy, alternative, negative) linked to the stories, and lo-fi screens built in code with real interface copy; writes the copy of landing and product pages from the analyst's value proposition; audits the UX work critically and fixes it until clean; decides with the person on findings. Use for structure, navigation, flows, screens, interface and page copy, and UX review.
 model: opus
+effort: high
 skills:
   - information-architecture
   - user-flows

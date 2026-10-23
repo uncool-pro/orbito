@@ -12,6 +12,8 @@ import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statS
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { agentForMode, modelMode } from './models.ts';
+
 /** Skills renamed or removed in Orbito: deleted from projects so two versions do not compete. */
 const RETIRED_SKILLS = ['orbito-lead', 'ux-design', 'requirements', 'rapid-prototyping', 'landing-page', 'sales-copy'];
 /** Agents whose work moved to other roles. */
@@ -95,8 +97,20 @@ export const updateProject = ({ root, pull, install = true }: { root: string; pu
   for (const d of readdirSync(join(tool, 'skills'), { withFileTypes: true })) {
     if (d.isDirectory()) copy(join(tool, 'skills', d.name), join(claude, 'skills', d.name), `skill ${d.name}`);
   }
+  // agents get the model and effort of the project's mode (`orbito models`)
+  const mode = modelMode(root);
+
   for (const f of readdirSync(join(tool, 'agents'))) {
-    if (f.endsWith('.md')) copy(join(tool, 'agents', f), join(claude, 'agents', f), `agent ${f.replace(/\.md$/, '')}`);
+    if (!f.endsWith('.md')) continue;
+    const name = f.replace(/\.md$/, '');
+    const next = agentForMode(readFileSync(join(tool, 'agents', f), 'utf8'), name, mode);
+    const target = join(claude, 'agents', f);
+    const current = existsSync(target) ? readFileSync(target, 'utf8') : undefined;
+
+    if (current === next) continue;
+    (current === undefined ? result.added : result.updated).push(`agent ${name}`);
+    mkdirSync(dirname(target), { recursive: true });
+    writeFileSync(target, next);
   }
   const commands = join(tool, 'templates/base/.claude/commands');
 

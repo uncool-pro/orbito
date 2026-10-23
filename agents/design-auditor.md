@@ -2,6 +2,7 @@
 name: design-auditor
 description: Fast, repeated checks of Orbito mockups after each stage — design-system consistency (UI audit) and accessibility (WCAG 2.2 AA). Reports findings in reviews/ with numbers screens can refer to; does not redesign. Use after a batch of screens, before showing work to a client, or when asked to check consistency or accessibility.
 model: haiku
+effort: low
 skills:
   - ui-audit
   - accessibility-audit

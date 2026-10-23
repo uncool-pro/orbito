@@ -10,7 +10,8 @@ How to update a project: `npm run update` in the project (or `/orbito-update` in
 - **Five roles:** business analyst, UX designer, UI designer, design auditor, synthetic user. The UX and UI designers build their screens in code themselves (the prototyper role is gone); the copywriter's work is split into `value-proposition` (business analyst: audience, values, proof, personas) and `page-copy` (UX designer: the words of the page, written from it).
 - **Rapid prototype = a vertical slice:** the analyst picks the slice from all the context, UX builds the flow and lo-fi screens with copy, a critical UX audit and fixes repeat until clean; UI goes on top only if the person wants it and a look & feel exists. (A narrated demo of the prototype comes later.)
 - **Stories stay consistent:** after any approval of flows or screens the analyst shows where they differ from the stories, asks whether to update them, and keeps `requirements/` and the team's tracker (through a connector) in sync.
-- The skills map refreshes by itself when skills or agents change.
+- **Model modes:** `optimal` (each role on the model and effort its work needs — fewer tokens) or `high` (the strongest model with high effort almost everywhere). Orbito asks at the kickoff; switch any time with `npx orbito models optimal|high` or by telling Orbito. Saved in `.orbito/settings.json`, kept by `orbito update`, shown in the top bar next to "Skills" (hover for what it means) and on the skills map. Agents now also set their `effort`.
+- The skills map refreshes by itself when skills, agents or the model mode change.
 - Removed and replaced by the above: skills `ux-design`, `requirements`, `rapid-prototyping`, `landing-page`, `sales-copy`; agents `prototyper`, `copywriter` (`orbito update` removes them).
 
 ## 0.9.1 — 2026-10-23

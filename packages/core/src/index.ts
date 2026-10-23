@@ -6,3 +6,4 @@ export * from './layout.ts';
 export * from './ds.ts';
 export * from './flowgraph.ts';
 export * from './team.ts';
+export * from './models.ts';
