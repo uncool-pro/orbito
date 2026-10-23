@@ -5,10 +5,10 @@ description: UX designer's screen design in Orbito — a short spec for every sc
 
 # Wireframes (screen design)
 
-**Role:** UX designer designs; the prototyper may build from the spec on a lighter model. **Comes after:** user flows. **Comes before:** UX review, then look & feel or UI design.
+**Role:** UX designer, who designs and builds the screens in code. **Comes after:** user flows. **Comes before:** UX review, then look & feel or UI design.
 
 ## Spec first
-For every screen in the flows, before building it, write a short spec (in the screen file's comment or as a list for the prototyper):
+For every screen in the flows, before building it, write a short spec (in the screen file's comment):
 - **Purpose**: the one thing the person comes here to do.
 - **Content**, in order of importance: what they need to see first, second, later.
 - **Actions**: primary (one), secondary, destructive (with confirmation); where each one leads (screen id).

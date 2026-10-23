@@ -13,7 +13,9 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 /** Skills renamed or removed in Orbito: deleted from projects so two versions do not compete. */
-const RETIRED_SKILLS = ['orbito-lead', 'ux-design', 'requirements', 'rapid-prototyping', 'landing-page'];
+const RETIRED_SKILLS = ['orbito-lead', 'ux-design', 'requirements', 'rapid-prototyping', 'landing-page', 'sales-copy'];
+/** Agents whose work moved to other roles. */
+const RETIRED_AGENTS = ['prototyper', 'copywriter'];
 
 /** The Orbito folder (the repository with skills/, agents/, templates/) this CLI runs from. */
 export const toolRoot = (): string => resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -119,6 +121,15 @@ export const updateProject = ({ root, pull, install = true }: { root: string; pu
     if (existsSync(dir)) {
       rmSync(dir, { recursive: true, force: true });
       result.removed.push(`skill ${name}`);
+    }
+  }
+
+  for (const name of RETIRED_AGENTS) {
+    const file = join(claude, 'agents', `${name}.md`);
+
+    if (existsSync(file)) {
+      rmSync(file);
+      result.removed.push(`agent ${name}`);
     }
   }
 

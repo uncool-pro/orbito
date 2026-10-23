@@ -14,18 +14,16 @@ Skills package the product design process of Orbito: what good work looks like a
 |---|---|
 | `process-new-product` | a new product (greenfield): stories → IA → flows → lo-fi → review and sync → look & feel → design system → hi-fi → audits → synthetic users |
 | `process-redesign` | something that exists: sort and audit it → keep / fix / redo → changes as versions → sync |
-| `process-rapid-prototype` | a quick clickable concept for a client: 1–2 happy paths, nothing more |
-| `process-landing-page` | a landing page that is both the mockup and the site: funnel → copy → lo-fi → look & feel → hi-fi → checks → static export |
+| `process-rapid-prototype` | a vertical slice for a client: the analyst picks 1–2 happy paths, UX builds them lo-fi with copy, a critical UX audit loops until clean; UI on top only with a look & feel |
+| `process-landing-page` | a landing page that is both the mockup and the site: funnel → value proposition (BA) → page copy (UX) → lo-fi → look & feel → hi-fi → checks → static export |
 
 ## Roles and competences
 
 | Agent | Model tier | Competences (skills) |
 |---|---|---|
-| `business-analyst` | build | `user-stories` (check, complete or write epics and stories with acceptance criteria) · `prototype-scope` · `requirements-sync` |
-| `ux-designer` | strongest | `information-architecture` · `user-flows` (built from the stories and linked to them) · `wireframes` · `ux-writing` · `ux-review` |
+| `business-analyst` | build | `user-stories` (check, complete or write epics and stories with acceptance criteria) · `value-proposition` (audience, values, proof, personas) · `prototype-scope` · `requirements-sync` (stories follow approved mockups and the tracker) |
+| `ux-designer` | strongest | `information-architecture` · `user-flows` (built from the stories and linked to them) · `wireframes` (designed and built in code) · `ux-writing` · `page-copy` · `ux-review` (critical, in auditor mode) |
 | `ui-designer` | build | `look-and-feel` · `design-system` · `ui-design` (hi-fi screens) · `ui-audit` |
-| `copywriter` | strongest | `sales-copy` |
-| `prototyper` | build | builds from the designers' specs: `wireframes` · `ui-design` · `design-system` |
 | `design-auditor` | light | `ui-audit` · `accessibility-audit` |
 | `synthetic-user` | light | one persona inside `synthetic-usability` (run by Orbito and the UX designer) |
 

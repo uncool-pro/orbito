@@ -22,7 +22,7 @@ Orbito keeps a product's mockups as code and shows them as a board of flows, a f
 | requirements | `requirements/*.md` | stories with ids (`REQ-01`), the local mirror of the team's tracker |
 | reviews | `reviews/*.md` | findings tables (`\| # \| ... \|`) that versions point to |
 | statuses | `.orbito/status.json` | set on the board, one per screen |
-| page content | `content/*.md` | landing pages: the funnel of sections, the copy, the research (`process-landing-page`, `sales-copy`) |
+| page content | `content/*.md` | landing pages: the funnel of sections, the copy, the research (`process-landing-page`, `value-proposition`, `page-copy`) |
 | fonts, pictures | `design-system/fonts.css`, `public/` | `@font-face` / `@import` for the typefaces the tokens name; files served as they are and copied by the export |
 
 ## Rules that are checked
@@ -39,11 +39,10 @@ The main session is Orbito, the lead: it uses the `orbito` skill to keep the str
 
 - stories missing or unclear → `business-analyst`
 - structure, flows, screen specs, deciding on findings → `ux-designer`
-- building screens and components from specs → `prototyper`
 - look & feel, the project design system, UI audit → `ui-designer`
 - repeated checks after a stage → `design-auditor`
 - "would people understand this?" → `synthetic-user` (signals, never proof)
-- the words of a landing or product page → `copywriter`
+- the business behind a page (value proposition, audience, proof) → `business-analyst`; the words of a landing or product page → `ux-designer`
 - any decision about direction, scope or approval → ask the person; write the answer into `.orbito/process.md`
 
 ## Feedback about Orbito

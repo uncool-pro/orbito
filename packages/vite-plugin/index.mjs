@@ -140,6 +140,22 @@ export default function orbito(options = {}) {
       ].join('\n');
     },
     configureServer(server) {
+      // skills and agents (the skills map) may live outside the Vite root (the tool repository): watch them, and on any
+      // change rebuild the project module and reload
+      const team = teamDirs(root);
+
+      if (team) {
+        server.watcher.add([team.skills, team.agents]);
+        server.watcher.on('all', (_event, file) => {
+          const f = resolve(file);
+
+          if (!inside(team.skills, f) && !inside(team.agents, f)) return;
+          const mod = server.moduleGraph.getModuleById(RESOLVED);
+
+          if (mod) server.moduleGraph.invalidateModule(mod);
+          server.ws.send({ type: 'full-reload' });
+        });
+      }
       // a fonts.css created while the server runs: rebuild the project module and reload
       server.watcher.on('add', (file) => {
         if (resolve(file) !== resolve(root, FONTS_FILE)) return;

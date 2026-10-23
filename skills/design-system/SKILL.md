@@ -5,7 +5,7 @@ description: Building and keeping the project design system in Orbito — tokens
 
 # Design system
 
-The design system is where every visual decision lives. Screens only combine its components; they never style things themselves. The UI designer owns it; the prototyper adds to it following these rules.
+The design system is where every visual decision lives. Screens only combine its components; they never style things themselves. The UI designer owns it; the UX designer adds to it following these rules when a screen needs something new.
 
 ## Sources, in order of trust
 1. Code of existing components (any technology: React, React Native, Vue, Flutter…) — exact values.

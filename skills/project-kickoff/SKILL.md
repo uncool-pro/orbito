@@ -18,7 +18,7 @@ People bring material the way they have it: a folder of files, a zip of an old s
    | Material | Goes to |
    |---|---|
    | requirements, backlog exports, stories | `requirements/` (checked and completed as stories by the business analyst, `user-stories`) |
-   | texts, copy, reviews, the audience's words | `content/` (research and existing copy, via `sales-copy`) |
+   | texts, copy, reviews, the audience's words | `content/` (research and existing copy, via `value-proposition`) |
    | logo, photos, illustrations | `public/images/` (web-ready sizes) |
    | font files (with a licence for web use) | `public/fonts/` + `design-system/fonts.css` |
    | colours, type, spacing from a brand book or an existing product | `design-system/tokens.json` (via `design-system`) |

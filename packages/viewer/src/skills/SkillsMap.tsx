@@ -15,7 +15,7 @@ const label = (name: string) =>
     .join(' ');
 
 /** The order people work in; anything else (the project's own agents and processes) follows alphabetically. */
-const ROLE_ORDER = ['business-analyst', 'ux-designer', 'ui-designer', 'copywriter', 'prototyper', 'design-auditor', 'synthetic-user'];
+const ROLE_ORDER = ['business-analyst', 'ux-designer', 'ui-designer', 'design-auditor', 'synthetic-user'];
 const PROCESS_ORDER = ['process-new-product', 'process-redesign', 'process-rapid-prototype', 'process-landing-page'];
 const byOrder = (order: string[]) => (a: { name: string }, b: { name: string }) => {
   const ia = order.indexOf(a.name), ib = order.indexOf(b.name);

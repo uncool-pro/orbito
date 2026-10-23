@@ -3,7 +3,7 @@
 A page is read, not worked in. It is closer to graphic design than to an interface: it may be more expressive than the product's screens, but it stays inside the brand (logo, colours, type, voice, pictures) and it stays readable. Everything in `SKILL.md` applies; this file adds what differs for pages.
 
 ## Before the variants
-- **The copy is approved first** (`sales-copy`), and all five variants use the same copy. The client then compares the look, not the words.
+- **The copy is approved first** (`page-copy`, from the analyst's `value-proposition`), and all five variants use the same copy. The client then compares the look, not the words.
 - **The funnel decides the order** of sections (`content/funnel.md`). A variant may change how a section looks, never which question it answers or where it sits.
 - **Brand assets in hand**: logo files, font files with a web licence, photographs. A page without real pictures looks unfinished next to one with them; if there are none yet, say so and agree with the person what stands in (product screenshots, the author's photo, typography doing the work) instead of drawing grey boxes.
 

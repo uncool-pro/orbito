@@ -1,11 +1,14 @@
 ---
 name: ux-review
-description: UX designer's corrective review in Orbito — a short review after every UX stage (architecture, flows, wireframes) and the decision on every finding from audits and synthetic users: fix, defend with a reason, or ask the person. Use after each UX stage, before showing screens to anyone, and whenever audit or synthetic-user findings come back.
+description: UX designer's critical review in Orbito, in auditor mode — looking for logic gaps, dead ends, missing states and unclear words after every UX stage (architecture, flows, wireframes), repeated with fixes until clean — and the decision on every finding from audits and synthetic users: fix, defend with a reason, or ask the person. Use after each UX stage, before showing screens to anyone, and whenever audit or synthetic-user findings come back.
 ---
 
 # UX review and decisions
 
-**Role:** UX designer (the repeated parts can go to the design auditor on a lighter model). **Comes after:** each UX stage, and after UI audit, accessibility audit and synthetic users.
+**Role:** UX designer, as the auditor of the UX work (design-system and accessibility checks are the design auditor's). **Comes after:** each UX stage, and after UI audit, accessibility audit and synthetic users.
+
+## Auditor mode
+The review is critical on purpose. Run it as an auditor, ideally as a separate agent run that did not build the screens, so it looks with fresh eyes: walk the path as the persona and look for logic gaps, steps that do not follow, missing states, dead ends and words that do not explain. Then the UX designer fixes, and the auditor looks again, until a round finds nothing that matters (in a rapid prototype this loop is the main quality gate).
 
 ## Corrective review after every stage
 After the architecture, after the flows, after the wireframes, run a short review and fix before moving on. Small, frequent reviews are more accurate than one big one at the end.

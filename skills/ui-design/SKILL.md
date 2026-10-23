@@ -5,7 +5,7 @@ description: UI designer's high-fidelity screens in Orbito — once the project 
 
 # UI design (hi-fi screens)
 
-**Role:** UI designer (the prototyper may do the building on a lighter model). **Comes after:** look & feel → design system. **Comes before:** UI audit, accessibility audit, synthetic users.
+**Role:** UI designer, who also builds the screens in code. **Comes after:** look & feel → design system. **Comes before:** UI audit, accessibility audit, synthetic users.
 
 The UX designer decides structure and behaviour; the UI designer makes each screen look and read the way the approved direction intends. From the moment the design system is approved, new screens are built on it straight away, and the lo-fi screens built earlier go on a migration list.
 
