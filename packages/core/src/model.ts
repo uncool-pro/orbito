@@ -16,6 +16,8 @@ export type Viewport = {
 export const BUILT_IN_VIEWPORTS = {
   mobile: { key: 'mobile', label: 'Mobile', width: 390, height: 844, kind: 'device' },
   tablet: { key: 'tablet', label: 'Tablet', width: 820, height: 1180, kind: 'device' },
+  // a web page on a tablet: tablet width, the whole page scrolls
+  'tablet-web': { key: 'tablet-web', label: 'Tablet web', width: 820, height: 1180, kind: 'page' },
   laptop: { key: 'laptop', label: 'Laptop', width: 1280, height: 800, kind: 'page' },
   desktop: { key: 'desktop', label: 'Desktop', width: 1440, height: 900, kind: 'page' },
   // a web page on a phone: phone width, the whole page scrolls (landing pages, sites)
@@ -27,8 +29,13 @@ export type ScreenMeta = {
   /** Permanent, human-friendly code shown on the board, e.g. `PL-01`. Never renumber; screens without a code are sandboxes. */
   code?: string;
   title: string;
-  /** Viewport key; defaults to the project's `defaultViewport`. */
+  /** Viewport key; defaults to the project's `defaultViewport` (or the first of `viewports`). */
   viewport?: string;
+  /**
+   * A responsive page: one implementation shown side by side at these sizes (e.g. `['desktop', 'tablet-web', 'mobile-web']`),
+   * the first one on the board. Layout changes per size come from CSS container queries on the page (`@container`).
+   */
+  viewports?: string[];
   /** Logical parent screen id; `goBack()` opens it. */
   back?: string;
   /** Requirement ids this screen implements (traceability; see the requirements view). */

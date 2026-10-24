@@ -16,7 +16,7 @@ A landing page is product design with a different centre of gravity: little inte
 | 2 | Value proposition | business-analyst | value-proposition | `content/research.md`, `content/value-proposition.md`, `.orbito/personas.md` | **person approves the value proposition** |
 | 3 | Funnel of sections | ux-designer | user-flows | `content/funnel.md` | **person approves the funnel** |
 | 4 | Page copy | ux-designer | page-copy | `content/copy.md`, section by section | **person approves the copy** |
-| 5 | Lo-fi page | ux-designer | wireframes | the page on the base kit with the real copy, desktop and `mobile-web` | UX review |
+| 5 | Lo-fi page | ux-designer | wireframes | the page on the base kit with the real copy, one responsive screen (desktop, tablet, phone side by side) | UX review |
 | 6 | Visual direction | ui-designer | look-and-feel | five (light: three) variants of the page | **person picks a direction** |
 | 7 | Design system | ui-designer | design-system | tokens, fonts, section components | `check:ds` clean |
 | 8 | Hi-fi page | ui-designer | ui-design | the chosen direction on every section | — |
@@ -65,7 +65,7 @@ Rules:
 - Plan the phone first: on a phone the funnel is a single column read top to bottom.
 
 ## Building the page (steps 5–8)
-- **One page = one screen.** `screens/landing/landing.screen.tsx` with `viewport: 'desktop'` (or `'laptop'`), wrapped in `PageScreen`. For the phone view on the board add `landing-mobile.screen.tsx` that re-exports the same component with `viewport: 'mobile-web'` (a phone-wide page that scrolls as a whole) (`export { default } from './landing.screen';` plus its own `meta`), so both widths are reviewed side by side. Put both in a flow (`flows/landing.flow.ts`) so the board shows them; variants of look & feel are `versions` of that flow.
+- **One page = one responsive screen.** `screens/landing/landing.screen.tsx`, wrapped in `PageScreen`, with `viewports: ['desktop', 'tablet-web', 'mobile-web']` in its `meta`: the board shows the desktop size, the prototype view shows all three side by side. One implementation that adapts (`Grid`, container queries `@container page (…)`), never separate phone screens. Put both in a flow (`flows/landing.flow.ts`) so the board shows them; variants of look & feel are `versions` of that flow.
 - **Sections** are design-system components built on `Section` (each with an `id` from the funnel). A section type that repeats with different content (a feature row, a testimonial) is its own organism with docs.
 - **Links** use `href`: `href="#offer"` for a section of the page, a full address for anything that leaves it. `to` (other screens) has no meaning on a static page and is dropped in the export.
 - **Layout without media queries**: `Grid` and wrapping flex layouts adapt to the width, so the same markup works on the board, in the prototype and in the export. Check the mobile screen on the board after every change.

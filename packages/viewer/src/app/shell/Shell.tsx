@@ -511,7 +511,9 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
         </section>
       )}
       <p className="pd-insp__meta">
-        {vp.label} · {vp.width}×{vp.height}
+        {s.viewports && s.viewports.length > 1
+          ? `${t.responsive}: ${s.viewports.map((k) => project.viewports[k]?.label ?? k).join(' · ')}`
+          : `${vp.label} · ${vp.width}×${vp.height}`}
       </p>
       <DevSection screen={s} />
       {mode !== 'prototype' && (

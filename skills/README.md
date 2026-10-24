@@ -19,15 +19,15 @@ Skills package the product design process of Orbito: what good work looks like a
 
 ## Roles and competences
 
-| Agent | Model tier | Competences (skills) |
+| Agent | Model (optimal) | Competences (skills) |
 |---|---|---|
-| `business-analyst` | build | `user-stories` (check, complete or write epics and stories with acceptance criteria) · `value-proposition` (audience, values, proof, personas) · `prototype-scope` · `requirements-sync` (stories follow approved mockups and the tracker) |
-| `ux-designer` | strongest | `information-architecture` · `user-flows` (built from the stories and linked to them) · `wireframes` (designed and built in code) · `ux-writing` · `page-copy` · `ux-review` (critical, in auditor mode) |
-| `ui-designer` | build | `look-and-feel` · `design-system` · `ui-design` (hi-fi screens) · `ui-audit` |
-| `design-auditor` | light | `ui-audit` · `accessibility-audit` |
-| `synthetic-user` | light | one persona inside `synthetic-usability` (run by Orbito and the UX designer) |
+| `business-analyst` | Opus medium (`value-proposition`: Opus high) | `user-stories` (check, complete or write epics and stories with acceptance criteria) · `value-proposition` (audience, values, proof, personas) · `prototype-scope` · `requirements-sync` (stories follow approved mockups and the tracker) |
+| `ux-designer` | Opus high | `information-architecture` · `user-flows` (built from the stories and linked to them) · `wireframes` (designed and built in code) · `ux-writing` · `page-copy` · `ux-review` (critical, in auditor mode) |
+| `ui-designer` | Opus medium (`look-and-feel`: Opus high) | `look-and-feel` · `design-system` · `ui-design` (hi-fi screens) · `ui-audit` |
+| `design-auditor` | Sonnet high | `ui-audit` · `accessibility-audit` |
+| `synthetic-user` | Sonnet high | one persona inside `synthetic-usability` (run by Orbito and the UX designer) |
 
-Model tiers are set in each agent's `model` and `effort` fields — the values in this repository are the **optimal** mode. The two modes are profiles in `agents/models.json` (copied to a project's `.orbito/models.json`): **optimal** (the agent files' own values) and **high** (the strongest model almost everywhere, high effort where the work is strategic). The mode is personal — `orbito models high` saves it in `.orbito/settings.local.json`, git-ignored; `--team` sets the team's default in `.orbito/settings.json` — and Orbito passes the profile's model and effort each time it calls an agent, so agent files never change. A competence that needs more than the rest of its role's work gets its own line, `<role>/<skill>` (look & feel runs on the strongest model in both modes). Rule of thumb: thinking about the product (architecture, flows, decisions) → strongest; building → build tier; repeated checks and personas → light. Anything code can check (design-system rules, links, dead ends, contrast) is checked by code, not by a model.
+Model tiers are set in each agent's `model` and `effort` fields — the values in this repository are the **optimal** mode. The two modes are profiles in `agents/models.json` (copied to a project's `.orbito/models.json`): **optimal** (the agent files' own values) and **high** (Opus everywhere, one effort step up, very high where the work is strategic). The mode is personal — `orbito models high` saves it in `.orbito/settings.local.json`, git-ignored; `--team` sets the team's default in `.orbito/settings.json` — and Orbito passes the profile's model and effort each time it calls an agent, so agent files never change. A competence that needs more than the rest of its role's work gets its own line, `<role>/<skill>`. The floor and the steps: **Sonnet high** is the lowest anything runs on, and only for work that is repeated or run many times in parallel (audits after each stage, synthetic personas); **Opus medium** is the default for the work itself; **Opus high** for strategic decisions made once that everything after builds on (the lead, information architecture and flows, the value proposition, look & feel) — **very high** (`xhigh`) for these in the high mode. Anything code can check (design-system rules, links, dead ends, contrast) is checked by code, not by a model.
 
 ## How the layers meet
 - A request for one competence ("do the information architecture") goes straight to its role; no process needed.

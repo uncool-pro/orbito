@@ -527,3 +527,10 @@
 .pd-team__skills li { grid-template-columns: 1fr auto; align-items: center; }
 .pd-team__skills li > :not(code):not(.pd-team__model--skill) { grid-column: 1 / -1; }
 .pd-team__skills .pd-team__model--skill { display: inline-block; -webkit-line-clamp: unset; font-size: 10.5px; line-height: 1.4; }
+
+/* a responsive page: its sizes side by side, one scale, tops aligned */
+.pd-stage--responsive { justify-content: flex-start; align-items: flex-start; gap: 40px; overflow-x: auto; }
+.pd-stage__size { margin: 0; display: flex; flex-direction: column; gap: 10px; flex: none; }
+.pd-stage__size figcaption { font: 600 13px var(--pd-font); color: var(--pd-ink); }
+.pd-stage__size figcaption small { font-weight: 400; color: var(--pd-muted); margin-left: 4px; }
+.pd-stage--responsive .pd-stage__frame { box-shadow: 0 12px 40px rgba(16, 24, 40, 0.16); border-radius: 8px; overflow: hidden; }

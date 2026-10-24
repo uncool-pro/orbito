@@ -1,20 +1,22 @@
 {
   "optimal": {
     "orbito": { "model": "opus", "effort": "high" },
-    "business-analyst": { "model": "sonnet", "effort": "medium" },
-    "ux-designer": { "model": "opus", "effort": "high" },
-    "ui-designer": { "model": "sonnet", "effort": "medium" },
-    "ui-designer/look-and-feel": { "model": "opus", "effort": "medium" },
-    "design-auditor": { "model": "haiku", "effort": "low" },
-    "synthetic-user": { "model": "haiku", "effort": "low" }
-  },
-  "high": {
-    "orbito": { "model": "opus", "effort": "high" },
-    "business-analyst": { "model": "opus", "effort": "high" },
+    "business-analyst": { "model": "opus", "effort": "medium" },
+    "business-analyst/value-proposition": { "model": "opus", "effort": "high" },
     "ux-designer": { "model": "opus", "effort": "high" },
     "ui-designer": { "model": "opus", "effort": "medium" },
     "ui-designer/look-and-feel": { "model": "opus", "effort": "high" },
-    "design-auditor": { "model": "opus", "effort": "medium" },
+    "design-auditor": { "model": "sonnet", "effort": "high" },
     "synthetic-user": { "model": "sonnet", "effort": "high" }
+  },
+  "high": {
+    "orbito": { "model": "opus", "effort": "xhigh" },
+    "business-analyst": { "model": "opus", "effort": "high" },
+    "business-analyst/value-proposition": { "model": "opus", "effort": "xhigh" },
+    "ux-designer": { "model": "opus", "effort": "xhigh" },
+    "ui-designer": { "model": "opus", "effort": "high" },
+    "ui-designer/look-and-feel": { "model": "opus", "effort": "xhigh" },
+    "design-auditor": { "model": "opus", "effort": "medium" },
+    "synthetic-user": { "model": "opus", "effort": "medium" }
   }
 }

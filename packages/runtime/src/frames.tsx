@@ -93,7 +93,12 @@ export const PageScreen = ({ background, className, modal, children }: PageScree
   const exported = mode === 'export';
 
   return (
-    <div className={className} data-pd-frame="page" style={{ position: 'relative', width: exported ? '100%' : viewport.width, minHeight: exported ? '100vh' : viewport.height, background }}>
+    // a query container, so one page adapts to every width it is shown at (`@container page (max-width: 600px)`)
+    <div
+      className={className}
+      data-pd-frame="page"
+      style={{ position: 'relative', width: exported ? '100%' : viewport.width, minHeight: exported ? '100vh' : viewport.height, background, containerType: 'inline-size', containerName: 'page' }}
+    >
       {children}
       {modal && <div style={{ position: 'absolute', left: 0, top: 0, width: viewport.width, height: viewport.height, zIndex: 10 }}>{modal}</div>}
     </div>

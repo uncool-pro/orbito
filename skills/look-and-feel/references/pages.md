@@ -19,8 +19,10 @@ A page is read, not worked in. It is closer to graphic design than to an interfa
 - **Full, not thin.** Each screenful of the page should feel composed. A narrow column of small text with empty ground on both sides reads as unfinished, however tasteful.
 - **Motion is optional and single.** At most one signature movement (how the hero appears, how a section enters) that fits the idea; never the same fade on every block. The static export has no scripts: motion is CSS only and the page must be complete without it.
 
-## The phone is its own composition
-More than half of visitors may arrive on a phone. Look at the `mobile-web` screen of every variant: its own line breaks in headlines, its own crop of pictures, the main button reachable in the first screenful, nothing running off the edge.
+## One page, three sizes, side by side
+A page is **one responsive implementation**, never separate desktop and phone screens. Each variant is one screen file with `viewports: ['desktop', 'tablet-web', 'mobile-web']` in its `meta`: the board shows it at desktop size, and the prototype view shows all three sizes **next to each other**, so the person sees at once whether it is what they meant. Always present and screenshot all three; never ask for an opinion on a single, in-between size.
+- Build it so it adapts by itself: `Grid` (columns that fit the width), and where a layout or a size must change, CSS container queries on the page (`@container page (max-width: 600px) { … }`) or container units (`cqi`) inside the design system's components — not separate screens, not JavaScript.
+- The phone is still its own composition: more than half of visitors may arrive on one. Check its line breaks in headlines, its crop of pictures, the main button in the first screenful, nothing running off the edge. The tablet is neither a stretched phone nor a squeezed desktop: check that it holds its own.
 
 ## Extra passes for the critique
 Add these to the passes in `SKILL.md` when the variant is a page:

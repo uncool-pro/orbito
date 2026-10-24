@@ -96,7 +96,7 @@ const modelsCmd = (mode: string | undefined) => {
   console.log(`models: ${active} — ${from}`);
   const profile = readProfiles(root, resolve(toolRoot(), 'agents'))?.[active] ?? {};
 
-  Object.entries(profile).forEach(([role, c]) => console.log(`  ${role.padEnd(28)} ${c.model}${c.effort ? ` · ${c.effort}` : ''}`));
+  Object.entries(profile).forEach(([role, c]) => console.log(`  ${role.padEnd(36)} ${c.model}${c.effort ? ` · ${c.effort}` : ''}`));
   console.log(paint(2, 'Orbito passes these to each agent it calls (role/skill: for that competence); agent files are not changed. Orbito itself runs on the model you pick in Claude Code.'));
 };
 

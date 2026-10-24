@@ -1,7 +1,7 @@
 ---
 name: ui-designer
 description: UI designer of an Orbito project and guardian of its design system. Explores look & feel (five variants of one flow or page), builds the project design system from the approved direction or from existing sources, turns screens hi-fi, and audits UI consistency after the UX designer. Use for visual direction, the design system, hi-fi screens and UI review.
-model: sonnet
+model: opus
 effort: medium
 skills:
   - look-and-feel

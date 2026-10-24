@@ -95,4 +95,19 @@ describe('loadProject', () => {
       ]),
     );
   });
+
+  it('shows a responsive page at its first size on the board and checks every size', () => {
+    const C = () => null;
+    const { project, problems } = loadProject(
+      { title: 'T' },
+      {
+        '/screens/home.screen.tsx': { default: C, meta: { title: 'Home', viewports: ['desktop', 'tablet-web', 'mobile-web'] } },
+        '/screens/odd.screen.tsx': { default: C, meta: { title: 'Odd', viewports: ['desktop', 'fridge'] } },
+      },
+      {},
+    );
+
+    expect(project.screens.find((s) => s.id === 'home')?.viewport).toBe('desktop');
+    expect(problems.map((p) => p.message)).toEqual([expect.stringContaining('unknown viewport "fridge"')]);
+  });
 });

@@ -41,9 +41,11 @@ export const loadProject = <C>(
       if (!mod.default) return void problems.push({ level: 'error', file: rel, message: 'screen file has no default export (the screen component)' });
       if (!mod.meta) return void problems.push({ level: 'error', file: rel, message: 'screen file has no `meta` export (defineScreen({...}))' });
       if (screens.some((s) => s.id === id)) return void problems.push({ level: 'error', file: rel, message: `duplicate screen id "${id}" (file names must be unique)` });
-      const viewport = mod.meta.viewport ?? defaultViewport;
+      const viewport = mod.meta.viewport ?? mod.meta.viewports?.[0] ?? defaultViewport;
 
-      if (!viewports[viewport]) problems.push({ level: 'error', file: rel, message: `unknown viewport "${viewport}"` });
+      [viewport, ...(mod.meta.viewports ?? [])].forEach((v, i, all) => {
+        if (all.indexOf(v) === i && !viewports[v]) problems.push({ level: 'error', file: rel, message: `unknown viewport "${v}"` });
+      });
       if (mod.meta.code) {
         const other = seenCodes.get(mod.meta.code.toLowerCase());
 
