@@ -52,21 +52,22 @@ export const BoardCard = memo(({ card, screen, viewport, live, state, active, fi
       data-screen={card.screenId}
       style={{ left: card.x, top: card.y, width: card.w, height: card.h }}
     >
-      {/* a light caption above the screen, as in design tools: the functional name first, the code small */}
+      {/* a light caption above the screen, as in design tools: the code (and a version's findings) small on top, the
+          functional name right over the screen, up to two lines */}
       <div className="pd-card__head" title={screen.title}>
+        {(screen.code || card.version) && (
+          <div className="pd-card__meta">
+            {screen.code && <span className="pd-card__code">{screen.code}</span>}
+            {card.version && !card.version.replaces && <i className="pd-badge pd-badge--new">{t.newScreen}</i>}
+            {card.version?.findings.map((n) => (
+              <i key={n} className="pd-badge" title={findingTitles?.[n]}>
+                #{n}
+              </i>
+            ))}
+          </div>
+        )}
         <span className="pd-card__name">{screen.title.split(' / ').pop()}</span>
-        {screen.code && <span className="pd-card__code">{screen.code}</span>}
       </div>
-      {card.version && (
-        <div className="pd-card__badges">
-          {!card.version.replaces && <i className="pd-badge pd-badge--new">{t.newScreen}</i>}
-          {card.version.findings.map((n) => (
-            <i key={n} className="pd-badge" title={findingTitles?.[n]}>
-              #{n}
-            </i>
-          ))}
-        </div>
-      )}
       <div className="pd-card__frame" style={{ left: card.frame.x - card.x, top: card.frame.y - card.y }}>
         {live ? <LiveScreen screen={screen} viewport={viewport} card={card} /> : <div className="pd-card__placeholder" style={{ width: card.frame.w, height: card.frame.h }} />}
       </div>

@@ -16,7 +16,7 @@ Orbito keeps a product's mockups as code and shows them as a board of flows, a f
 |---|---|---|
 | tokens | `design-system/tokens.json` | every value; each token has a `usage` note; text colours list the backgrounds they sit on (`on`) |
 | components | `design-system/atoms → molecules → organisms → templates` | a level builds only on itself or lower; `<Name>.docs.tsx` next to each (description, do/don't, variants); exported from `design-system/index.ts` |
-| screens | `screens/**/<id>.screen.tsx` | file name = id; `export const meta = defineScreen({ code, title, viewport?, back?, requirements? })`; codes (`AB-01`) never change |
+| screens | `screens/**/<id>.screen.tsx` | file name = id; `export const meta = defineScreen({ code, title, viewport?, back?, requirements? })`; codes `<AREA>-<NN>` (`PL-01`: area prefix + number within the area) never change (rules: `wireframes` skill) |
 | flows | `flows/*.flow.ts` | pages → flows (ordered screens) with `path: 'happy' \| 'alternative' \| 'negative'`; `versions` hold alternatives next to the original |
 | raw material | `raw/` | everything the person brought, unsorted and left untouched; out of git by default; `.orbito/sources.md` lists what it holds and where each item was used |
 | requirements | `requirements/*.md` | stories with ids (`REQ-01`), the local mirror of the team's tracker |

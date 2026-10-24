@@ -16,10 +16,18 @@ For every screen in the flows, before building it, write a short spec (in the sc
 - **Stories** it covers (`requirements: ['REQ-..']`); add the screen code to each story's `Screens:` line and to `requirements/coverage.md`.
 
 ## Building
-- One file per screen: `screens/<area>/<id>.screen.tsx`, `meta` with a permanent `code`, a `title` like `Area / Screen`, `back`, `requirements`, `viewport` when it is not the default.
+- One file per screen: `screens/<area>/<id>.screen.tsx`, `meta` with a permanent `code` (see "Screen codes"), a `title` like `Area / Screen`, `back`, `requirements`, `viewport` when it is not the default.
 - Mobile: `DeviceScreen` with `top` (app bar), `bottom` (tab bar or actions), `overlay` (floating button), `modal` (sheet, dialog). Web: `PageScreen`.
 - Only design-system components; data in a local `data.ts` per area, fictional and realistic (real lengths, edge cases).
 - After building: `npm run check:ds`, `npm run typecheck`, and look at the board and the flows diagram.
+
+## Screen codes and names
+- **Name** (the last part of the title) says what happens on the screen, in the users' words, up to about six words: `Plants / Edit watering reminder`, not `Plants / Screen 3`. People read the name; the code is for references.
+- **Code** = `<AREA>-<NN>`: the area's prefix from the information architecture (two letters, three if two would clash) and a two-digit number in the order screens are created in that area: `PL-01`, `PL-02`.
+- **Per area, not per feature:** one screen often serves several features (a detail screen in "water a plant" and in "water from the schedule"), and features change with the requirements; the areas of the information architecture are the most stable thing in the project. A single global sequence (`S1, S2…`) says nothing about where a screen lives and grows without limit.
+- **Permanent:** never renumber. A new screen takes the next free number in its area; a deleted screen's number is not reused; a screen moved to another area keeps its code (stories, tickets and chats already point to it).
+- **Versions** of a screen under review: `PL-02·A`, `PL-02·B`. **Features** (flows) have their own short keys within the page (`P1`, `P2`).
+- The team already numbers screens its own way (tracker IDs, a design-file convention)? Use theirs and note it in `.orbito/process.md`.
 
 ## Lo-fi or design system
 - **No approved design system yet** → build from the lo-fi kit (grey, functional): real structure, real copy, real states, no visual polish.

@@ -15,6 +15,7 @@ description: UX designer's information architecture in Orbito — grouping conte
 3. Decide the top level (tabs, main menu): 3–5 on mobile, up to ~8 on web. Everything else nests under them, at most two levels deep for frequent tasks.
 4. Place each function where people will look for it first; frequent tasks closest to the top.
 5. Write the result as a tree (markdown list) with a one-line reason for each top-level group in `requirements/information-architecture.md`, and link it from `.orbito/process.md`.
+6. Give each area a short prefix for screen codes (`Plants` → `PL`, two letters, unique) and write it next to the area in the tree; `wireframes` numbers the screens within it.
 
 ## Checks
 - Can a first-time user say where to find the three most frequent tasks? Walk it as the persona.

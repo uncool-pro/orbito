@@ -59,7 +59,6 @@
 .pd-card__viewport { position: relative; overflow: hidden; }
 .pd-card__inner { transform-origin: 0 0; overflow-x: hidden; scrollbar-width: none; }
 .pd-card__placeholder { background: repeating-linear-gradient(135deg, #f4f5f7 0 10px, #eceef2 10px 20px); }
-.pd-card__badges { position: absolute; right: 14px; top: 50px; z-index: 2; display: flex; gap: 4px; }
 .pd-badge { font-style: normal; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: var(--pd-accent); color: #fff; }
 .pd-badge--new { background: #1f7a4d; }
 .pd-crash { padding: 24px; font: 14px/1.4 var(--pd-font); color: #a3261b; background: #fff4f2; height: 100%; }
@@ -516,3 +515,12 @@
 .pd-insp__path code { white-space: normal; overflow-wrap: anywhere; text-overflow: clip; }
 .pd-insp__path { align-items: flex-start; }
 .pd-insp__key { color: var(--pd-muted); font-size: 11px; margin-left: 2px; }
+
+/* caption above a screen: room for names of up to ~6 words. The code sits small above, the name below it, right over the
+   screen, up to two lines (the full title on hover) */
+.pd-card__head { left: 10px; right: 10px; top: 0; height: 51px; display: flex; flex-direction: column; justify-content: flex-end; align-items: flex-start; gap: 1px; white-space: normal; overflow: hidden; }
+.pd-card__name { font: 600 14px/1.25 var(--pd-font); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; max-width: 100%; }
+.pd-card__code { order: -1; font: 500 10.5px/1.2 var(--pd-font); letter-spacing: 0.02em; }
+.pd-card__meta { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.pd-card__meta .pd-badge { font-size: 9px; padding: 1px 5px; }
+.pd-card__head .pd-card__code { order: 0; }
