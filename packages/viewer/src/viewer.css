@@ -323,24 +323,10 @@
 .pd-tree h4 { margin: 14px 8px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--pd-muted); }
 .pd-tree ul { list-style: none; margin: 0; padding: 0; }
 .pd-tree a, .pd-tree button { font: inherit; color: var(--pd-ink); text-decoration: none; }
-.pd-tree__item, .pd-tree__pagelink { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; border-radius: 6px; }
-.pd-tree__item:hover, .pd-tree__pagelink:hover, .pd-tree__flow:hover, .pd-tree__screen:hover { background: var(--pd-bg); }
+.pd-tree__item { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; border-radius: 6px; }
+.pd-tree__item:hover { background: var(--pd-bg); }
+.pd-tree__item small { color: var(--pd-muted); font-weight: 400; }
 .pd-tree__item.is-on { background: var(--pd-accent-soft); color: var(--pd-accent); font-weight: 600; }
-.pd-tree__item small, .pd-tree__pagelink small { color: var(--pd-muted); font-weight: 400; }
-.pd-tree__page.is-current > .pd-tree__pagelink { font-weight: 700; }
-.pd-tree ul.pd-tree__flows { margin-left: 6px; padding-left: 6px; border-left: 1px solid var(--pd-panel-line); }
-.pd-tree__flowrow { display: flex; align-items: center; }
-.pd-tree button.pd-tree__toggle { width: 20px; flex: none; border: 0; background: transparent; color: var(--pd-muted); cursor: pointer; font-size: 11px; padding: 0; }
-.pd-tree__flow { flex: 1; display: flex; align-items: center; gap: 6px; padding: 5px 6px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pd-tree__flow.is-on { background: var(--pd-accent-soft); color: var(--pd-accent); }
-.pd-tree ul.pd-tree__screens { margin-left: 20px; }
-.pd-tree__screen { width: 100%; display: flex; align-items: center; gap: 6px; padding: 4px 6px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; text-align: left; white-space: nowrap; overflow: hidden; }
-.pd-tree__screen b { font-size: 12px; flex: none; }
-.pd-tree__screen span { color: var(--pd-muted); overflow: hidden; text-overflow: ellipsis; }
-.pd-tree__screen.is-on { background: var(--pd-accent-soft); }
-.pd-tree__screen.is-on span { color: var(--pd-ink); }
-.pd-tree__version > span { display: block; padding: 4px 6px; font-size: 12px; color: var(--pd-accent); }
-.pd-tree__version small { color: var(--pd-muted); }
 
 /* inspector */
 .pd-inspector { grid-area: inspector; min-width: 0; overflow-y: auto; background: var(--pd-panel); border-left: 1px solid var(--pd-panel-line); font-size: 13px; }
@@ -481,7 +467,6 @@
 .pd-insp__features a { color: var(--pd-ink); text-decoration: none; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pd-insp__features a:hover { color: var(--pd-accent); }
 .pd-mini-chip small, .pd-insp__title small { color: var(--pd-muted); font-size: 11px; margin-left: 4px; }
-.pd-tree__flow .pd-dot { margin-left: auto; flex: none; }
 
 /* view options on the island */
 .pd-viewmenu { position: relative; }
@@ -492,6 +477,42 @@
 .pd-insp__features .pd-status { flex: none; }
 .pd-insp__features li { min-width: 0; }
 .pd-inspector > .pd-insp__hint { margin: 0; padding: 14px 16px; font-size: 12px; line-height: 1.5; }
-.pd-tree__flow { min-width: 0; }
-.pd-tree__flow .pd-tree__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pd-tree__flow .pd-path-dot { flex: none; }
+
+/* screen details: for developers */
+.pd-insp section.pd-insp__dev { gap: 8px; padding-top: 10px; border-top: 1px solid var(--pd-panel-line); }
+.pd-insp__path { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.pd-insp__path code { flex: 1; min-width: 0; font: 11.5px ui-monospace, SFMono-Regular, Consolas, monospace; padding: 5px 8px; border-radius: 6px; background: #f3f4f7; color: var(--pd-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-insp__devbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+.pd-btn--sm { font-size: 12px; padding: 4px 9px; }
+
+/* project tree: one row for every level (pages → features → screens) */
+.pd-tree__level { display: flex; flex-direction: column; gap: 1px; }
+.pd-tree ul.pd-tree__level--nested { margin: 1px 0 2px 11px; padding-left: 4px; border-left: 1px solid var(--pd-panel-line); }
+.pd-tree__line { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.pd-tree button.pd-tree__chevron { flex: none; width: 22px; height: 22px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 5px; background: transparent; color: var(--pd-muted); cursor: pointer; }
+.pd-tree button.pd-tree__chevron:hover { background: var(--pd-bg); color: var(--pd-ink); }
+.pd-tree__chevron svg { transition: transform 0.15s ease; }
+.pd-tree__chevron.is-open svg { transform: rotate(90deg); }
+.pd-tree__spacer { flex: none; width: 22px; }
+.pd-tree .pd-tree__row { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border: 0; border-radius: 6px; background: transparent; color: var(--pd-ink); cursor: pointer; text-align: left; }
+.pd-tree .pd-tree__row:hover { background: var(--pd-bg); }
+.pd-tree .pd-tree__row.is-on { background: var(--pd-accent-soft); }
+.pd-tree__row.is-on .pd-tree__name { color: var(--pd-accent); font-weight: 600; }
+.pd-tree__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-tree__page.is-current > .pd-tree__line .pd-tree__name { font-weight: 600; }
+.pd-tree__code { margin-left: auto; flex: none; font-size: 11px; color: var(--pd-muted); font-variant-numeric: tabular-nums; }
+.pd-tree__flow .pd-dot { flex: none; }
+.pd-pathmark { flex: none; width: 12px; height: 0; border-top: 2px solid var(--pd-happy); }
+.pd-pathmark.pd-path--alternative { border-top: 2px dashed var(--pd-alt); background: none; }
+.pd-pathmark.pd-path--negative { border-top: 2px dotted var(--pd-neg); background: none; }
+.pd-tree .pd-tree__vlabel { cursor: default; font-size: 12px; color: var(--pd-accent); }
+.pd-tree .pd-tree__vlabel:hover { background: transparent; }
+.pd-tree__icon { flex: none; }
+.pd-tree__state { margin-left: auto; flex: none; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; background: var(--pd-accent-soft); color: var(--pd-accent); }
+.pd-tree .pd-tree__screen, .pd-tree .pd-tree__vlabel { width: 100%; padding-left: 18px; }
+.pd-tree__version > .pd-tree__level--nested { margin-left: 29px; }
+.pd-insp__flow .pd-pathmark { display: inline-block; vertical-align: middle; margin-right: 2px; }
+.pd-tree .pd-tree__row { box-sizing: border-box; }
+.pd-insp__path code { white-space: normal; overflow-wrap: anywhere; text-overflow: clip; }
+.pd-insp__path { align-items: flex-start; }
+.pd-insp__key { color: var(--pd-muted); font-size: 11px; margin-left: 2px; }

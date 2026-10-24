@@ -14,6 +14,9 @@
 //      GET  /__orbito/status                 the status file
 //      POST /__orbito/status  {id,status,note?}  writes that one entry, nothing else
 //      GET  /__orbito/file?path=<rel>        a .md / .txt / .json file inside the project (e.g. a review report)
+//      GET  /__orbito/env                    the project folder and the system (for the developer section of screen details)
+//      POST /__orbito/reveal?path=<rel>      shows a project file in Explorer / Finder / the file manager
+import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -188,6 +191,20 @@ export default function orbito(options = {}) {
           if (!inside(root, file) || !/\.(md|txt|json)$/i.test(file) || !existsSync(file)) return reply(404, { error: 'not found' });
 
           return reply(200, readFileSync(file, 'utf8'), 'text/plain; charset=utf-8');
+        }
+        if (url.pathname === '/__orbito/env') return reply(200, { root: resolve(root), platform: process.platform, sep });
+        if (url.pathname === '/__orbito/reveal') {
+          const file = resolve(root, url.searchParams.get('path') ?? '');
+
+          if (req.method !== 'POST') return reply(405, { error: 'POST' });
+          if (!inside(root, file) || !existsSync(file)) return reply(404, { error: 'not found' });
+          // the file manager of the system, the file selected; arguments, never a shell string
+          const [cmd, args] =
+            process.platform === 'win32' ? ['explorer.exe', [`/select,${file}`]] : process.platform === 'darwin' ? ['open', ['-R', file]] : ['xdg-open', [dirname(file)]];
+
+          spawn(cmd, args, { detached: true, stdio: 'ignore' }).on('error', () => undefined).unref();
+
+          return reply(200, { ok: true });
         }
         if (url.pathname !== '/__orbito/status') return next();
         const statusPath = resolve(root, STATUS_FILE);

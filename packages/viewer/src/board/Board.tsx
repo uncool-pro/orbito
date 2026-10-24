@@ -285,7 +285,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
           {page.flows.map((f) => (
             <li key={f.key}>
               <a href={`#/board/${page.key}/${f.key}`}>
-                <b>{f.key}</b> {f.name}
+                {f.name} <small className="pd-insp__key">{f.key}</small>
               </a>
               <StatusChip id={flowStatusId(page.key, f.key)} entry={flowStatus(f.key)} />
             </li>

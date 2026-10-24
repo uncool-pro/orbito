@@ -6,6 +6,7 @@ import type { Page, Project, Screen, Status } from '@uncool-pro/orbito-core';
 import { screenHash } from '@uncool-pro/orbito-runtime';
 
 import { LiveScreen } from '../../board/BoardCard';
+import { absolutePath, openInEditor, revealFile, useDevEnv } from '../../dev';
 import { useT } from '../../i18n';
 import { useStatuses } from '../../status';
 import { useViewer } from '../context';
@@ -234,6 +235,28 @@ const Drawer = ({ mode, page, flowKey, dsSection }: { mode: Mode; page?: Page; f
   );
 };
 
+/** One disclosure icon for every level of the tree: a chevron that turns down when the level is open. */
+const Chevron = ({ open, label, onClick }: { open: boolean; label: string; onClick: () => void }) => (
+  <button type="button" className={`pd-tree__chevron${open ? ' is-open' : ''}`} aria-expanded={open} aria-label={label} onClick={onClick}>
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+      <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  </button>
+);
+
+const BranchIcon = () => (
+  <svg className="pd-tree__icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+    <path d="M5 3v10M5 10c0-3 6-2 6-6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="5" cy="3" r="1.6" fill="currentColor" />
+    <circle cx="11" cy="4" r="1.6" fill="currentColor" />
+    <circle cx="5" cy="13" r="1.6" fill="currentColor" />
+  </svg>
+);
+
+/**
+ * Pages → features (flows) → screens. Every level has the same row: a chevron (or its space), the name first, the code
+ * small and grey after it. A flow shows its path as the line of the flows legend and its status as the only dot.
+ */
 const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: string }) => {
   const { project } = useViewer();
   const { selected, select } = useShell();
@@ -242,10 +265,13 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
   const base = mode === 'flows' ? 'flows' : 'board';
   const byId = new Map(project.screens.map((s) => [s.id, s]));
   const [open, setOpen] = useState<Set<string>>(() => new Set(flowKey ? [flowKey] : page?.flows.slice(0, 2).map((f) => f.key)));
+  const [pageOpen, setPageOpen] = useState(true);
+  const toggle = (key: string) => setOpen((o) => (o.has(key) ? new Set([...o].filter((k) => k !== key)) : new Set([...o, key])));
 
   useEffect(() => {
     if (flowKey) setOpen((o) => new Set([...o, flowKey]));
   }, [flowKey]);
+  useEffect(() => setPageOpen(true), [page?.key]);
 
   const pick = (id: string) => {
     if (mode === 'prototype') return void (window.location.hash = screenHash(id));
@@ -260,13 +286,13 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
       <li key={`${extra ?? ''}${id}`}>
         <button
           type="button"
-          className={`pd-tree__screen${selected === id ? ' is-on' : ''}`}
+          className={`pd-tree__row pd-tree__screen${selected === id ? ' is-on' : ''}`}
           onClick={() => pick(id)}
           onDoubleClick={() => (window.location.hash = screenHash(id))}
           title={s.title}
         >
-          <b>{s.code ?? '·'}</b>
-          <span>{s.title.split(' / ').pop()}</span>
+          <span className="pd-tree__name">{s.title.split(' / ').pop()}</span>
+          {s.code && <small className="pd-tree__code">{s.code}</small>}
         </button>
       </li>
     );
@@ -275,64 +301,73 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
   return (
     <nav className="pd-tree" aria-label={t.pages}>
       <h4>{t.pages}</h4>
-      {project.pages.map((p) => {
-        const current = p.key === page?.key;
+      <ul className="pd-tree__level">
+        {project.pages.map((p) => {
+          const current = p.key === page?.key;
+          const expanded = current && pageOpen;
 
-        return (
-          <div key={p.key} className={`pd-tree__page${current ? ' is-current' : ''}`}>
-            <a className="pd-tree__pagelink" href={`#/${base}/${p.key}`}>
-              {p.name}
-              <small>{p.flows.length}</small>
-            </a>
-            {current && (
-              <ul className="pd-tree__flows">
-                <li>
-                  <a className={`pd-tree__flow${flowKey ? '' : ' is-on'}`} href={`#/${base}/${p.key}`}>
-                    {t.allFlows}
-                  </a>
-                </li>
-                {p.flows.map((f) => {
-                  const expanded = open.has(f.key);
+          return (
+            <li key={p.key} className={`pd-tree__page${current ? ' is-current' : ''}`}>
+              <div className="pd-tree__line">
+                <Chevron
+                  open={expanded}
+                  label={expanded ? t.collapse : t.expand}
+                  onClick={() => (current ? setPageOpen((v) => !v) : void (window.location.hash = `#/${base}/${p.key}`))}
+                />
+                <a className="pd-tree__row" href={`#/${base}/${p.key}`}>
+                  <span className="pd-tree__name">{p.name}</span>
+                  <small className="pd-tree__code">{p.flows.length}</small>
+                </a>
+              </div>
+              {expanded && (
+                <ul className="pd-tree__level pd-tree__level--nested">
+                  <li>
+                    <div className="pd-tree__line">
+                      <span className="pd-tree__spacer" />
+                      <a className={`pd-tree__row${flowKey ? '' : ' is-on'}`} href={`#/${base}/${p.key}`}>
+                        <span className="pd-tree__name">{t.allFlows}</span>
+                      </a>
+                    </div>
+                  </li>
+                  {p.flows.map((f) => {
+                    const isOpen = open.has(f.key);
+                    const st = statusOf(statuses, flowStatusId(p.key, f.key)).status;
 
-                  return (
-                    <li key={f.key}>
-                      <div className="pd-tree__flowrow">
-                        <button
-                          type="button"
-                          className="pd-tree__toggle"
-                          aria-expanded={expanded}
-                          aria-label={expanded ? t.collapse : t.expand}
-                          onClick={() => setOpen((o) => (o.has(f.key) ? new Set([...o].filter((k) => k !== f.key)) : new Set([...o, f.key])))}
-                        >
-                          {expanded ? '▾' : '▸'}
-                        </button>
-                        <a className={`pd-tree__flow${flowKey === f.key ? ' is-on' : ''}`} href={`#/${base}/${p.key}/${f.key}`} title={t.pathKinds[f.path ?? 'happy']}>
-                          <i className={`pd-path-dot pd-path--${f.path ?? 'happy'}`} />
-                          <b>{f.key}</b> <span className="pd-tree__name">{f.name}</span>
-                          <i className={`pd-dot pd-status--${statusOf(statuses, flowStatusId(p.key, f.key)).status}`} title={t.statusLabels[statusOf(statuses, flowStatusId(p.key, f.key)).status]} />
-                        </a>
-                      </div>
-                      {expanded && (
-                        <ul className="pd-tree__screens">
-                          {f.screens.map((id, i) => row(id, `${f.key}${i}`))}
-                          {(f.versions ?? []).map((v) => (
-                            <li key={v.key} className="pd-tree__version">
-                              <span>
-                                ⑂ {v.name} <small>{v.state}</small>
-                              </span>
-                              <ul className="pd-tree__screens">{v.screens.map((vs) => row(vs.id, `${f.key}/${v.key}`))}</ul>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        );
-      })}
+                    return (
+                      <li key={f.key}>
+                        <div className="pd-tree__line">
+                          <Chevron open={isOpen} label={isOpen ? t.collapse : t.expand} onClick={() => toggle(f.key)} />
+                          <a className={`pd-tree__row pd-tree__flow${flowKey === f.key ? ' is-on' : ''}`} href={`#/${base}/${p.key}/${f.key}`} title={`${f.name} · ${t.pathKinds[f.path ?? 'happy']}`}>
+                            <i className={`pd-pathmark pd-path--${f.path ?? 'happy'}`} />
+                            <span className="pd-tree__name">{f.name}</span>
+                            <small className="pd-tree__code">{f.key}</small>
+                            <i className={`pd-dot pd-status--${st}`} title={t.statusLabels[st]} />
+                          </a>
+                        </div>
+                        {isOpen && (
+                          <ul className="pd-tree__level pd-tree__level--nested">
+                            {f.screens.map((id, i) => row(id, `${f.key}${i}`))}
+                            {(f.versions ?? []).map((v) => (
+                              <li key={v.key} className="pd-tree__version">
+                                <div className="pd-tree__row pd-tree__vlabel">
+                                  <BranchIcon />
+                                  <span className="pd-tree__name">{v.name}</span>
+                                  <small className="pd-tree__state">{v.state}</small>
+                                </div>
+                                <ul className="pd-tree__level pd-tree__level--nested">{v.screens.map((vs) => row(vs.id, `${f.key}/${v.key}`))}</ul>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </li>
+          );
+        })}
+      </ul>
     </nav>
   );
 };
@@ -452,7 +487,7 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
           <h4>{t.inFlows}</h4>
           {inFlows.map(({ p, f }) => (
             <a key={`${p.key}${f.key}`} className="pd-insp__flow" href={`#/${mode === 'flows' ? 'flows' : 'board'}/${p.key}/${f.key}`}>
-              <i className={`pd-path-dot pd-path--${f.path ?? 'happy'}`} /> <b>{f.key}</b> {f.name}
+              <i className={`pd-pathmark pd-path--${f.path ?? 'happy'}`} /> {f.name} <small className="pd-tree__code">{f.key}</small>
             </a>
           ))}
         </section>
@@ -476,14 +511,59 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
         </section>
       )}
       <p className="pd-insp__meta">
-        {vp.label} · {vp.width}×{vp.height} · <code>{s.file}</code>
+        {vp.label} · {vp.width}×{vp.height}
       </p>
+      <DevSection screen={s} />
       {mode !== 'prototype' && (
         <a className="pd-btn pd-btn--primary pd-insp__open" href={screenHash(s.id)}>
           {t.openPrototype}
         </a>
       )}
     </div>
+  );
+};
+
+/**
+ * Where the screen lives in code, for whoever builds it: the file path to copy, the file in the system's file manager or the
+ * editor (dev only), and a reference to paste into the chat with Claude. No code to copy: a screen is assembled from
+ * design-system components, so the file and its components say more than a dump of HTML and CSS.
+ */
+const DevSection = ({ screen: s }: { screen: Screen<ComponentType> }) => {
+  const env = useDevEnv();
+  const t = useT();
+  const [copied, setCopied] = useState<string | null>(null);
+  const copy = (what: string, text: string) =>
+    void navigator.clipboard?.writeText(text).then(() => {
+      setCopied(what);
+      setTimeout(() => setCopied((c) => (c === what ? null : c)), 1400);
+    });
+  const name = s.title.split(' / ').pop() ?? s.id;
+
+  return (
+    <section className="pd-insp__dev">
+      <h4>{t.devTitle}</h4>
+      <div className="pd-insp__path">
+        <code title={env ? absolutePath(env, s.file) : s.file}>{s.file}</code>
+        <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => copy('path', env ? absolutePath(env, s.file) : s.file)} aria-label={t.copyPath} title={t.copyPath}>
+          {copied === 'path' ? '✓' : '⧉'}
+        </button>
+      </div>
+      <div className="pd-insp__devbtns">
+        {env && (
+          <>
+            <button type="button" className="pd-btn pd-btn--sm" onClick={() => void revealFile(s.file)}>
+              {t.reveal(env.platform)}
+            </button>
+            <button type="button" className="pd-btn pd-btn--sm" onClick={() => void openInEditor(env, s.file)}>
+              {t.openEditor}
+            </button>
+          </>
+        )}
+        <button type="button" className="pd-btn pd-btn--sm" title={t.copyForClaudeTip} onClick={() => copy('claude', t.claudeRef(name, s.code ?? '', s.file))}>
+          {copied === 'claude' ? `✓ ${t.copied}` : t.copyForClaude}
+        </button>
+      </div>
+    </section>
   );
 };
 
