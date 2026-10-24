@@ -6,6 +6,7 @@ import type { LinkMap, Project, ProjectProblem, StatusFile, Team } from '@uncool
 import { registerParents } from '@uncool-pro/orbito-runtime';
 
 import { App } from './app/App';
+import { setFavicon } from './app/Logo';
 import { ViewerContext } from './app/context';
 import { ShellProvider } from './app/shell/state';
 import type { DsData } from './app/context';
@@ -58,6 +59,7 @@ export const mount = (loaded: LoadedProject, container: HTMLElement | null = doc
 
   fonts.textContent = loaded.ds.fonts ?? '';
   initStatuses(loaded.statuses, loaded.dev);
+  setFavicon();
   loaded.problems.forEach((p) => console[p.level === 'error' ? 'error' : 'warn'](`[orbito] ${p.file ? `${p.file}: ` : ''}${p.message}`));
   const root = createRoot(container);
 

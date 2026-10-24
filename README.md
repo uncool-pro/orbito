@@ -1,3 +1,5 @@
+<p><img src="assets/orbito-wordmark.svg" alt="Orbito" width="240"></p>
+
 # Orbito
 
 Mockups as code, reviewed as flows on a board. Built for product designers who work with an AI agent in Claude Code: the agent builds screens from your design system, you see every flow on one board, statuses and review versions included, and you make the decisions.

@@ -6,6 +6,7 @@ import type { Page, Project, Screen, Status } from '@uncool-pro/orbito-core';
 import { screenHash } from '@uncool-pro/orbito-runtime';
 
 import { LiveScreen } from '../../board/BoardCard';
+import { OrbitoMark } from '../Logo';
 import { absolutePath, openInEditor, revealFile, useDevEnv } from '../../dev';
 import { useT } from '../../i18n';
 import { useStatuses } from '../../status';
@@ -69,7 +70,7 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
       </button>
       <nav className="pd-crumbs" aria-label={t.location}>
         <a className="pd-crumbs__project" href="#/board">
-          <i className="pd-logo" aria-hidden />
+          <OrbitoMark className="pd-logo" />
           {project.config.title}
         </a>
         {mode === 'ds' || mode === 'skills' ? (

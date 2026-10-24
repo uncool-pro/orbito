@@ -299,7 +299,7 @@
 .pd-crumbs a:hover { color: var(--pd-accent); }
 .pd-crumbs span { color: #b4bac5; }
 .pd-crumbs__project { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
-.pd-logo { width: 18px; height: 18px; border-radius: 50%; background: #925f98; box-shadow: inset -5px 5px 0 -3px var(--pd-mint); flex: none; }
+.pd-logo { width: 18px; height: 18px; color: var(--pd-ink); flex: none; }
 .pd-search { position: relative; margin-left: auto; display: flex; align-items: center; }
 .pd-search__input { width: 260px; font: inherit; font-size: 13px; padding: 7px 64px 7px 12px; border: 1px solid var(--pd-panel-line); border-radius: 8px; background: var(--pd-bg); color: var(--pd-ink); }
 .pd-search__input:focus { outline: 2px solid var(--pd-accent-soft); border-color: var(--pd-accent); background: #fff; }

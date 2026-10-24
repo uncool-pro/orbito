@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { purposeOf } from '@uncool-pro/orbito-core';
 import type { ProcessInfo, SkillInfo } from '@uncool-pro/orbito-core';
 
+import { OrbitoMark } from '../app/Logo';
 import { useViewer } from '../app/context';
 import { useT } from '../i18n';
 
@@ -111,7 +112,7 @@ export const SkillsMap = () => {
       <section className="pd-team__lead">
         <div className="pd-team__card pd-team__card--lead">
           <div className="pd-team__name">
-            <i className="pd-logo" aria-hidden />
+            <OrbitoMark className="pd-logo" />
             <b>{t.leadName}</b>
             <span className="pd-team__model is-strongest">{t.leadModel}</span>
           </div>
