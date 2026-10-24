@@ -72,7 +72,13 @@ Fix in this order, because later steps cannot rescue earlier ones: the idea → 
 ## In Orbito
 - Each variant is a **version** of the chosen flow (`versions` in its flow file, `state: 'open'`, a name with its idea), built with its own tokens and components (a `design-system/variants/<name>/` folder or token overrides), so the board shows all five under the original.
 - Present them together — for a page always at **desktop, tablet and phone side by side** (one responsive implementation, see `references/pages.md`), never at a single in-between size: "I prepared five directions — which one speaks to you?" For each, give its idea sentence (and, for the bold ones, the drawn direction). Collect what people like and dislike in each, not only the winner; mixing is allowed.
-- Iterate on the chosen direction with the client until approved ("this is boring", "more air", "less playful").
+- Iterate while the person is still choosing: a round of feedback **changes the variants in place**; a mix of two becomes one of the five, replacing one. Never more than five variants open at once — new versions piling up on the board make it unreadable.
 
-## After approval
-Record the approval (who, when, which variant and what was mixed in) in `.orbito/process.md`, mark the version `merged`, drop the others, and continue with `design-system` to turn the direction into all the building blocks. From then on new screens are built hi-fi.
+## Close the exploration as soon as one direction wins
+Look & feel is a choice, not the place where the chosen design gets polished. The moment one direction clearly wins — the person says "this one", or starts asking for changes to only one variant ("more air here", "a different photo in this one") — **stop and propose closing the exploration** before making those changes:
+> "It looks like you have chosen **[variant and its idea]**. Shall I close the look & feel? I will keep this direction, remove the other variants from the board and the project (their versions and `design-system/variants/` folders), and from now on we refine only this one, as the project's design."
+
+- **Only with the person's consent.** If they want to keep another variant to borrow from, keep that one too and say it stays until the design system is built. If they are not sure yet, keep exploring — but do not deepen one variant while the others are still open.
+- **Then clean up:** in the flow file, the chosen version becomes `merged` and the others are deleted with their screens; their `design-system/variants/<name>/` folders go; the board shows only the chosen direction. Run `npm run check:ds` and `npm run typecheck`, and look at the board.
+- **Record it** in `.orbito/process.md`: who chose, when, which variant and its idea sentence, what was mixed in from others, what was removed.
+- **Hand over:** the refining continues as the project's design — `design-system` turns the direction into tokens and components, and `ui-design` builds and refines the screens in it. From then on every change ("more air", "a bigger headline") is made in the design system and the real screens, not in a variant, and new screens are built hi-fi.

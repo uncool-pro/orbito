@@ -17,7 +17,7 @@ Run by **Orbito** (the lead). Each step names the role (agent) and the competenc
 | 5 | Screens (lo-fi) | ux-designer | wireframes | lo-fi screens with real copy (`ux-writing`) | UX review, `#/flows` clean |
 | 6 | Review with the client | orbito | ux-review | an approved version of the flows | **client and BA approve** |
 | 7 | Stories follow the mockups | business-analyst | requirements-sync | stories and tests updated | done before development |
-| 8 | Visual direction | ui-designer | look-and-feel | five variants of one flow | **client picks a direction** |
+| 8 | Visual direction | ui-designer | look-and-feel | five variants of one flow; after the choice only the chosen one stays | **client picks a direction**, agrees to remove the others |
 | 9 | Design system | ui-designer | design-system | tokens, components, docs; `check:ds` clean | person approves the system |
 | 10 | Screens (hi-fi) | ui-designer | ui-design | lo-fi screens migrated, new ones in hi-fi | — |
 | 11 | Consistency | design-auditor | ui-audit | `reviews/…-ui-audit.md` | findings decided (`ux-review`) |

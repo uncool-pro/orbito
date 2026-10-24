@@ -7,7 +7,7 @@ description: UI designer's high-fidelity screens in Orbito — once the project 
 
 **Role:** UI designer, who also builds the screens in code. **Comes after:** look & feel → design system. **Comes before:** UI audit, accessibility audit, synthetic users.
 
-The UX designer decides structure and behaviour; the UI designer makes each screen look and read the way the approved direction intends. From the moment the design system is approved, new screens are built on it straight away, and the lo-fi screens built earlier go on a migration list.
+The UX designer decides structure and behaviour; the UI designer makes each screen look and read the way the approved direction intends. Work starts only after the look & feel exploration is **closed** (one direction kept, the other variants removed, the choice recorded in `.orbito/process.md`); if variants are still open on the board, propose closing them first (`look-and-feel`, "Close the exploration") instead of refining one of them. From the moment the design system is approved, new screens are built on it straight away, and the lo-fi screens built earlier go on a migration list.
 
 ## Migrating a lo-fi screen
 1. Keep its structure, links, states and copy; replace each lo-fi component with the design system's equivalent (same names and props where the role is the same, so most screens switch without edits).
