@@ -6,7 +6,7 @@ Mockups as code (React + TypeScript), reviewed as flows on a board. Not producti
 | Package | What | Depends on |
 |---|---|---|
 | `packages/core` | project model, loading from the file convention, link types, statuses, board layout. Pure TS: no React, no DOM | — |
-| `packages/runtime` | what mockups import: `<Link>` / `useLinkProps`, `goTo` / `goBack`, `DeviceScreen`, `PageScreen`, `useFrame` | react |
+| `packages/runtime` | what mockups import: `<Link>` / `useLinkProps`, `goTo` / `goBack`, `DeviceScreen`, `PageScreen` (windows of the viewport's size: only the content scrolls, bars and side panels sit in slots), `useFrame` | react |
 | `packages/viewer` | the browser app: overview, board (`board/`, camera in `canvas/`), single screen view, design-system catalog (`ds/`, route `#/ds`) | core, runtime |
 | `packages/cli` | `orbito check ds` and the design-system analyzer (TypeScript AST); `orbito export` (one screen → static `index.html` via the project's Vite, SSR); `orbito update [--pull]` (refreshes a project's skills, agents and commands from this folder; `--pull` updates the folder from GitHub first) | core, typescript (vite, react from the project) |
 | `packages/vite-plugin` | `virtual:orbito/project` (screens, flows, tokens, component docs, design-system report, the team for `#/skills`) + dev endpoints `/__orbito/status`, `/__orbito/file`, `/__orbito/env`, `/__orbito/reveal` | vite, core, cli |

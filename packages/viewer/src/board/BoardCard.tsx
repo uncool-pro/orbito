@@ -19,8 +19,8 @@ export const LiveScreen = memo(({ screen, viewport, card }: { screen: Screen<Com
       <div
         className="pd-card__inner"
         inert
-        data-pd-page-scroll={viewport.kind === 'page' ? '' : undefined}
-        style={{ width: viewport.width, height: viewport.height, transform: `scale(${card.frame.scale})`, overflowY: viewport.kind === 'page' ? 'auto' : 'hidden' }}
+        
+        style={{ width: viewport.width, height: viewport.height, transform: `scale(${card.frame.scale})`, overflow: 'hidden' }}
       >
         <FrameContext.Provider value={{ mode: 'board', viewport }}>
           <ErrorBoundary name={screen.code ?? screen.id}>

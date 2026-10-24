@@ -17,7 +17,8 @@ For every screen in the flows, before building it, write a short spec (in the sc
 
 ## Building
 - One file per screen: `screens/<area>/<id>.screen.tsx`, `meta` with a permanent `code` (see "Screen codes"), a `title` like `Area / Screen`, `back`, `requirements`, `viewport` when it is not the default.
-- Mobile: `DeviceScreen` with `top` (app bar), `bottom` (tab bar or actions), `overlay` (floating button), `modal` (sheet, dialog). Web: `PageScreen`.
+- Mobile and tablet: `DeviceScreen` with `top` (app bar), `bottom` (tab bar or actions), `overlay` (floating button), `modal` (sheet, dialog). Web: `PageScreen` with `top` (header, navigation bar), `side` (side navigation, filters, a drawer; `sideAt: 'right'` for the other edge), `bottom` (sticky actions, a cookie bar), `overlay` (chat button, toast), `modal` (dialog).
+- **What stays in place while scrolling is the frame, not the content.** Every screen is seen through a window exactly the viewport's size (a phone, a browser) and only the content scrolls — on the board and in the prototype, like the real product. Everything that must not move goes into the slots above. Something that sticks only once you scroll to it (a section's tabs, a table header) is `position: sticky` inside the content. Never build a fixed bar or a side panel as part of the long content (it would scroll away with it), and never stretch a screen taller than its viewport to show the whole page: people scroll it in the prototype.
 - Only design-system components; data in a local `data.ts` per area, fictional and realistic (real lengths, edge cases).
 - After building: `npm run check:ds`, `npm run typecheck`, and look at the board and the flows diagram.
 

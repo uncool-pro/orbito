@@ -15,19 +15,23 @@ const Stat = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
+// the side navigation stays in place while the dashboard scrolls: it goes into `side`, not into the content
+const SideNav = () => (
+  <nav style={{ width: 240, height: '100%', boxSizing: 'border-box', padding: 'var(--space-5)', background: 'var(--color-surface)', borderRight: '1px solid var(--color-line)', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+    <Text variant="title" tone="primary">
+      Leafy admin
+    </Text>
+    <Text variant="heading">Dashboard</Text>
+    <Text tone="muted">Plant catalogue</Text>
+    <Text tone="muted">Users</Text>
+  </nav>
+);
+
 export default function AdminDashboard() {
   return (
-    <PageScreen background="var(--color-bg)">
-      <div style={{ display: 'flex', minHeight: 900 }}>
-        <aside style={{ width: 240, padding: 'var(--space-5)', background: 'var(--color-surface)', borderRight: '1px solid var(--color-line)', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
-          <Text variant="title" tone="primary">
-            Leafy admin
-          </Text>
-          <Text variant="heading">Dashboard</Text>
-          <Text tone="muted">Plant catalogue</Text>
-          <Text tone="muted">Users</Text>
-        </aside>
-        <main style={{ flex: 1, padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+    <PageScreen background="var(--color-bg)" side={<SideNav />}>
+      <div>
+        <main style={{ padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text variant="title">Good morning</Text>
             <Button icon="leaf" to="admin-catalog">
@@ -41,8 +45,8 @@ export default function AdminDashboard() {
           </div>
           <Text variant="heading">Most added this week</Text>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>
-            {plants.slice(0, 6).map((p) => (
-              <ListItem key={p.id} title={p.name} subtitle={p.room} leading={<PlantThumb size={40} />} trailing={<Icon name="chevron" size={18} />} />
+            {[...plants, ...plants].map((p, i) => (
+              <ListItem key={`${p.id}-${i}`} title={p.name} subtitle={p.room} leading={<PlantThumb size={40} />} trailing={<Icon name="chevron" size={18} />} />
             ))}
           </div>
         </main>

@@ -110,7 +110,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
 
         if (!key || cardEl?.dataset.card !== key) return null;
         const card = layoutRef.current.cards.find((c) => c.key === key);
-        const candidates = [...cardEl.querySelectorAll<HTMLElement>('[data-pd-scroll], [data-pd-page-scroll]')];
+        const candidates = [...cardEl.querySelectorAll<HTMLElement>('[data-pd-scroll]')];
         const sc = candidates.find((e) => e.scrollHeight > e.clientHeight + 1 || e.scrollWidth > e.clientWidth + 1);
 
         return sc && card ? { el: sc, scale: controller.camera.k * card.frame.scale } : null;
