@@ -96,8 +96,8 @@ const modelsCmd = (mode: string | undefined) => {
   console.log(`models: ${active} — ${from}`);
   const profile = readProfiles(root, resolve(toolRoot(), 'agents'))?.[active] ?? {};
 
-  Object.entries(profile).forEach(([role, c]) => console.log(`  ${role.padEnd(18)} ${c.model}${c.effort ? ` · ${c.effort}` : ''}`));
-  console.log(paint(2, 'Orbito passes these to each agent it calls; agent files are not changed. Orbito itself runs on the model you pick in Claude Code.'));
+  Object.entries(profile).forEach(([role, c]) => console.log(`  ${role.padEnd(28)} ${c.model}${c.effort ? ` · ${c.effort}` : ''}`));
+  console.log(paint(2, 'Orbito passes these to each agent it calls (role/skill: for that competence); agent files are not changed. Orbito itself runs on the model you pick in Claude Code.'));
 };
 
 const [cmd, sub] = args.filter((a) => !a.startsWith('--') && a !== opt('root') && a !== opt('out'));

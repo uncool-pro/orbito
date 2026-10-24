@@ -24,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { searchForWorkspaceRoot } from 'vite';
 
 import { analyzeProject } from '@uncool-pro/orbito-cli/analyze';
-import { buildTeam, listOf, modelFor, parseFrontmatter, resolveMode, tokensToCss } from '@uncool-pro/orbito-core';
+import { buildTeam, listOf, modelFor, parseFrontmatter, resolveMode, skillModels, tokensToCss } from '@uncool-pro/orbito-core';
 
 // keep in sync with packages/core/src/status.ts (the tool owns the list)
 const STATUSES = ['todo', 'wip', 'review', 'changes', 'approved', 'onHold', 'dropped'];
@@ -80,7 +80,7 @@ const readTeam = (root) => {
   });
   const profiles = readJson(resolve(root, '.orbito/models.json'), null) ?? readJson(resolve(dirs.agents, 'models.json'), null);
   // each agent as Orbito will call it in this mode (the profile wins over the agent file's own values)
-  const inMode = agents.map((a) => ({ ...a, ...(modelFor(profiles ?? undefined, mode, a.name) ?? {}) }));
+  const inMode = agents.map((a) => ({ ...a, ...(modelFor(profiles ?? undefined, mode, a.name) ?? {}), skillModels: skillModels(profiles ?? undefined, mode, a.name) }));
 
   return { ...buildTeam(skills, inMode), models: mode, modelsSource: source };
 };

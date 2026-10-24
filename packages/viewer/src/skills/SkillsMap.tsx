@@ -29,11 +29,17 @@ const tier = (model?: string) => (model === 'opus' ? 'strongest' : model === 'ha
 /** Scrolls to a role's card on the map (the hash is the viewer's route, so no anchors). */
 const showRole = (role: string) => document.getElementById(`role-${role}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-const SkillList = ({ names, byName }: { names: string[]; byName: Map<string, SkillInfo> }) => (
+const SkillList = ({ names, byName, models }: { names: string[]; byName: Map<string, SkillInfo>; models?: Record<string, { model: string; effort?: string }> }) => (
   <ul className="pd-team__skills">
     {names.map((n) => (
       <li key={n}>
         <code>{n}</code>
+        {models?.[n] && (
+          <span className={`pd-team__model pd-team__model--skill is-${tier(models[n].model)}`}>
+            {models[n].model}
+            {models[n].effort ? ` · ${models[n].effort}` : ''}
+          </span>
+        )}
         <span title={byName.get(n)?.description}>{byName.get(n)?.description ? purposeOf(byName.get(n)!.description) : ''}</span>
       </li>
     ))}
@@ -150,7 +156,7 @@ export const SkillsMap = () => {
                 {purposeOf(a.description)}
               </p>
               <p className="pd-team__count">{t.competencesCount(a.skills.length)}</p>
-              <SkillList names={a.skills} byName={byName} />
+              <SkillList names={a.skills} byName={byName} models={a.skillModels} />
             </article>
           ))}
         </div>

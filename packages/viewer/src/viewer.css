@@ -524,3 +524,6 @@
 .pd-card__meta { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .pd-card__meta .pd-badge { font-size: 9px; padding: 1px 5px; }
 .pd-card__head .pd-card__code { order: 0; }
+.pd-team__skills li { grid-template-columns: 1fr auto; align-items: center; }
+.pd-team__skills li > :not(code):not(.pd-team__model--skill) { grid-column: 1 / -1; }
+.pd-team__skills .pd-team__model--skill { display: inline-block; -webkit-line-clamp: unset; font-size: 10.5px; line-height: 1.4; }

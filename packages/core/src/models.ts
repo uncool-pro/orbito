@@ -6,6 +6,8 @@
  *   `high` — the strongest model almost everywhere, with high effort where the work is strategic.
  * - The mode in use is resolved per person, highest first: the `ORBITO_MODELS` environment variable →
  *   `.orbito/settings.local.json` (personal, git-ignored) → `.orbito/settings.json` (the team's default, committed) → `optimal`.
+ * - A competence can need more than the rest of its role's work: a `<role>/<skill>` entry (`ui-designer/look-and-feel`)
+ *   overrides the role's values when the role is called for that competence.
  * - Agent files are never rewritten. Orbito (the main session) passes the profile's model and effort each time it
  *   calls an agent, which Claude Code applies over the agent file's own values.
  */
@@ -29,5 +31,17 @@ export const resolveMode = (sources: { env?: string; local?: OrbitoSettings; tea
   return { mode: 'optimal', source: 'default' };
 };
 
-/** The model and effort of a role in a mode; roles the profiles do not know (the project's own agents) get `undefined`. */
-export const modelFor = (profiles: ModelProfiles | undefined, mode: ModelMode, role: string): ModelChoice | undefined => profiles?.[mode]?.[role];
+/**
+ * The model and effort of a role in a mode — for one of its competences when `skill` is given and the profile has an
+ * entry for it; roles the profiles do not know (the project's own agents) get `undefined`.
+ */
+export const modelFor = (profiles: ModelProfiles | undefined, mode: ModelMode, role: string, skill?: string): ModelChoice | undefined =>
+  (skill ? profiles?.[mode]?.[`${role}/${skill}`] : undefined) ?? profiles?.[mode]?.[role];
+
+/** The competences of a role that run on their own model and effort in a mode (`<role>/<skill>` entries). */
+export const skillModels = (profiles: ModelProfiles | undefined, mode: ModelMode, role: string): Record<string, ModelChoice> =>
+  Object.fromEntries(
+    Object.entries(profiles?.[mode] ?? {})
+      .filter(([key]) => key.startsWith(`${role}/`))
+      .map(([key, choice]) => [key.slice(role.length + 1), choice]),
+  );
