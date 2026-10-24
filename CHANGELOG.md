@@ -2,6 +2,15 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
+## 0.9.3 — 2026-10-24
+UX review of the viewer itself (notes from use, decided with the `ux-review` competence).
+- **Statuses belong to features, not screens:** a change of requirements touches the whole flow, so the status sits on the flow (the lane header on the board, a dot next to the flow in the left panel, the list of features in the details panel). Stored in `.orbito/status.json` under `flow:<page>/<flow>`; old per-screen entries are ignored.
+- **Status as a dropdown in place:** a native select where the status is shown — no more menu opening outside the screen (and blocking clicks, which stopped screens from highlighting on hover).
+- **Two-way sync:** a status changed on the board writes the file; a status Claude (or you) writes in the file shows on the open board at once, without a reload.
+- **One purpose for the right panel — "Details":** with nothing selected, the features of this page with their statuses; with a screen selected, its details (where it leads, by name). View options moved to "View" on the bottom island.
+- **Light captions above screens, as in design tools:** the functional name, readable, with the code small and grey beside it; no frame around the card, no status and no ↗ button (a click on a screen already opens the prototype).
+- **Names instead of codes:** flow boxes lead with the screen's name; ways out under a screen are a quiet arrow with a count, and on hover they name where they go — a screen of the same feature by its name, any other way out by the feature it opens ("→ Add a plant").
+
 ## 0.9.2 — 2026-10-23
 - **Skills in three layers:** Orbito (the lead) runs **processes** (`process-new-product`, `process-redesign`, `process-rapid-prototype`, `process-landing-page`), each a table of steps with the role, the competence, the output and where you decide; **roles** (agents) preload their own **competences** (`skills:` in the agent file).
 - **New competences:** UX — `information-architecture`, `user-flows`, `wireframes`, `ux-writing`, `ux-review` (from the former `ux-design`); BA — `user-stories` (good-practice stories: INVEST, given/when/then, splitting, definition of ready; checks and completes what you bring), `prototype-scope`, `requirements-sync`; UI — `ui-design` (hi-fi screens).

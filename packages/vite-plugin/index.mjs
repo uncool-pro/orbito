@@ -201,7 +201,7 @@ export default function orbito(options = {}) {
           try {
             const { id, status, note } = JSON.parse(raw || '{}');
 
-            if (typeof id !== 'string' || !/^[\w-]+$/.test(id)) return reply(400, { error: 'invalid screen id' });
+            if (typeof id !== 'string' || !/^[\w.:/-]+$/.test(id)) return reply(400, { error: 'invalid status id' });
             if (!STATUSES.includes(status)) return reply(400, { error: `status must be one of: ${STATUSES.join(', ')}` });
             if (note !== undefined && note !== null && typeof note !== 'string') return reply(400, { error: 'note must be text' });
             const all = readJson(statusPath, {});
@@ -223,7 +223,12 @@ export default function orbito(options = {}) {
       const rel = relative(root, file).split(sep).join('/');
 
       // a status write must not reload the page: the viewer already shows the new value
-      if (file === resolve(root, STATUS_FILE)) return [];
+      // a status change, from the board or from Claude editing the file: send the file to the browser, no reload
+      if (file === resolve(root, STATUS_FILE)) {
+        ctx.server.ws.send({ type: 'custom', event: 'orbito:status', data: readJson(file, {}) });
+
+        return [];
+      }
       // the model mode shows in the top bar and on the skills map
       if (rel === '.orbito/settings.json' || rel === '.orbito/settings.local.json' || rel === '.orbito/models.json') {
         const mod = ctx.server.moduleGraph.getModuleById(RESOLVED);

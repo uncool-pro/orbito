@@ -38,6 +38,7 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
   const world = useRef<HTMLDivElement>(null);
   const ctrl = useRef<CanvasController | null>(null);
   const code = (id: string) => byId.get(id)?.code ?? id;
+  const name = (id: string) => byId.get(id)?.title.split(' / ').pop() ?? id;
 
   useLayoutEffect(() => {
     const el = root.current;
@@ -188,7 +189,7 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
                   className={`pd-fedge pd-fedge--${e.kind}${on ? ' is-on' : focusId ? ' is-faded' : ''}`}
                   markerEnd={`url(#pd-fa-${e.kind})`}
                 >
-                  <title>{`${code(e.from)} → ${code(e.to)}${e.label ? ` · „${e.label}”` : ''}${e.flows.length ? ` · ${e.flows.join(', ')}` : ''}`}</title>
+                  <title>{`${name(e.from)} → ${name(e.to)}${e.label ? ` · „${e.label}”` : ''}${e.flows.length ? ` · ${e.flows.join(', ')}` : ''}`}</title>
                 </path>
               );
             })}
@@ -221,9 +222,9 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
                 onPointerEnter={() => setHover(n.id)}
                 onDoubleClick={() => (window.location.hash = screenHash(n.id))}
               >
-                <b>{code(n.id)}</b>
                 <span>{s.title.split(' / ').pop()}</span>
-                {exits.length > 0 && <small className="pd-fbox__exits">→ {exits.map(code).join(', ')}</small>}
+                <b>{code(n.id)}</b>
+                {exits.length > 0 && <small className="pd-fbox__exits" title={exits.map((id) => byId.get(id)?.title ?? id).join('\n')}>→ {exits.length === 1 ? (byId.get(exits[0]!)?.title.split(' / ').pop() ?? exits[0]) : t.exitsCount(exits.length)}</small>}
               </div>
             );
           })}

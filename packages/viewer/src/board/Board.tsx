@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { computeLayout, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
+import { computeLayout, flowStatusId, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
 import type { Card, Page, Status } from '@uncool-pro/orbito-core';
 
 import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
@@ -13,6 +13,7 @@ import { centerOn, fitRect, intersects, visibleWorld, zoomAt, zoomTo } from '../
 import type { Camera } from '../canvas/camera';
 import { CanvasController } from '../canvas/controller';
 import type { Scroller } from '../canvas/controller';
+import { StatusChip } from '../app/StatusChip';
 import { BoardCard } from './BoardCard';
 import { useFindingTitles } from './findings';
 
@@ -227,8 +228,32 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
 
     return set;
   }, [hover, layout, links]);
+  // statuses belong to features (flows); a card takes the status of the flow its lane shows
+  const flowOfLane = useMemo(() => new Map(layout.lanes.map((l) => [l.key, l.flowKey])), [layout.lanes]);
+  const flowStatus = (flowKey: string) => statusOf(statuses, flowStatusId(page.key, flowKey));
+  // people read names, not codes: the functional name of a screen, and the feature a way out leads to
+  const nameOf = (id: string) => byId.get(id)?.title.split(' / ').pop() ?? id;
+  // a screen of the same feature is named by the screen; any other way out by the feature it opens ("arrow to a section")
+  const exitsOf = (targets: string[], flowKey?: string) =>
+    [
+      ...new Set(
+        targets.map((id) => {
+          if (page.flows.find((f) => f.key === flowKey)?.screens.includes(id)) return nameOf(id);
+          const inPage = page.flows.find((f) => f.screens.includes(id));
+          if (inPage) return inPage.name;
+          const elsewhere = project.pages.flatMap((p) => p.flows.map((f) => ({ p, f }))).find(({ f }) => f.screens.includes(id));
+
+          return elsewhere ? `${elsewhere.p.name} · ${elsewhere.f.name}` : nameOf(id);
+        }),
+      ),
+    ];
+  const flowOfCard = (key: string) => {
+    const card = layout.cards.find((c) => c.key === key);
+
+    return card && flowOfLane.get(card.laneKey);
+  };
   const cardState = (c: Card): 'idle' | 'hl' | 'dim' => {
-    if (statusFilter && statusOf(statuses, c.screenId).status !== statusFilter) return 'dim';
+    if (statusFilter && flowStatus(flowOfLane.get(c.laneKey) ?? c.laneKey).status !== statusFilter) return 'dim';
     if (related) return related.has(c.screenId) ? 'hl' : 'dim';
     if (selected) return selected === c.screenId ? 'hl' : 'idle';
 
@@ -239,15 +264,14 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   const counts = useMemo(() => {
     const n = new Map<Status, number>();
 
-    new Set(layout.cards.map((c) => c.screenId)).forEach((id) => {
-      if (!byId.get(id)?.code) return;
-      const st = statusOf(statuses, id).status;
+    page.flows.forEach((f) => {
+      const st = statusOf(statuses, flowStatusId(page.key, f.key)).status;
 
       n.set(st, (n.get(st) ?? 0) + 1);
     });
 
     return n;
-  }, [layout.cards, statuses, byId]);
+  }, [page, statuses]);
 
   // the inspector shows the page summary when nothing is selected
   const screensCount = new Set(layout.cards.map((c) => c.screenId)).size;
@@ -256,7 +280,17 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     setInspectorExtra(
       <section className="pd-insp">
         <h4>{t.summary}</h4>
-        <p className="pd-muted">{links ? t.cards(screensCount) : t.detecting}</p>
+        <p className="pd-muted">{links ? t.featuresSummary(page.flows.length, screensCount) : t.detecting}</p>
+        <ul className="pd-insp__features">
+          {page.flows.map((f) => (
+            <li key={f.key}>
+              <a href={`#/board/${page.key}/${f.key}`}>
+                <b>{f.key}</b> {f.name}
+              </a>
+              <StatusChip id={flowStatusId(page.key, f.key)} entry={flowStatus(f.key)} />
+            </li>
+          ))}
+        </ul>
         <ul className="pd-insp__counts">
           {STATUSES.filter((st) => counts.get(st)).map((st: Status) => (
             <li key={st}>
@@ -264,12 +298,11 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
             </li>
           ))}
         </ul>
-        <p className="pd-muted pd-insp__hint">{t.hint}</p>
       </section>,
     );
 
     return () => setInspectorExtra(null);
-  }, [counts, screensCount, links, t]);
+  }, [counts, screensCount, links, t, page, statuses]);
 
   return (
     <div
@@ -303,6 +336,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
                   <b>{l.key}</b>
                   <span>{l.name}</span>
                   <small>{t.cards(l.cards.length)}</small>
+                  <StatusChip id={flowStatusId(page.key, l.flowKey)} entry={flowStatus(l.flowKey)} />
                 </>
               )}
             </div>
@@ -320,7 +354,6 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
               live={mounted.has(c.key)}
               state={cardState(c)}
               active={active === c.key}
-              status={statusOf(statuses, c.screenId)}
               findingTitles={findingTitles[c.laneKey]}
             />
           );
@@ -347,19 +380,33 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
               </g>
             );
           })}
-          {layout.stubs.map((s) => (
-            <g key={s.cardKey} className={`pd-stub${hover.card === s.cardKey ? ' is-on' : ''}`}>
-              <path d={`M${s.x} ${s.y + 2} L${s.x} ${s.y + 22}`} markerEnd="url(#pd-arrow-tie)" />
-              <text x={s.x} y={s.y + 38} textAnchor="middle">
-                → {s.targets.map((id) => byId.get(id)?.code ?? id).join(', ')}
-              </text>
-            </g>
-          ))}
+          {layout.stubs.map((s) => {
+            const on = hover.card === s.cardKey;
+
+            // quiet by default (an arrow and how many ways out); the names show on hover — a way into another
+            // feature is named by that feature, not by a screen code
+            return (
+              <g key={s.cardKey} className={`pd-stub${on ? ' is-on' : ''}`}>
+                <path d={`M${s.x} ${s.y + 2} L${s.x} ${s.y + 22}`} markerEnd="url(#pd-arrow-tie)" />
+                {on ? (
+                  exitsOf(s.targets, flowOfCard(s.cardKey)).map((label, i) => (
+                    <text key={label} x={s.x} y={s.y + 40 + i * 18} textAnchor="middle">
+                      → {label}
+                    </text>
+                  ))
+                ) : (
+                  <text x={s.x} y={s.y + 38} textAnchor="middle" className="pd-stub__count">
+                    {s.targets.length}
+                  </text>
+                )}
+              </g>
+            );
+          })}
           {hoveredEdge && (
             <g className="pd-edge-label" transform={`translate(${hoveredEdge.mid.x} ${hoveredEdge.mid.y})`}>
               <text textAnchor="middle" y={-8}>
                 {hoveredEdge.label ? `“${hoveredEdge.label}” → ` : '→ '}
-                {byId.get(hoveredEdge.to)?.code ?? hoveredEdge.to}
+                {nameOf(hoveredEdge.to)}
               </text>
             </g>
           )}

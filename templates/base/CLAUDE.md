@@ -12,7 +12,7 @@ This project holds the product's mockups as code, viewed with Orbito: a board of
 - `design-system/` — `tokens.json` (every value, each with a usage note), components in `atoms/` → `molecules/` → `organisms/` → `templates/`, each with a `<Name>.docs.tsx` (description, do/don't, variants), all exported from `design-system/index.ts`. It starts as a neutral base kit: restyle it through tokens before changing components.
 - `screens/**/<id>.screen.tsx` — one screen per file: default export = component, `export const meta = defineScreen({ code, title, viewport?, back?, requirements? })`. File name = id; codes (`AB-01`) are permanent.
 - `flows/*.flow.ts` — pages and flows of the board; `versions` hold alternatives (a review, another concept) next to the original.
-- `.orbito/status.json` — screen statuses (set on the board). `.orbito/process.md` — the design process.
+- `.orbito/status.json` — feature statuses, one per flow (`flow:<page>/<flow>`), set on the board or by you in the file; the board updates by itself. `.orbito/process.md` — the design process.
 
 ## Team (agents) and skills
 Three layers (the map is at `#/skills`): **Orbito** (you) runs a **process** that fits the project — `process-new-product`, `process-redesign`, `process-rapid-prototype`, `process-landing-page` — and calls the **roles** in `.claude/agents/` for its steps; each role preloads its **competences** (skills in `.claude/skills/`):

@@ -1,11 +1,10 @@
 import { memo } from 'react';
 import type { ComponentType } from 'react';
 
-import type { Card, Screen, StatusEntry, Viewport } from '@uncool-pro/orbito-core';
-import { FrameContext, screenHash } from '@uncool-pro/orbito-runtime';
+import type { Card, Screen, Viewport } from '@uncool-pro/orbito-core';
+import { FrameContext } from '@uncool-pro/orbito-runtime';
 
 import { ErrorBoundary } from '../app/ErrorBoundary';
-import { StatusChip } from '../app/StatusChip';
 import { useT } from '../i18n';
 
 /**
@@ -40,11 +39,10 @@ type Props = {
   live: boolean;
   state: 'idle' | 'hl' | 'dim';
   active: boolean;
-  status: StatusEntry;
   findingTitles?: Record<number, string>;
 };
 
-export const BoardCard = memo(({ card, screen, viewport, live, state, active, status, findingTitles }: Props) => {
+export const BoardCard = memo(({ card, screen, viewport, live, state, active, findingTitles }: Props) => {
   const t = useT();
 
   return (
@@ -54,17 +52,10 @@ export const BoardCard = memo(({ card, screen, viewport, live, state, active, st
       data-screen={card.screenId}
       style={{ left: card.x, top: card.y, width: card.w, height: card.h }}
     >
-      <div className="pd-card__head">
-        <div className="pd-card__title">
-          <b>{screen.code ?? screen.id}</b>
-          <span>{screen.title}</span>
-        </div>
-        <div className="pd-card__tools">
-          {screen.code && <StatusChip id={screen.id} entry={status} />}
-          <a data-pd-ui className="pd-card__open" href={screenHash(screen.id)} title={t.open} aria-label={t.open}>
-            ↗
-          </a>
-        </div>
+      {/* a light caption above the screen, as in design tools: the functional name first, the code small */}
+      <div className="pd-card__head" title={screen.title}>
+        <span className="pd-card__name">{screen.title.split(' / ').pop()}</span>
+        {screen.code && <span className="pd-card__code">{screen.code}</span>}
       </div>
       {card.version && (
         <div className="pd-card__badges">

@@ -21,7 +21,7 @@ Boundaries: `core` never imports React or the DOM; `runtime` never imports `view
 - `screens/**/<id>.screen.tsx` — default export = component, `export const meta = defineScreen({ code, title, viewport?, back?, requirements? })`. The file name is the id.
 - `flows/*.flow.ts` — `definePage({ key, name, flows: [{ key, name, screens: [...ids], versions? }] })`.
 - `design-system/` — tokens, atoms, molecules, organisms. Screens use only the design system.
-- `.orbito/status.json` — screen statuses, written by the board in dev.
+- `.orbito/status.json` — feature (flow) statuses, `flow:<page>/<flow>`, written by the board in dev or by Claude; the dev server pushes changes to the open board.
 
 Links are declared once, where they are drawn: an element with `data-pd-to` (via `useLinkProps` / `<Link>`). The viewer renders every screen offscreen once (`viewer/src/board/probe.tsx`) and reads the links and their positions; the board draws arrows from the triggering element.
 

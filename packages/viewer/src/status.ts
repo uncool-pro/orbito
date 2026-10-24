@@ -3,7 +3,7 @@ import { useSyncExternalStore } from 'react';
 import type { Status, StatusFile } from '@uncool-pro/orbito-core';
 
 /**
- * Screen statuses. The build ships the file's content read-only; the dev server reads and writes `.orbito/status.json`
+ * Feature statuses (one per flow, `flow:<page>/<flow>`). The build ships the file's content read-only; the dev server reads and writes `.orbito/status.json`
  * through the Vite plugin (`/__orbito/status`), so a change on the board is a change in the repo (and in git history).
  */
 let state: StatusFile = {};
@@ -25,6 +25,14 @@ export const initStatuses = (initial: StatusFile, canEdit: boolean) => {
       })
       .catch(() => undefined);
 };
+
+// the dev server pushes the file whenever it changes, also when Claude edits it
+const hot = (import.meta as unknown as { hot?: { on: (event: string, cb: (data: StatusFile) => void) => void } }).hot;
+
+hot?.on('orbito:status', (file) => {
+  state = file;
+  emit();
+});
 
 export const useStatuses = () =>
   useSyncExternalStore(

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 
-import { DS_LEVELS, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
+import { DS_LEVELS, flowStatusId, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
 import type { Page, Project, Screen, Status } from '@uncool-pro/orbito-core';
 import { screenHash } from '@uncool-pro/orbito-runtime';
 
@@ -9,7 +9,6 @@ import { LiveScreen } from '../../board/BoardCard';
 import { useT } from '../../i18n';
 import { useStatuses } from '../../status';
 import { useViewer } from '../context';
-import { StatusChip } from '../StatusChip';
 import { useInspectorExtra, useShell, useZoom } from './state';
 
 export type Mode = 'board' | 'flows' | 'prototype' | 'ds' | 'skills';
@@ -266,7 +265,6 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
           onDoubleClick={() => (window.location.hash = screenHash(id))}
           title={s.title}
         >
-          <i className={`pd-dot pd-status--${statusOf(statuses, id).status}`} />
           <b>{s.code ?? '·'}</b>
           <span>{s.title.split(' / ').pop()}</span>
         </button>
@@ -310,7 +308,8 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
                         </button>
                         <a className={`pd-tree__flow${flowKey === f.key ? ' is-on' : ''}`} href={`#/${base}/${p.key}/${f.key}`} title={t.pathKinds[f.path ?? 'happy']}>
                           <i className={`pd-path-dot pd-path--${f.path ?? 'happy'}`} />
-                          <b>{f.key}</b> {f.name}
+                          <b>{f.key}</b> <span className="pd-tree__name">{f.name}</span>
+                          <i className={`pd-dot pd-status--${statusOf(statuses, flowStatusId(p.key, f.key)).status}`} title={t.statusLabels[statusOf(statuses, flowStatusId(p.key, f.key)).status]} />
                         </a>
                       </div>
                       {expanded && (
@@ -381,16 +380,19 @@ const DsTree = ({ section }: { section?: string }) => {
 
 const Inspector = ({ mode }: { mode: Mode }) => {
   const { selected } = useShell();
+  const t = useT();
   const { project } = useViewer();
   const extra = useInspectorExtra();
   const s = selected ? project.screens.find((x) => x.id === selected) : undefined;
 
   return (
-    <aside className="pd-inspector" data-pd-ui>
-      {s ? <ScreenInspector screen={s} mode={mode} /> : (
+    <aside className="pd-inspector" data-pd-ui aria-label={t.details}>
+      {s ? (
+        <ScreenInspector screen={s} mode={mode} />
+      ) : (
         <>
           {mode !== 'prototype' && extra}
-          <ViewOptionsPanel mode={mode} />
+          <p className="pd-muted pd-insp__hint">{mode === 'prototype' ? t.prototypeHint : t.selectHint}</p>
         </>
       )}
     </aside>
@@ -400,7 +402,6 @@ const Inspector = ({ mode }: { mode: Mode }) => {
 const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; mode: Mode }) => {
   const { project, links, ds } = useViewer();
   const { select } = useShell();
-  const statuses = useStatuses();
   const t = useT();
   const vp = project.viewports[s.viewport ?? project.config.defaultViewport]!;
   const scale = Math.min(236 / vp.width, 300 / vp.height);
@@ -412,29 +413,25 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
   const parts = ds.report.screens[s.id] ?? [];
   const chip = (id: string) => (
     <button key={id} type="button" className="pd-mini-chip" onClick={() => (mode === 'prototype' ? (window.location.hash = screenHash(id)) : select(id, { focus: true }))}>
-      <b>{byId.get(id)?.code ?? id}</b> {byId.get(id)?.title.split(' / ').pop()}
+      {byId.get(id)?.title.split(' / ').pop() ?? id} <small>{byId.get(id)?.code}</small>
     </button>
   );
 
   return (
     <div className="pd-insp">
       <div className="pd-insp__head">
-        <b>{s.code ?? s.id}</b>
+        <b>{s.title.split(' / ').pop()}</b>
         <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => select(null)} aria-label={t.close}>
           ×
         </button>
       </div>
-      <p className="pd-insp__title">{s.title}</p>
+      <p className="pd-insp__title">
+        {s.title} <small>{s.code}</small>
+      </p>
       {mode !== 'prototype' && (
         <div className="pd-insp__preview" style={{ width: frame.w, height: frame.h }}>
           <LiveScreen screen={s} viewport={vp} card={{ frame }} />
         </div>
-      )}
-      {s.code && (
-        <section>
-          <h4>{t.status}</h4>
-          <StatusChip id={s.id} entry={statusOf(statuses, s.id)} />
-        </section>
       )}
       {s.note && (
         <section>
@@ -490,13 +487,26 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
   );
 };
 
+/** View options of the canvas (filter, versions, other links, wheel), in a small menu on the island. */
+const ViewMenu = ({ mode }: { mode: Mode }) => {
+  const t = useT();
+
+  return (
+    <details className="pd-viewmenu">
+      <summary>{t.view}</summary>
+      <div className="pd-viewmenu__pop">
+        <ViewOptionsPanel mode={mode} />
+      </div>
+    </details>
+  );
+};
+
 const ViewOptionsPanel = ({ mode }: { mode: Mode }) => {
   const { options, setOptions } = useShell();
   const t = useT();
 
   return (
     <section className="pd-insp pd-insp--options">
-      <h4>{t.view}</h4>
       {mode === 'prototype' ? (
         <p className="pd-muted">{t.prototypeHint}</p>
       ) : (
@@ -525,7 +535,6 @@ const ViewOptionsPanel = ({ mode }: { mode: Mode }) => {
           <label className="pd-toggle">
             <input type="checkbox" checked={options.wheelZooms} onChange={(e) => setOptions({ wheelZooms: e.target.checked })} /> {t.wheelZooms}
           </label>
-          <p className="pd-muted pd-insp__hint">{t.selectHint}</p>
         </>
       )}
     </section>
@@ -556,6 +565,7 @@ const Island = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
           {t.prototype}
         </a>
       </div>
+      {canZoom && <ViewMenu mode={mode} />}
       {canZoom && (
         <div className="pd-island__zoom">
           <button type="button" onClick={() => canvas.current?.zoomBy(0.8)} aria-label={t.zoomOut}>
