@@ -30,11 +30,18 @@ Links are declared once, where they are drawn: an element with `data-pd-to` (via
 - Components live in level folders: `atoms/` → `molecules/` → `organisms/` → `templates/`. A component builds only on its own level or lower ones. Exported PascalCase names, unique across the system, re-exported from `design-system/index.ts`.
 - Next to each component: `<Name>.docs.tsx` with `defineDocs({ component, description, guidelines: { do, dont }, variants: [{ name, render, note?, width? }] })` — every variant and state the component has.
 - Screens import from `design-system` (entry point) only; no raw `<button>`/`<a>`/`<input>`, no event handlers, no raw colours, no hard-coded spacing or fonts. Something missing → add it to the design system first, then use it.
+- A deliberate one-off in a screen is marked `// ds-exception: <why>` (line above or end of line): the analyzer turns that line's issues into an `info` entry with the reason (rule `ds-exception`), so exceptions stay visible in Health; without a reason it is not an exception.
 - `npm run check:ds` (`orbito check ds [--json] [--strict]`) runs the same check the catalog shows at `#/ds/health`. Run it after every change; errors fail CI.
 - The analyzer lives in `packages/cli/src/analyze.ts` (TypeScript AST, no browser). Add a rule there with a test in `packages/cli/test/analyze.test.ts`.
 
 ## Board input rules (keep them this simple)
 Drag anywhere pans; two-finger scroll / wheel pans; pinch or Ctrl/⌘ + wheel zooms at the cursor; click a card to start the prototype from that screen (no hover overlays on cards: hovering only highlights related screens and arrows); Esc leaves; Shift+1 fit. Camera math is pure (`canvas/camera.ts`, unit-tested); input handling is `canvas/controller.ts` (pointer capture, no React re-render while moving).
+
+## Stable core (towards 1.0)
+People's projects depend on how the board, the flows diagram and the prototype behave. These parts are the stable core: **fix them, do not redesign them**, and build new things around them (new views, panels, skills), not into them.
+- The core: board layout (`core/src/layout.ts`), the flows graph (`core/src/flowgraph.ts`), the camera and input (`viewer/src/canvas/`), link detection (`viewer/src/board/probe.tsx`), the screen frames (`runtime/src/frames.tsx`), the project convention and `orbito update`.
+- Every fix in the core comes with a test that fails without it (e.g. `viewer/test/controller.test.ts`: a click must reach the screen under the cursor). Test real input in the browser too — a synthetic `click()` on an element skips what the browser does between press and click.
+- A change of behaviour there (a default, a gesture, a file format) needs Jakub's OK and a "Changed" note in the changelog with what people must do; anything that would break existing projects ships with its migration in `orbito update`.
 
 ## Template vs demo
 `templates/base` is what every new project starts from: keep it neutral, generic and passing `check:ds` with 0 errors and 0 warnings. `demo/` is a finished example project with its own design system. Changes to the base kit go to the template; the demo shows what a project looks like after the kickoff.

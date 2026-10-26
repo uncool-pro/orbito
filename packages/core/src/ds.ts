@@ -62,6 +62,7 @@ export const defineDocs = <R>(docs: ComponentDocs<R>): ComponentDocs<R> => docs;
 
 export type DsRule =
   | 'raw-color'
+  | 'ds-exception'
   | 'raw-font'
   | 'raw-spacing'
   | 'unknown-token'

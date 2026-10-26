@@ -6,7 +6,7 @@
     "ux-designer": { "model": "opus", "effort": "high" },
     "ui-designer": { "model": "opus", "effort": "medium" },
     "ui-designer/look-and-feel": { "model": "opus", "effort": "high" },
-    "design-auditor": { "model": "sonnet", "effort": "high" },
+    "design-auditor": { "model": "opus", "effort": "medium" },
     "synthetic-user": { "model": "sonnet", "effort": "high" }
   },
   "high": {
@@ -16,7 +16,7 @@
     "ux-designer": { "model": "opus", "effort": "xhigh" },
     "ui-designer": { "model": "opus", "effort": "high" },
     "ui-designer/look-and-feel": { "model": "opus", "effort": "xhigh" },
-    "design-auditor": { "model": "opus", "effort": "medium" },
+    "design-auditor": { "model": "opus", "effort": "high" },
     "synthetic-user": { "model": "opus", "effort": "medium" }
   }
 }

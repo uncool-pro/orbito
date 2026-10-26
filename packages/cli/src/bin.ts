@@ -71,6 +71,8 @@ const updateCmd = () => {
     const changes = [...r.added.map((x) => `+ ${x}`), ...r.updated.map((x) => `~ ${x}`), ...r.removed.map((x) => `- ${x}`)];
 
     console.log(changes.length ? changes.join('\n') : 'skills, agents and commands are up to date');
+    r.conflicts.forEach((x) => console.log(paint(33, `! ${x}: one of yours has this name, so Orbito's was not installed — rename yours and run the update again`)));
+    if (r.backedUp.length) console.log(paint(33, `! edits you made to Orbito's items were saved before the update: ${r.backedUp.join(', ')} — put your additions in a skill of your own`));
     console.log(paint(2, 'Your screens, flows and design system were not changed. New template pieces are listed in CHANGELOG.md of Orbito.'));
   } catch (e) {
     console.error(paint(31, 'update failed: ') + (e instanceof Error ? e.message : String(e)));

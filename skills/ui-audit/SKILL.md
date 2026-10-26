@@ -5,7 +5,7 @@ description: UI audit of Orbito mockups after the UX designer — consistency wi
 
 # UI audit
 
-The UI designer is the guardian of the design system. The audit checks that what the UX side built is built right, visually. It does not redesign flows.
+**Role:** design auditor — the UI designer builds the design system and the screens, the auditor checks them with fresh eyes. The audit checks that what was built is built right, visually. It does not redesign flows and does not decide: the findings go to `design-decisions`.
 
 ## First the machine, then the eye
 1. `npm run check:ds` — raw values, imports outside the design system, level order, undocumented components. Fix or report all errors first.

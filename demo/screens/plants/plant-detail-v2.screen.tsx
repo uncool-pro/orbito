@@ -5,10 +5,10 @@ import { AppBar, Button, Icon, PlantThumb, Text } from '../../design-system';
 
 export const meta = defineScreen({
   code: 'PL-02·A',
-  title: 'Plants / Detail (after UX review)',
+  title: 'Plants / Detail (after UX audit)',
   back: 'plant-list',
   requirements: ['REQ-03'],
-  note: 'Version after the October UX review: watering status moves to the top (finding #1), one primary action (finding #2).',
+  note: 'Version after the October UX audit: watering status moves to the top (finding #1), one primary action (finding #2).',
 });
 
 export default function PlantDetailV2() {

@@ -11,11 +11,11 @@ export default definePage({
       screens: ['plant-list', 'plant-detail', 'watered'],
       versions: [
         {
-          key: 'ux-review',
-          name: 'After UX review',
+          key: 'ux-audit',
+          name: 'After UX audit',
           date: '2026-10-19',
           state: 'open',
-          report: 'reviews/2026-10-ux-review.md',
+          report: 'reviews/2026-10-ux-audit.md',
           screens: [{ id: 'plant-detail-v2', replaces: 'plant-detail', findings: [1, 2] }],
         },
       ],

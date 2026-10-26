@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { purposeOf } from '@uncool-pro/orbito-core';
 import type { ProcessInfo, SkillInfo } from '@uncool-pro/orbito-core';
 
-import { OrbitoMark } from '../app/Logo';
+import { OrbitoWordmark } from '../app/Logo';
 import { useViewer } from '../app/context';
 import { useT } from '../i18n';
 
@@ -112,8 +112,7 @@ export const SkillsMap = () => {
       <section className="pd-team__lead">
         <div className="pd-team__card pd-team__card--lead">
           <div className="pd-team__name">
-            <OrbitoMark className="pd-logo" />
-            <b>{t.leadName}</b>
+            <OrbitoWordmark className="pd-wordmark pd-wordmark--lead" title={t.leadName} />
             <span className="pd-team__model is-strongest">{t.leadModel}</span>
           </div>
           <p className="pd-team__role">{t.leadRole}</p>
@@ -162,6 +161,32 @@ export const SkillsMap = () => {
           ))}
         </div>
       </section>
+
+      {team.own && (
+        <section className="pd-team__layer pd-team__layer--own">
+          <h2>{t.ownTitle}</h2>
+          <p className="pd-team__layer-lead">{t.ownLead}</p>
+          <div className="pd-team__agents">
+            {team.own.agents.map((a) => (
+              <article key={a.name} className="pd-team__card">
+                <div className="pd-team__name">
+                  <b>{label(a.name)}</b>
+                </div>
+                <p className="pd-team__role" title={a.description}>
+                  {purposeOf(a.description)}
+                </p>
+                <SkillList names={a.skills} byName={byName} />
+              </article>
+            ))}
+            {team.own.skills.length > 0 && (
+              <article className="pd-team__card">
+                <p className="pd-team__count">{t.competencesCount(team.own.skills.length)}</p>
+                <SkillList names={team.own.skills} byName={byName} />
+              </article>
+            )}
+          </div>
+        </section>
+      )}
     </div>
   );
 };

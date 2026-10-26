@@ -29,6 +29,7 @@ Orbito keeps a product's mockups as code and shows them as a board of flows, a f
 
 ## Rules that are checked
 - Screens are built only from the design system (`import … from '../../design-system'`): no raw `<button>`, `<a>`, `<input>`, no event handlers, no raw colours, spacing or fonts. Something missing? Add it to the design system first (right level, docs with variants), then use it.
+- A visual change a screen needs goes into the design system (change the component or add a variant), or — only with the person's agreement — stays as a one-off marked `// ds-exception: <why>`; `check:ds` then lists it in Health with its reason. Ask, never decide this silently.
 - Links are declared where they are drawn: `to="<screen id>"` or `back` on a design-system component; a transition the person does not trigger (error, timeout, auto-return) is a `<Transition to on label />` from the runtime. Pages published as a static site use `href` instead (`#section-id` or a full address).
 - A page meant to be published (a landing) is exported with `npm run export` (`site` in `orbito.config.ts`) into `site/`, a static folder for any host. Never publish or deploy it yourself.
 - After every change: `npm run check:ds` (0 errors), `npm run typecheck`, then look at the board (`#/board`) and the flows diagram (`#/flows`): no dead ends, no unreachable screens, no flow step without a link.
@@ -51,7 +52,15 @@ The main session is Orbito, the lead: it uses the `orbito` skill to keep the str
 When something goes against what the person wanted or the tool fails, add an anonymous note with `product-feedback` (`feedback.md`). Never change skills because of it unless the person asks.
 
 ## Updating Orbito
-`npm run update` (or `/orbito-update`) pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; the project's own files are never changed. What changed is in Orbito's `CHANGELOG.md`: tell the person in plain words and ask before applying anything that touches the project template. The map of Orbito, its agents and skills is at `#/skills`.
+When the person asks to update Orbito — in any words — run **`npm run update`** (`npx orbito update --pull` in a project without that script) and follow `/orbito-update`. Always the whole command, never a part of it: no `git pull` in the Orbito folder by hand, no copying single skills, no "only the engine, to be safe". The command is the safe way; a half-done update leaves the engine and the skills out of step.
+- **It changes:** the Orbito folder (the engine), Orbito's skills, agents and commands in `.claude/`, `.orbito/models.json`, `.orbito/managed.json` (the list of what Orbito installed), the personal lines of `.gitignore`, the `update` script in `package.json`.
+- **It never changes:** screens, flows, the design system, `requirements/`, `content/`, `raw/`, `.orbito/process.md`, `status.json`, the model settings, `CLAUDE.md`, and the project's own skills and agents.
+- **Nothing gets lost:** an Orbito skill edited in the project is saved to `.orbito/backup/<date>/` before it is replaced; a skill of the team's that has a name Orbito uses is left alone and reported. Show these lines to the person in plain words.
+- **If it fails,** show the message and ask; never work around it by hand.
+Then tell the person what changed (Orbito's `CHANGELOG.md`, in plain words), and ask before applying anything that touches the project template. The map of Orbito, its agents and skills is at `#/skills`.
+
+## The project's own skills and agents
+Orbito's skills and agents are listed in `.orbito/managed.json` and replaced by every update: **never edit them**. When the team wants its own rules, a checklist or a role, add a new skill folder in `.claude/skills/` (or an agent in `.claude/agents/`) with a name that is not Orbito's — a team prefix such as `team-` keeps it clear — and, if an Orbito step should use it, say so in that skill or in `CLAUDE.md`. Updates never touch them, and the skills map shows them apart, as "Your skills and agents". When the person asks you to change how an Orbito skill works for this project, write the change into a skill of their own (or `CLAUDE.md`) and tell them why: inside Orbito's skill it would be replaced by the next update.
 
 ## Recording decisions
 One line per decision under "Decisions" in `.orbito/process.md`: date, what, who decided, why. Approvals also go to the phase table.

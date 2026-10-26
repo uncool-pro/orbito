@@ -16,12 +16,12 @@ A landing page is product design with a different centre of gravity: little inte
 | 2 | Value proposition | business-analyst | value-proposition | `content/research.md`, `content/value-proposition.md`, `.orbito/personas.md` | **person approves the value proposition** |
 | 3 | Funnel of sections | ux-designer | user-flows | `content/funnel.md` | **person approves the funnel** |
 | 4 | Page copy | ux-designer | page-copy | `content/copy.md`, section by section | **person approves the copy** |
-| 5 | Lo-fi page | ux-designer | wireframes | the page on the base kit with the real copy, one responsive screen (desktop, tablet, phone side by side) | UX review |
+| 5 | Lo-fi page | ux-designer | wireframes | the page on the base kit with the real copy, one responsive screen (desktop, tablet, phone side by side) | UX audit |
 | 6 | Visual direction | ui-designer | look-and-feel | five (light: three) variants of the page; after the choice only the chosen one stays | **person picks a direction**, agrees to remove the others |
 | 7 | Design system | ui-designer | design-system | tokens, fonts, section components | `check:ds` clean |
 | 8 | Hi-fi page | ui-designer | ui-design | the chosen direction on every section | — |
 | 9 | Accessibility | design-auditor | accessibility-audit | findings | high findings fixed |
-| 10 | Five-second test | synthetic-user | synthetic-usability | signals on the first screenful and the whole page | UX fixes, defends or asks |
+| 10 | Five-second test | synthetic-user | synthetic-usability | signals on the first screenful and the whole page | findings decided (`design-decisions`) |
 | 11 | Publish | orbito | process-landing-page | `npm run export` → `site/` | **person publishes** |
 
 The person approves the funnel, the copy, the chosen direction and the final page. Every approval goes to `.orbito/process.md`. Conversion data after launch is not part of Orbito yet; say so when the person asks how to measure the page.

@@ -19,7 +19,7 @@ Built from the target group recorded at the kickoff (`.orbito/process.md`). 5–
 First the five-second test: each persona sees only the first screenful (on a desktop and on a phone) and says what this is, who it is for and what they would do next. Then the whole page: where they would stop reading, what is unclear, what would stop them from saying yes, which words they do not understand. Signals about the words go to the `ux-designer` (`page-copy`), and doubts about the offer itself to the `business-analyst` (`value-proposition`).
 
 ## After
-The `ux-designer` goes through the signals with `ux-review`: fix, defend (with the reason), or ask. Personas are often wrong — they do not know technical limits or product decisions. The human UX designer decides; decisions go to `.orbito/process.md`.
+Orbito goes through the signals with the UX designer (`design-decisions`): fix, defend (with the reason), or ask. Personas are often wrong — they do not know technical limits or product decisions. The human UX designer decides; decisions go to `.orbito/process.md`.
 
 ## Report
 `reviews/<date>-synthetic-users.md`: personas used, tasks, signals grouped by screen, and the decision for each.

@@ -29,7 +29,7 @@
   background-image: radial-gradient(circle, var(--pd-dot) 1.1px, transparent 1.3px);
 }
 .pd-board.is-space, .pd-board.is-dragging { cursor: grabbing; }
-.pd-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+.pd-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 
 .pd-lane { position: absolute; left: 0; border-radius: 24px; background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(150, 158, 175, 0.35); }
 .pd-lane--version { background: rgba(107, 63, 160, 0.06); border-color: rgba(107, 63, 160, 0.25); border-style: dashed; }
@@ -299,7 +299,9 @@
 .pd-crumbs a:hover { color: var(--pd-accent); }
 .pd-crumbs span { color: #b4bac5; }
 .pd-crumbs__project { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
-.pd-logo { width: 18px; height: 18px; color: var(--pd-ink); flex: none; }
+/* the wordmark takes the text colour: dark here, white on a dark surface */
+.pd-brand { display: inline-flex; align-items: center; color: var(--pd-ink); padding-right: 12px; margin-right: 2px; border-right: 1px solid var(--pd-panel-line); }
+.pd-wordmark { height: 15px; width: auto; display: block; flex: none; }
 .pd-search { position: relative; margin-left: auto; display: flex; align-items: center; }
 .pd-search__input { width: 260px; font: inherit; font-size: 13px; padding: 7px 64px 7px 12px; border: 1px solid var(--pd-panel-line); border-radius: 8px; background: var(--pd-bg); color: var(--pd-ink); }
 .pd-search__input:focus { outline: 2px solid var(--pd-accent-soft); border-color: var(--pd-accent); background: #fff; }
@@ -395,7 +397,7 @@
 .pd-team__card { position: relative; background: var(--pd-surface); border: 1px solid var(--pd-line); border-radius: 14px; padding: 18px 18px 14px; }
 .pd-team__card--lead { width: min(560px, 100%); border: 2px solid var(--pd-accent); }
 .pd-team__name { display: flex; align-items: center; gap: 8px; font-size: 16px; }
-.pd-team__name .pd-logo { width: 22px; height: 22px; }
+.pd-team__name .pd-wordmark--lead { height: 20px; color: var(--pd-ink); }
 .pd-team__model { margin-left: auto; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 999px; background: var(--pd-bg); color: var(--pd-muted); white-space: nowrap; }
 .pd-team__model.is-strongest { background: var(--pd-accent-soft); color: var(--pd-accent); }
 .pd-team__model.is-build { background: #e6eefb; color: #2a5bb0; }
@@ -534,3 +536,8 @@
 .pd-stage__size figcaption { font: 600 13px var(--pd-font); color: var(--pd-ink); }
 .pd-stage__size figcaption small { font-weight: 400; color: var(--pd-muted); margin-left: 4px; }
 .pd-stage--responsive .pd-stage__frame { box-shadow: 0 12px 40px rgba(16, 24, 40, 0.16); border-radius: 8px; overflow: hidden; }
+
+/* a way back from the skills map and the design-system catalog */
+.pd-backbar { position: sticky; top: 0; z-index: 5; padding: 10px 16px 0; pointer-events: none; }
+.pd-backbar__link { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px 5px 6px; border-radius: 8px; font: 600 13px var(--pd-font); color: var(--pd-ink); text-decoration: none; background: var(--pd-panel); border: 1px solid var(--pd-panel-line); box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06); }
+.pd-backbar__link:hover { background: var(--pd-bg); }

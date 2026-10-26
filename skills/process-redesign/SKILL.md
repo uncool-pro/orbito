@@ -14,12 +14,12 @@ Run by **Orbito** (the lead), following `orbito` → "Start from what exists". N
 | 2 | Requirements from what exists | business-analyst | user-stories | stories describing current behaviour | person confirms gaps |
 | 3 | Design system from what exists | ui-designer | design-system | tokens and components rebuilt "as they are" | `check:ds` clean |
 | 4 | Current screens rebuilt | ux-designer | wireframes | the current flows, as they are | — |
-| 5 | Audit of the current state | design-auditor | ui-audit | findings on the current state | — |
+| 5 | Audit of the current state | design-auditor | ux-audit | findings on the current state (paths and words; then `ui-audit` for the look) | — |
 | 6 | Accessibility of the current state | design-auditor | accessibility-audit | findings on the current state | — |
-| 7 | Keep / fix / redo | orbito | ux-review | a list per part, with reasons | **person approves the list** |
-| 8 | Changes to paths | ux-designer | user-flows | changed flows as versions | UX review |
-| 9 | Changed screens | ux-designer | wireframes | changed screens in versions | UX review |
-| 10 | Review with the client | orbito | ux-review | approved versions | **client and BA approve** |
+| 7 | Keep / fix / redo | orbito | design-decisions | a list per part, with reasons | **person approves the list** |
+| 8 | Changes to paths | ux-designer | user-flows | changed flows as versions | UX audit |
+| 9 | Changed screens | ux-designer | wireframes | changed screens in versions | UX audit |
+| 10 | Review with the client | orbito | design-decisions | approved versions | **client and BA approve** |
 | 11 | Stories follow the mockups | business-analyst | requirements-sync | stories and tests updated | done before development |
 
 ## Notes

@@ -6,7 +6,8 @@ import type { Page, Project, Screen, Status } from '@uncool-pro/orbito-core';
 import { screenHash } from '@uncool-pro/orbito-runtime';
 
 import { LiveScreen } from '../../board/BoardCard';
-import { OrbitoMark } from '../Logo';
+import { lastBoardHash } from '../App';
+import { OrbitoWordmark } from '../Logo';
 import { absolutePath, openInEditor, revealFile, useDevEnv } from '../../dev';
 import { useT } from '../../i18n';
 import { useStatuses } from '../../status';
@@ -45,10 +46,42 @@ export const Shell = ({ mode, page, flowKey, dsSection, children }: ShellProps) 
       <TopBar mode={mode} page={page} flowKey={flowKey} />
       {drawerOpen && <Drawer mode={mode} page={page} flowKey={flowKey} dsSection={dsSection} />}
       <main className="pd-main">
+        {isPage(mode) && <BackBar />}
         {children}
         {!isPage(mode) && <Island mode={mode} page={page} flowKey={flowKey} />}
       </main>
       {inspectorOpen && !isPage(mode) && <Inspector mode={mode} />}
+    </div>
+  );
+};
+
+/**
+ * The skills map and the design-system catalog are places you visit from the board: a way back where people look for
+ * it (top left, under the bar) and Esc, so neither is a dead end with only the breadcrumbs to leave by.
+ */
+const BackBar = () => {
+  const t = useT();
+  const back = lastBoardHash();
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement).tagName)) return;
+      window.location.hash = lastBoardHash();
+    };
+
+    window.addEventListener('keydown', onKey);
+
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
+  return (
+    <div className="pd-backbar" data-pd-ui>
+      <a href={back} className="pd-backbar__link">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M10 3.5 5.5 8l4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        {back.startsWith('#/flows') ? t.backToFlows : t.backToBoard}
+      </a>
     </div>
   );
 };
@@ -68,9 +101,12 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
       <button type="button" className="pd-iconbtn" onClick={() => togglePanel('drawer')} aria-label={t.toggleDrawer} title={t.toggleDrawer}>
         <Glyph d={PANEL_LEFT} />
       </button>
+      {/* the tool's logo, always the whole wordmark */}
+      <a className="pd-brand" href="#/board" title="Orbito">
+        <OrbitoWordmark className="pd-wordmark" />
+      </a>
       <nav className="pd-crumbs" aria-label={t.location}>
         <a className="pd-crumbs__project" href="#/board">
-          <OrbitoMark className="pd-logo" />
           {project.config.title}
         </a>
         {mode === 'ds' || mode === 'skills' ? (
@@ -95,7 +131,13 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
           )
         )}
       </nav>
-      <a className={`pd-topnav${mode === 'skills' ? ' is-on' : ''}`} href="#/skills" aria-current={mode === 'skills' ? 'page' : undefined}>
+      {/* a toggle: on the skills map, the same link takes you back to where you were */}
+      <a
+        className={`pd-topnav${mode === 'skills' ? ' is-on' : ''}`}
+        href={mode === 'skills' ? lastBoardHash() : '#/skills'}
+        aria-current={mode === 'skills' ? 'page' : undefined}
+        title={mode === 'skills' ? t.closeSkills : undefined}
+      >
         {t.skills}
       </a>
       <ModelsBadge />
@@ -437,7 +479,7 @@ const Inspector = ({ mode }: { mode: Mode }) => {
 
 const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; mode: Mode }) => {
   const { project, links, ds } = useViewer();
-  const { select } = useShell();
+  const { select, togglePanel } = useShell();
   const t = useT();
   const vp = project.viewports[s.viewport ?? project.config.defaultViewport]!;
   const scale = Math.min(236 / vp.width, 300 / vp.height);
@@ -457,8 +499,9 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
     <div className="pd-insp">
       <div className="pd-insp__head">
         <b>{s.title.split(' / ').pop()}</b>
-        <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => select(null)} aria-label={t.close}>
-          ×
+        {/* hides the panel (the same as the button in the top bar); the selection stays, so the details come back */}
+        <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => togglePanel('inspector')} aria-label={t.hidePanel} title={t.hidePanel}>
+          <Glyph d={PANEL_RIGHT} />
         </button>
       </div>
       <p className="pd-insp__title">

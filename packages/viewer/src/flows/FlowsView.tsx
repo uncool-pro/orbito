@@ -8,6 +8,7 @@ import { useViewer } from '../app/context';
 import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
 import { centerOn, fitRect, zoomAt } from '../canvas/camera';
 import { CanvasController } from '../canvas/controller';
+import { sharpWhenStill } from '../canvas/sharp';
 import { useT } from '../i18n';
 
 const KINDS: FlowEdgeKind[] = ['happy', 'alternative', 'negative', 'other'];
@@ -45,10 +46,11 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
 
     if (!el || !graph) return;
     const fit = () => fitRect({ x: 0, y: 0, w: graph.w, h: graph.h }, { w: el.clientWidth, h: el.clientHeight - 64 }, { inset: 8, pad: 48, maxK: 1.6 });
+    const place = world.current ? sharpWhenStill(world.current) : () => undefined;
     const controller = new CanvasController(el, {
       initial: fit(),
       onChange: (c) => {
-        if (world.current) world.current.style.transform = `translate3d(${c.x}px, ${c.y}px, 0) scale(${c.k})`;
+        place(c);
         el.style.backgroundSize = `${24 * c.k}px ${24 * c.k}px`;
         el.style.backgroundPosition = `${c.x}px ${c.y}px`;
         setZoom(c.k);
@@ -162,9 +164,11 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
       onPointerLeave={() => setHover(null)}
       onClick={(e) => {
         if (ctrl.current?.consumeDrag()) return;
-        const box = (e.target as Element).closest<HTMLElement>('[data-step]');
+        // the element under the cursor, whatever the browser picked as the click's target (see Board)
+        const target = (document.elementFromPoint(e.clientX, e.clientY) ?? e.target) as Element;
+        const box = target.closest<HTMLElement>('[data-step]');
 
-        if (!(e.target as Element).closest('[data-pd-ui]')) select(box?.dataset.step ?? null);
+        if (!target.closest('[data-pd-ui]')) select(box?.dataset.step ?? null);
       }}
     >
       {!graph ? (

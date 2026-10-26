@@ -1,4 +1,4 @@
-# UX review — Plants / Detail (example)
+# UX audit — Plants / Detail (example)
 
 | # | Severity | Screen | Finding | Proposal |
 |---|---|---|---|---|

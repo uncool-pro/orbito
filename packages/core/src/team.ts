@@ -10,11 +10,13 @@ export type SkillInfo = { name: string; description: string };
 export type AgentInfo = { name: string; description: string; model?: string; effort?: string; skills: string[]; skillModels?: Record<string, { model: string; effort?: string }> };
 export type ProcessStep = { n: string; step: string; role: string; skill: string; output: string; gate: string };
 export type ProcessInfo = { name: string; description: string; steps: ProcessStep[] };
-export type Team = { lead: { skills: string[] }; processes: ProcessInfo[]; agents: AgentInfo[]; skills: SkillInfo[]; models?: 'optimal' | 'high'; modelsSource?: 'env' | 'local' | 'team' | 'default' };
+/** The project's own skills and agents (not installed by Orbito): shown apart, never mixed into Orbito's team. */
+export type OwnTeam = { skills: string[]; agents: AgentInfo[] };
+export type Team = { lead: { skills: string[] }; processes: ProcessInfo[]; agents: AgentInfo[]; skills: SkillInfo[]; own?: OwnTeam; models?: 'optimal' | 'high'; modelsSource?: 'env' | 'local' | 'team' | 'default' };
 
 /** What the files hold before they are linked. */
-export type AgentSource = { name: string; description: string; model?: string; effort?: string; skills?: string[]; skillModels?: Record<string, { model: string; effort?: string }>; body: string };
-export type SkillSource = SkillInfo & { body?: string };
+export type AgentSource = { name: string; description: string; model?: string; effort?: string; own?: boolean; skills?: string[]; skillModels?: Record<string, { model: string; effort?: string }>; body: string };
+export type SkillSource = SkillInfo & { body?: string; own?: boolean };
 
 /** Skills the main session uses itself (the lead); any competence no agent owns also stays with the lead. */
 export const LEAD_SKILLS = ['orbito', 'orbito-workspace', 'project-kickoff', 'product-feedback'];
@@ -80,8 +82,9 @@ export const parseSteps = (body: string): ProcessStep[] => {
 
 export const buildTeam = (skills: SkillSource[], agents: AgentSource[]): Team => {
   const names = new Set(skills.map((s) => s.name));
+  const ownSkills = new Set(skills.filter((s) => s.own).map((s) => s.name));
   const competence = (n: string) => names.has(n) && !LEAD_SKILLS.includes(n) && !isProcess(n);
-  const linked: AgentInfo[] = agents
+  const all: AgentInfo[] = agents
     .map((a) => ({
       name: a.name,
       description: a.description,
@@ -101,10 +104,13 @@ export const buildTeam = (skills: SkillSource[], agents: AgentSource[]): Team =>
       ).filter(competence),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
+  const ownAgents = new Set(agents.filter((a) => a.own).map((a) => a.name));
+  const linked = all.filter((a) => !ownAgents.has(a.name));
   const used = new Set(linked.flatMap((a) => a.skills));
-  const lead = skills.map((s) => s.name).filter((n) => !isProcess(n) && (LEAD_SKILLS.includes(n) || !used.has(n)));
+  const lead = skills.map((s) => s.name).filter((n) => !ownSkills.has(n) && !isProcess(n) && (LEAD_SKILLS.includes(n) || !used.has(n)));
+  const own: OwnTeam = { skills: [...ownSkills].sort(), agents: all.filter((a) => ownAgents.has(a.name)) };
   const processes = skills
-    .filter((s) => isProcess(s.name))
+    .filter((s) => isProcess(s.name) && !s.own)
     .map((s) => ({ name: s.name, description: s.description, steps: parseSteps(s.body ?? '') }));
 
   return {
@@ -112,5 +118,6 @@ export const buildTeam = (skills: SkillSource[], agents: AgentSource[]): Team =>
     processes,
     agents: linked,
     skills: skills.map(({ name, description }) => ({ name, description })).sort((a, b) => a.name.localeCompare(b.name)),
+    ...(own.skills.length || own.agents.length ? { own } : {}),
   };
 };

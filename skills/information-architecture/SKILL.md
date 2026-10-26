@@ -26,4 +26,4 @@ description: UX designer's information architecture in Orbito — grouping conte
 Stories describe one long list of notifications in categories that mirror the backend (orders, system, payments, account). Users look for "what needs me today". Better: group by what the notification asks of the person — *to do*, *for information*, *problems* — with the original category as a label inside. The story is not wrong; the structure on screen is a UX decision, proposed as a version.
 
 ## Hand-over
-The tree goes to `user-flows`. Review it with `ux-review` before moving on.
+The tree goes to `user-flows`. The design auditor checks it with `ux-audit` before moving on.

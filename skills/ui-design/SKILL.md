@@ -19,6 +19,13 @@ The UX designer decides structure and behaviour; the UI designer makes each scre
 ## Designing a new screen in hi-fi
 Start from the UX spec (`wireframes`), then build it directly on the design system with the same steps 2–4.
 
+## Every visual change lands in the design system
+When a screen needs something the design system does not have, or wants it to look different (a new style, a new state, other spacing), never solve it only in the screen — that is how a design system quietly stops being true. Stop and ask the person, in plain words, with a recommendation:
+1. **Change the component** in the design system — every screen using it changes too; say how many (the catalog lists them).
+2. **Add a variant** of it — the screens that use the current look keep it.
+3. **Keep it as a one-off exception** on this screen — mark it with `// ds-exception: <why>` on the line above, so `npm run check:ds` lists it in Health with its reason instead of failing.
+Usually 1 or 2. On a branch where something is being tried out, an exception is fine until the experiment is decided; when it is merged, ask again. After every visual change run `npm run check:ds`: a new error or warning means something bypassed the design system — settle it with the person the same way.
+
 ## Done means
 - No lo-fi kit components left on migrated screens (`npm run check:ds` reports them).
 - Every screen holds with real content and in every state, on every viewport it declares.

@@ -27,7 +27,7 @@ demo/
   screens/
     plants/  account/  admin/  one file per screen: <id>.screen.tsx with `meta` (code, title, viewport…)
     data.ts                    fictional data shared by screens
-  flows/                       pages and flows of the board; a flow can have versions (e.g. after a UX review)
+  flows/                       pages and flows of the board; a flow can have versions (e.g. after a UX audit)
   reviews/                     reports that versions point to (findings #1, #2 … appear on the board)
   .orbito/status.json          screen statuses, written from the board
 ```
@@ -36,7 +36,7 @@ What it shows:
 
 - **Mobile and web in one project:** the app screens use the `mobile` viewport, the admin screens `desktop`.
 - **Links drawn once:** buttons and rows take `to="<screen id>"`; the board finds the arrows itself.
-- **A review version:** flow P1 has a version "After UX review" with a reworked detail screen (`plant-detail-v2`) tied to findings in `reviews/2026-10-ux-review.md`.
+- **A review version:** flow P1 has a version "After UX audit" with a reworked detail screen (`plant-detail-v2`) tied to findings in `reviews/2026-10-ux-audit.md`.
 - **A design system that passes every rule:** `npm run check:ds` reports 0 issues; add `color: '#ff0000'` to any screen to see a rule fire.
 
 ## Removing the demo

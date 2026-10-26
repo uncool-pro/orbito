@@ -150,11 +150,8 @@ export class CanvasController {
 
     this.drag = { id: e.pointerId, mode: sc ? 'scroll' : 'pan', lastX: e.clientX, lastY: e.clientY, startX: e.clientX, startY: e.clientY, scroller: sc ?? undefined };
     this.dragged = false;
-    try {
-      this.el.setPointerCapture(e.pointerId);
-    } catch {
-      /* pointer already gone (e.g. synthetic events) */
-    }
+    // no pointer capture yet: a capture taken on press makes browsers deliver the click to the board instead of the card
+    // under the cursor, so a plain click on a screen would never open it; capture starts with the drag (onMove)
   };
 
   private onMove = (e: PointerEvent) => {
@@ -174,6 +171,13 @@ export class CanvasController {
 
     if (!d || d.id !== e.pointerId) return;
     if (!this.dragged && Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < DRAG_SLOP) return;
+    if (!this.dragged) {
+      try {
+        this.el.setPointerCapture(e.pointerId); // keeps the drag alive outside the window
+      } catch {
+        /* pointer already gone (e.g. synthetic events) */
+      }
+    }
     this.dragged = true;
     this.el.classList.add('is-dragging');
     const dx = e.clientX - d.lastX;

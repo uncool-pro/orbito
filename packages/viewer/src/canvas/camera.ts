@@ -6,7 +6,9 @@ export type Camera = { x: number; y: number; k: number };
 export type Rect = { x: number; y: number; w: number; h: number };
 export type Size = { w: number; h: number };
 
-export const ZOOM = { min: 0.05, max: 3 } as const;
+// max: a web page shown nearly twice its real size, a phone screen two and a half times — enough to fill a large screen
+// with one screen when presenting
+export const ZOOM = { min: 0.05, max: 6 } as const;
 
 const clampK = (k: number) => Math.min(ZOOM.max, Math.max(ZOOM.min, k));
 

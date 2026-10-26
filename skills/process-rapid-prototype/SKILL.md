@@ -14,7 +14,7 @@ Run by **Orbito** (the lead). A rapid prototype is a **vertical slice**: a narro
 | 2 | Functional or with UI? | orbito | process-rapid-prototype | the decision written in `.orbito/process.md` | **person decides** |
 | 3 | User flow | ux-designer | user-flows | the happy flow of the slice, linked to its stories | — |
 | 4 | Lo-fi screens with copy | ux-designer | wireframes | the screens of the slice with real interface words (`ux-writing`), clickable end to end | — |
-| 5 | Critical UX audit | ux-designer | ux-review | findings: logic gaps, dead ends, unclear steps, missing states, copy | — |
+| 5 | Critical UX audit | design-auditor | ux-audit | findings: logic gaps, dead ends, unclear steps, missing states, copy | — |
 | 6 | Fixes, then audit again | ux-designer | wireframes | fixes; steps 5–6 repeat until the audit finds nothing that matters | audit clean |
 | 7 | UI on top (only if decided in step 2) | ui-designer | ui-design | the slice on the project's design system or the brand tokens | — |
 | 8 | Ready to show | orbito | process-rapid-prototype | the walk-through, what was built and what was left out | **person accepts the prototype** |

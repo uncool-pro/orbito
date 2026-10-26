@@ -57,19 +57,25 @@ const readTeam = (root) => {
   const dirs = teamDirs(root);
 
   if (!dirs) return null;
+  // the project's own items: neither installed by Orbito (`.orbito/managed.json`) nor shipped with it
+  const managed = readJson(resolve(root, '.orbito/managed.json'), { items: {} }).items ?? {};
+  const shipped = resolve(PACKAGES_ROOT, '..');
+  const inProject = dirs.skills === resolve(root, '.claude/skills');
+  const ownSkill = (name) => inProject && !managed[`.claude/skills/${name}`] && !existsSync(resolve(shipped, 'skills', name));
+  const ownAgent = (file) => inProject && !managed[`.claude/agents/${file}`] && !existsSync(resolve(shipped, 'agents', file));
   const skills = (existsSync(dirs.skills) ? readdirSync(dirs.skills, { withFileTypes: true }) : [])
     .filter((d) => d.isDirectory() && existsSync(resolve(dirs.skills, d.name, 'SKILL.md')))
     .map((d) => {
       const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.skills, d.name, 'SKILL.md'), 'utf8'));
 
-      return { name: data.name || d.name, description: data.description || '', body };
+      return { name: data.name || d.name, description: data.description || '', body, own: ownSkill(d.name) };
     });
   const agents = (existsSync(dirs.agents) ? readdirSync(dirs.agents) : [])
     .filter((f) => f.endsWith('.md'))
     .map((f) => {
       const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.agents, f), 'utf8'));
 
-      return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, effort: data.effort, skills: listOf(data.skills), body };
+      return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, effort: data.effort, skills: listOf(data.skills), body, own: ownAgent(f) };
     });
 
   // the model mode of the person running the viewer: environment → personal settings → the team's default

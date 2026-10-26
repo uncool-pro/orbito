@@ -45,4 +45,22 @@ describe('team', () => {
     expect(team.lead.skills).toEqual(['orbito', 'orbito-workspace', 'sales-copy']);
     expect(team.processes).toEqual([{ name: 'process-new-product', description: 'process-new-product.', steps: [{ n: '1', step: 'Paths', role: 'ux-designer', skill: 'user-flows', output: 'flows', gate: '' }] }]);
   });
+
+  it("keeps the project's own skills and agents apart from Orbito's team", () => {
+    const team = buildTeam(
+      [
+        { name: 'orbito', description: 'orbito.' },
+        { name: 'wireframes', description: 'wireframes.' },
+        { name: 'team-brand-rules', description: 'our brand.', own: true },
+      ],
+      [
+        { name: 'ux-designer', description: 'ux.', skills: ['wireframes'], body: '' },
+        { name: 'team-reviewer', description: 'ours.', skills: ['team-brand-rules'], body: '', own: true },
+      ],
+    );
+
+    expect(team.lead.skills).toEqual(['orbito']);
+    expect(team.agents.map((a) => a.name)).toEqual(['ux-designer']);
+    expect(team.own).toEqual({ skills: ['team-brand-rules'], agents: [expect.objectContaining({ name: 'team-reviewer', skills: ['team-brand-rules'] })] });
+  });
 });

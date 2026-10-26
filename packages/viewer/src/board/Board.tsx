@@ -12,6 +12,7 @@ import { useStatuses } from '../status';
 import { centerOn, fitRect, intersects, visibleWorld, zoomAt, zoomTo } from '../canvas/camera';
 import type { Camera } from '../canvas/camera';
 import { CanvasController } from '../canvas/controller';
+import { sharpWhenStill } from '../canvas/sharp';
 import type { Scroller } from '../canvas/controller';
 import { StatusChip } from '../app/StatusChip';
 import { BoardCard } from './BoardCard';
@@ -87,10 +88,11 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   useLayoutEffect(() => {
     const el = root.current!;
     let saveTimer = 0;
+    const place = sharpWhenStill(world.current!);
     const controller: CanvasController = new CanvasController(el, {
       initial: readView(viewKey) ?? fitWidth(),
       onChange: (c) => {
-        world.current!.style.transform = `translate3d(${c.x}px, ${c.y}px, 0) scale(${c.k})`;
+        place(c);
         el.style.backgroundSize = `${24 * c.k}px ${24 * c.k}px`;
         el.style.backgroundPosition = `${c.x}px ${c.y}px`;
         setZoom(c.k);
@@ -197,7 +199,9 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   // a click on the empty board clears the selection; never after a drag
   const onClick = (e: React.MouseEvent) => {
     if (ctrl.current?.consumeDrag()) return;
-    const target = e.target as Element;
+    // the element under the cursor, not the event target: whatever the browser picks as the click's target (a captured
+    // pointer, an overlay), the screen the person clicked is the one under the pointer
+    const target = (document.elementFromPoint(e.clientX, e.clientY) ?? e.target) as Element;
 
     if (target.closest('[data-pd-ui]')) return;
     const card = target.closest<HTMLElement>('[data-card]');

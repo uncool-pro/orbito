@@ -1,4 +1,9 @@
-<p><img src="assets/orbito-wordmark.svg" alt="Orbito" width="240"></p>
+<p>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/orbito-wordmark-light.svg">
+    <img src="assets/orbito-wordmark.svg" alt="Orbito" width="240">
+  </picture>
+</p>
 
 # Orbito
 

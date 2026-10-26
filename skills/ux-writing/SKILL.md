@@ -5,7 +5,7 @@ description: UX designer's interface copy in Orbito — labels, buttons, heading
 
 # UX writing
 
-**Role:** UX designer. **Works inside:** wireframes and UI design. **Checked by:** synthetic users (words people do not understand) and the UX review.
+**Role:** UX designer. **Works inside:** wireframes and UI design. **Checked by:** synthetic users (words people do not understand) and the UX audit (`ux-audit`, by the design auditor).
 
 Interface words are part of the design: a screen with the right layout and the wrong words still fails. Write them while building, never leave lorem ipsum or "Button" for later.
 

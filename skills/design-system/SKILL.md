@@ -26,6 +26,8 @@ Rebuild components in the project's mockup stack (React + TypeScript + tokens), 
 ## Replacing the lo-fi kit
 After the look & feel is approved, replace kit components one by one under the same names; `npm run check:ds` and the catalog show where each is used, so you can check the affected screens on the board. Note progress in `.orbito/process.md`.
 
+Changes requested while designing screens come here first: a screen never carries its own version of a component (see `ui-design`, "Every visual change lands in the design system"); a deliberate one-off is marked `// ds-exception: <why>` and stays visible in Health.
+
 ## Adding a component later
 Check the catalog first — most needs are a variant of something that exists. If it is new: right level, tokens only, docs with variants, then use it in the screen.
 

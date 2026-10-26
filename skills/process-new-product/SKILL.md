@@ -12,17 +12,17 @@ Run by **Orbito** (the lead). Each step names the role (agent) and the competenc
 |---|---|---|---|---|---|
 | 1 | Kickoff and sources | orbito | project-kickoff | `.orbito/process.md`, `.orbito/sources.md` | person confirms the plan |
 | 2 | Requirements | business-analyst | user-stories | what the person brought, checked and completed: epics and stories in `requirements/` | stories ready (definition of ready) |
-| 3 | Navigation and structure | ux-designer | information-architecture | `requirements/information-architecture.md` | UX review |
-| 4 | Paths | ux-designer | user-flows | flows (happy, alternative, negative) built from the stories and linked to them; `requirements/coverage.md` | UX review; gaps listed for the person and the analyst |
-| 5 | Screens (lo-fi) | ux-designer | wireframes | lo-fi screens with real copy (`ux-writing`) | UX review, `#/flows` clean |
-| 6 | Review with the client | orbito | ux-review | an approved version of the flows | **client and BA approve** |
+| 3 | Navigation and structure | ux-designer | information-architecture | `requirements/information-architecture.md` | UX audit (design-auditor) |
+| 4 | Paths | ux-designer | user-flows | flows (happy, alternative, negative) built from the stories and linked to them; `requirements/coverage.md` | UX audit; gaps listed for the person and the analyst |
+| 5 | Screens (lo-fi) | ux-designer | wireframes | lo-fi screens with real copy (`ux-writing`) | UX audit, `#/flows` clean |
+| 6 | Review with the client | orbito | design-decisions | an approved version of the flows | **client and BA approve** |
 | 7 | Stories follow the mockups | business-analyst | requirements-sync | stories and tests updated | done before development |
 | 8 | Visual direction | ui-designer | look-and-feel | five variants of one flow; after the choice only the chosen one stays | **client picks a direction**, agrees to remove the others |
 | 9 | Design system | ui-designer | design-system | tokens, components, docs; `check:ds` clean | person approves the system |
 | 10 | Screens (hi-fi) | ui-designer | ui-design | lo-fi screens migrated, new ones in hi-fi | — |
-| 11 | Consistency | design-auditor | ui-audit | `reviews/…-ui-audit.md` | findings decided (`ux-review`) |
+| 11 | Consistency | design-auditor | ui-audit | `reviews/…-ui-audit.md` | findings decided (`design-decisions`) |
 | 12 | Accessibility | design-auditor | accessibility-audit | `reviews/…-accessibility.md` | high findings fixed |
-| 13 | Would people understand it? | synthetic-user | synthetic-usability | signals per screen | UX fixes, defends or asks |
+| 13 | Would people understand it? | synthetic-user | synthetic-usability | signals per screen | findings decided (`design-decisions`) |
 
 ## Notes
 - From step 9 on, the UX designer builds new screens straight on the design system (hi-fi); the lo-fi kit is a temporary, earlier cost.

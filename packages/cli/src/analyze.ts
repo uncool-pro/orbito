@@ -13,6 +13,8 @@ import { contrastRatio, DS_LEVELS } from '../../core/src/ds.ts';
 import type { DsComponent, DsIssue, DsLevel, DsReport, TokenFile } from '../../core/src/ds.ts';
 
 const posix = (p: string) => p.split(sep).join('/');
+/** `// ds-exception: <reason>` (or inside a JSX comment) marks a deliberate departure from the design system. */
+const EXCEPTION = /ds-exception:\s*(.*?\S)\s*(?:\*\/\s*\}?)?\s*$/;
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.orbito', '.git']);
 
 const walk = (dir: string, out: string[] = []): string[] => {
@@ -236,12 +238,17 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
   // ---- screens
   const screens: Record<string, string[]> = {};
 
+  // screen lines, for deliberate exceptions (`// ds-exception: <reason>` on the line above or at the end of the line)
+  const screenLines = new Map<string, string[]>();
+
   walk(screensDir)
     .filter((f) => /\.screen\.[jt]sx$/.test(f))
     .forEach((file) => {
       const id = /([^/\\]+)\.screen\.[jt]sx$/.exec(file)![1]!;
       const { f } = scan(file, 'screen');
       const fromDs = new Set<string>();
+
+      screenLines.set(rel(file), readFileSync(file, 'utf8').split(/\r?\n/));
 
       f.imports.forEach((imp) => {
         const at = { file: rel(file), line: imp.line, screen: id };
@@ -270,6 +277,20 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
       add({ rule: 'undocumented', severity: 'warning', file: c.file, component: c.name, message: `${c.name} has no docs`, hint: `Add ${c.name}.docs.tsx next to it: description, do/don't and variants.` });
     else if (!c.variants) add({ rule: 'no-variants', severity: 'warning', file: c.file, component: c.name, message: `${c.name} docs show no variants`, hint: 'Show every variant and state the component has.' });
     if (!c.screens.length && !c.usedBy.length) add({ rule: 'unused', severity: 'info', file: c.file, component: c.name, message: `${c.name} is not used by any screen or component` });
+  });
+  // a deliberate exception in a screen stays visible (info, with its reason) instead of failing the check; one without
+  // a reason is not an exception
+  issues.forEach((i) => {
+    const lines = i.file && i.line && i.severity !== 'info' ? screenLines.get(i.file) : undefined;
+
+    if (!lines) return;
+    const reason = [lines[i.line! - 1], lines[i.line! - 2]].map((l) => (l ? EXCEPTION.exec(l)?.[1] : undefined)).find(Boolean);
+
+    if (!reason) return;
+    i.message = `exception (${reason}): ${i.message}`;
+    i.severity = 'info';
+    i.rule = 'ds-exception';
+    delete i.hint;
   });
   // tag issues with the component of their file
   issues.forEach((i) => {

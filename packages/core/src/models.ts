@@ -2,8 +2,8 @@
  * How the team's agents use models — a personal choice of each person, never a change to shared files.
  *
  * - Two profiles ship with Orbito in `agents/models.json` (copied to a project's `.orbito/models.json`):
- *   `optimal` — Opus medium for the work, Opus high for strategic decisions, Sonnet high (the floor) only for repeated
- *   checks and synthetic personas (the agent files carry these values);
+ *   `optimal` — Opus medium for the work, Opus high for strategic decisions, Sonnet high (the floor) only for synthetic
+ *   personas, run many at once (the agent files carry these values);
  *   `high` — Opus everywhere, one effort step up, very high (`xhigh`) for strategic decisions.
  * - The mode in use is resolved per person, highest first: the `ORBITO_MODELS` environment variable →
  *   `.orbito/settings.local.json` (personal, git-ignored) → `.orbito/settings.json` (the team's default, committed) → `optimal`.
