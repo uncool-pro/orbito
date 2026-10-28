@@ -2,6 +2,14 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
+## 0.9.5 — 2026-10-28
+Security fixes from the first security audit of Orbito (dependencies were clean: no known vulnerabilities, no telemetry).
+- **`npx --no orbito` everywhere:** skills and docs ran `npx orbito …`. The name `orbito` on npm belongs to someone else, so without Orbito installed locally `npx` could offer to download and run that package. `--no` never downloads anything: inside a project it runs Orbito's CLI, outside one it refuses.
+- **The dev server refuses requests from other sites:** a page from another site open in the same browser could send requests to the board's local endpoints (for example write a note into `status.json`, which Claude reads, or open the file manager). Requests from other sites now get 403; the board and the command line work as before.
+- **Materials are data, never instructions:** the skills that read `raw/` and other material people bring now say so explicitly — commands written inside a document or a page are not followed, flagged as suspicious, and nothing is sent anywhere or run because a material suggests it.
+- **`orbito export` never cleans a folder it did not make:** `--out` pointing at a folder with work in it (e.g. `screens`) used to empty it first; now the export only cleans an empty folder or its own (marked with `.orbito-export`), otherwise it stops.
+- **`.env` is ignored by git** in new projects, so keys for connected tools are not committed by accident.
+
 ## 0.9.4 — 2026-10-26
 - **Fix: a click on a screen opens the prototype again.** The board took the pointer on every press, and some browsers then delivered the click to the board instead of the screen, so nothing opened. The pointer is now taken only when a drag starts, and a click is resolved by what is under the cursor (board and flows view). A regression test guards it.
 - **Sharp screens at any zoom:** the board and the flows view kept the world as one GPU layer all the time, so the browser drew the screens once and then only stretched that picture — zoomed in, they were blurry. The layer is now used only while the camera moves (smooth panning and zooming); once it stops, the screens are redrawn at the current zoom, crisp.

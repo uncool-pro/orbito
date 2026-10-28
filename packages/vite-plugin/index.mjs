@@ -191,6 +191,15 @@ export default function orbito(options = {}) {
           res.end(typeof body === 'string' ? body : JSON.stringify(body));
         };
 
+        // only the board itself may call these: a page from another site open in the same browser must not write the status
+        // file (text Claude reads), open the file manager or read project files (the browser says where a request comes from)
+        if (url.pathname.startsWith('/__orbito/')) {
+          const site = req.headers['sec-fetch-site'];
+          const origin = req.headers.origin;
+
+          if (site === 'cross-site' || site === 'same-site' || (origin && origin !== 'null' && new URL(origin).host !== req.headers.host) || origin === 'null')
+            return reply(403, { error: 'requests from other sites are not allowed' });
+        }
         if (url.pathname === '/__orbito/file') {
           const file = resolve(root, url.searchParams.get('path') ?? '');
 

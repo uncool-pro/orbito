@@ -68,4 +68,11 @@ describe('orbito export', () => {
   it('refuses an output folder outside the project', async () => {
     await expect(exportSite({ root, out: '../elsewhere' })).rejects.toThrow(/inside the project/);
   });
+
+  it('never cleans a folder it did not make: the work in it stays', async () => {
+    await expect(exportSite({ root, out: 'screens' })).rejects.toThrow(/not made by orbito export/);
+    expect(existsSync(join(root, 'screens'))).toBe(true);
+    // its own folder is cleaned and written again
+    await expect(exportSite({ root })).resolves.toBeTruthy();
+  });
 });

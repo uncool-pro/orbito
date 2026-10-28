@@ -38,6 +38,9 @@ export type ExportResult = { screen: string; file: string; out: string; bytes: n
 
 const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
+/** Marks a folder as the export's own, so the next export may clean it. */
+export const EXPORT_MARKER = '.orbito-export';
+
 const inside = (dir: string, file: string) => {
   const rel = relative(dir, file);
 
@@ -120,9 +123,13 @@ export const exportSite = async ({ root, screen, out }: ExportOptions): Promise<
     const target = resolve(root, out ?? site?.out ?? 'site');
 
     if (!inside(root, target)) throw new Error(`output folder must be inside the project: ${target}`);
+    // only a folder an earlier export made (it has the marker) or an empty one is cleaned: \`--out screens\` must never wipe work
+    if (existsSync(target) && readdirSync(target).length && !existsSync(join(target, EXPORT_MARKER)))
+      throw new Error(`${relative(root, target)} is not empty and was not made by orbito export — pick another --out (e.g. site)`);
     // the folder belongs to the export: start clean so removed files do not linger
     rmSync(target, { recursive: true, force: true });
     mkdirSync(target, { recursive: true });
+    writeFileSync(join(target, EXPORT_MARKER), 'Made by orbito export. Everything in this folder is replaced by the next export.\n');
     let copied = 0;
     const pub = join(root, 'public');
 

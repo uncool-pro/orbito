@@ -2,6 +2,10 @@ node_modules
 dist
 *.local
 *.local.*
+
+# keys and tokens for connected tools: never committed
+.env
+.env.*
 .DS_Store
 exports/
 
