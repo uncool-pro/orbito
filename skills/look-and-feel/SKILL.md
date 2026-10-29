@@ -71,7 +71,7 @@ Fix in this order, because later steps cannot rescue earlier ones: the idea → 
 
 ## In Orbito
 - Each variant is a **version** of the chosen flow (`versions` in its flow file, `state: 'open'`, a name with its idea), built with its own tokens and components (a `design-system/variants/<name>/` folder or token overrides), so the board shows all five under the original.
-- Present them together — for a page always at **desktop, tablet and phone side by side** (one responsive implementation, see `references/pages.md`), never at a single in-between size: "I prepared five directions — which one speaks to you?" For each, give its idea sentence (and, for the bold ones, the drawn direction). Collect what people like and dislike in each, not only the winner; mixing is allowed.
+- Present them together — for a page always at **desktop, tablet and phone size** (one responsive implementation with a size switch in the prototype, see `references/pages.md`; show the person all three), never at a single in-between size: "I prepared five directions — which one speaks to you?" For each, give its idea sentence (and, for the bold ones, the drawn direction). Collect what people like and dislike in each, not only the winner; mixing is allowed.
 - Iterate while the person is still choosing: a round of feedback **changes the variants in place**; a mix of two becomes one of the five, replacing one. Never more than five variants open at once — new versions piling up on the board make it unreadable.
 
 ## Close the exploration as soon as one direction wins

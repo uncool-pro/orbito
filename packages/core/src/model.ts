@@ -32,8 +32,8 @@ export type ScreenMeta = {
   /** Viewport key; defaults to the project's `defaultViewport` (or the first of `viewports`). */
   viewport?: string;
   /**
-   * A responsive page: one implementation shown side by side at these sizes (e.g. `['desktop', 'tablet-web', 'mobile-web']`),
-   * the first one on the board. Layout changes per size come from CSS container queries on the page (`@container`).
+   * A responsive page: one implementation at these sizes (e.g. `['desktop', 'tablet-web', 'mobile-web']`), the first
+   * one on the board; the prototype shows one size at a time with a switch between them. Layout changes per size come from CSS container queries on the page (`@container`).
    */
   viewports?: string[];
   /** Logical parent screen id; `goBack()` opens it. */

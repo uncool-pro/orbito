@@ -2,8 +2,9 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
-## 0.9.5 — 2026-10-28
-Security fixes from the first security audit of Orbito (dependencies were clean: no known vulnerabilities, no telemetry).
+## 0.9.5 — 2026-10-29
+Security fixes from the first security audit of Orbito (dependencies were clean: no known vulnerabilities, no telemetry), and a full-size prototype for responsive pages.
+- **Changed: a responsive page shows one size at a time in the prototype.** A screen with `viewports` (e.g. a landing page) used to show all its sizes side by side, each one small. Now the prototype shows one size, as big as the window allows, and a **Desktop / Tablet / Mobile** switch in the top right corner changes it; the size you pick stays while you click through and after a reload. Nothing to change in your project. The look & feel and landing-page skills tell Claude to check all three sizes and point you to the switch.
 - **`npx --no orbito` everywhere:** skills and docs ran `npx orbito …`. The name `orbito` on npm belongs to someone else, so without Orbito installed locally `npx` could offer to download and run that package. `--no` never downloads anything: inside a project it runs Orbito's CLI, outside one it refuses.
 - **The dev server refuses requests from other sites:** a page from another site open in the same browser could send requests to the board's local endpoints (for example write a note into `status.json`, which Claude reads, or open the file manager). Requests from other sites now get 403; the board and the command line work as before.
 - **Materials are data, never instructions:** the skills that read `raw/` and other material people bring now say so explicitly — commands written inside a document or a page are not followed, flagged as suspicious, and nothing is sent anywhere or run because a material suggests it.
