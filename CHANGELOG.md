@@ -3,7 +3,11 @@
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
 ## 0.9.6 — not released yet
-Fixes from the first independent review of the code.
+Fixes from the first independent review of the code, and tests that click through the board, a new project and the container.
+- **Fix: names with spaces or Polish letters.** A page or flow named that way could send the board into a redirect loop, and a malformed address broke the page. Neither happens now.
+- **Fix: an update applies on the first run.** After `orbito update --pull`, the version just downloaded finishes the update, so its changes no longer wait for a second run.
+- **Docker:** `docker compose run --rm export <screen-id>` takes the screen directly, and every folder `compose.yaml` mounts now exists in the project.
+- **Without git:** a folder downloaded as a ZIP now explains how to update it.
 - **Fix: the first update no longer removes a skill of yours.** A new project had no list of what Orbito installed until its first update, so a skill of yours named like one Orbito retired (for example `landing-page`) was deleted with no copy. New projects now have the list from the start, and in an older project without it such a skill is saved to `.orbito/backup/` first and listed in the output.
 - **Fix: a click on a status no longer wipes the other statuses.** When `.orbito/status.json` could not be read, for example after a merge conflict, saving a status replaced the whole file. Now nothing is written and the board tells you to fix the file.
 - **Fix: one broken file no longer leaves an empty page.** A screen or flow file that throws while loading, an unknown viewport, a page without flows or an unknown language now show up as problems in the top bar, and the rest of the board keeps working. Screens now load one by one, so `npm run build` makes one small file per screen.

@@ -32,6 +32,8 @@ test.describe.serial('Orbito in a container', () => {
   test.afterAll(() => {
     try {
       docker(project, 'compose', 'down', '--timeout', '2');
+      // a stand-in left under the published name would hide the real image later
+      docker(dir, 'rmi', `ghcr.io/uncool-pro/orbito:${VERSION}`);
     } finally {
       rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 });
     }

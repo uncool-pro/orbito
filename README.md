@@ -29,6 +29,8 @@ Claude follows the steps below and asks you only for the project's name, platfor
 
 Later, `npm run update` in the project brings the newest Orbito (or ask Claude to "update Orbito").
 
+Not sure about the technical words? You do not need them. Tell Claude you are not a programmer, and it will explain each step and tell you what to click.
+
 ### The steps (for you, or for Claude installing Orbito for someone)
 1. Clone Orbito into a folder that stays where it is — projects link to it, and updates come from it:
    ```sh
@@ -40,6 +42,8 @@ Later, `npm run update` in the project brings the newest Orbito (or ask Claude t
    node orbito/packages/create/src/index.ts my-product --title "My product" --platform web --locale en
    ```
    It copies the project template, installs it, and checks it. Never move or rename the `orbito` folder afterwards.
+
+   No git? Download [the ZIP](https://github.com/uncool-pro/orbito/archive/refs/heads/main.zip), unpack it, rename the folder to `orbito` and carry on from `npm install`. You still need Node.js. Such a folder cannot fetch updates by itself: `npm run update` then tells you how to replace it.
 3. Tell the person to put their material into `my-product/raw/`, open Claude Code in `my-product/` and type `/orbito-init`.
 
 ## What you see
