@@ -3,18 +3,16 @@ import type { ComponentType, ReactNode } from 'react';
 
 import { DS_LEVELS, flowStatusId, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
 import type { Page, Project, Screen, Status } from '@uncool-pro/orbito-core';
-import { screenHash } from '@uncool-pro/orbito-runtime';
 
 import { LiveScreen } from '../../board/BoardCard';
-import { lastBoardHash } from '../App';
 import { OrbitoWordmark } from '../Logo';
 import { absolutePath, openInEditor, revealFile, useDevEnv } from '../../dev';
 import { useT } from '../../i18n';
 import { useStatuses } from '../../status';
 import { useViewer } from '../context';
+import { canvasHash, canvasOf, dsHash, go, lastCanvasHash, openScreen, parseRoute, pickScreen, screenHash, SKILLS_HASH } from '../routes';
+import type { Mode } from '../routes';
 import { useInspectorExtra, useShell, useZoom } from './state';
-
-export type Mode = 'board' | 'flows' | 'prototype' | 'ds' | 'skills';
 
 /** Modes that are full pages of their own: no canvas island, no screen inspector. */
 const isPage = (mode: Mode) => mode === 'ds' || mode === 'skills';
@@ -61,12 +59,12 @@ export const Shell = ({ mode, page, flowKey, dsSection, children }: ShellProps) 
  */
 const BackBar = () => {
   const t = useT();
-  const back = lastBoardHash();
+  const back = lastCanvasHash();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement).tagName)) return;
-      window.location.hash = lastBoardHash();
+      go(lastCanvasHash());
     };
 
     window.addEventListener('keydown', onKey);
@@ -80,7 +78,7 @@ const BackBar = () => {
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
           <path d="M10 3.5 5.5 8l4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        {back.startsWith('#/flows') ? t.backToFlows : t.backToBoard}
+        {parseRoute(back).view === 'flows' ? t.backToFlows : t.backToBoard}
       </a>
     </div>
   );
@@ -94,7 +92,7 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
   const t = useT();
   const flow = page?.flows.find((f) => f.key === flowKey);
   const issues = problems.length + ds.report.counts.error + ds.report.counts.warning;
-  const base = mode === 'flows' ? 'flows' : 'board';
+  const base = canvasOf(mode);
 
   return (
     <header className="pd-top" data-pd-ui>
@@ -102,27 +100,27 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
         <Glyph d={PANEL_LEFT} />
       </button>
       {/* the tool's logo, always the whole wordmark */}
-      <a className="pd-brand" href="#/board" title="Orbito">
+      <a className="pd-brand" href={canvasHash('board')} title="Orbito">
         <OrbitoWordmark className="pd-wordmark" />
       </a>
       <nav className="pd-crumbs" aria-label={t.location}>
-        <a className="pd-crumbs__project" href="#/board">
+        <a className="pd-crumbs__project" href={canvasHash('board')}>
           {project.config.title}
         </a>
         {mode === 'ds' || mode === 'skills' ? (
           <>
             <span>/</span>
-            <a href={mode === 'ds' ? '#/ds' : '#/skills'}>{mode === 'ds' ? t.designSystem : t.skills}</a>
+            <a href={mode === 'ds' ? dsHash() : SKILLS_HASH}>{mode === 'ds' ? t.designSystem : t.skills}</a>
           </>
         ) : (
           page && (
             <>
               <span>/</span>
-              <a href={`#/${base}/${page.key}`}>{page.name}</a>
+              <a href={canvasHash(base, page.key)}>{page.name}</a>
               {flow && (
                 <>
                   <span>/</span>
-                  <a href={`#/${base}/${page.key}/${flow.key}`}>
+                  <a href={canvasHash(base, page.key, flow.key)}>
                     <b>{flow.key}</b> {flow.name}
                   </a>
                 </>
@@ -134,7 +132,7 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
       {/* a toggle: on the skills map, the same link takes you back to where you were */}
       <a
         className={`pd-topnav${mode === 'skills' ? ' is-on' : ''}`}
-        href={mode === 'skills' ? lastBoardHash() : '#/skills'}
+        href={mode === 'skills' ? lastCanvasHash() : SKILLS_HASH}
         aria-current={mode === 'skills' ? 'page' : undefined}
         title={mode === 'skills' ? t.closeSkills : undefined}
       >
@@ -142,7 +140,7 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
       </a>
       <ModelsBadge />
       <Search mode={mode} />
-      <a className={`pd-health-pill${issues ? ' is-warn' : ''}`} href="#/ds/health" title={t.health}>
+      <a className={`pd-health-pill${issues ? ' is-warn' : ''}`} href={dsHash('health')} title={t.health}>
         {issues ? `${issues} ${t.issuesShort}` : `✓ ${t.health}`}
       </a>
       {!isPage(mode) && (
@@ -164,7 +162,7 @@ export const ModelsBadge = () => {
 
   return (
     <span className="pd-models">
-      <a className={`pd-models__pill is-${mode}`} href="#/skills" aria-describedby="pd-models-tip">
+      <a className={`pd-models__pill is-${mode}`} href={SKILLS_HASH} aria-describedby="pd-models-tip">
         {t.modelsBadge[mode]}
       </a>
       <span id="pd-models-tip" role="tooltip" className="pd-models__tip">
@@ -204,17 +202,17 @@ const Search = ({ mode }: { mode: Mode }) => {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const go = (s: Screen<ComponentType>) => {
+  const openResult = (s: Screen<ComponentType>) => {
     const p = pageOfScreen(project, s.id);
 
     setQ('');
     setOpen(false);
     input.current?.blur();
-    if (mode === 'prototype' || !p) return void (window.location.hash = screenHash(s.id));
+    if (mode === 'prototype' || !p) return openScreen(s.id);
     select(s.id, { focus: true });
-    const base = mode === 'flows' ? 'flows' : 'board';
+    const route = parseRoute(window.location.hash);
 
-    if (!window.location.hash.startsWith(`#/${base}/${p.key}`)) window.location.hash = `#/${base}/${p.key}`;
+    if (!('page' in route) || route.page !== p.key) go(canvasHash(canvasOf(mode), p.key));
   };
 
   return (
@@ -231,7 +229,7 @@ const Search = ({ mode }: { mode: Mode }) => {
         onFocus={() => setOpen(true)}
         onBlur={() => window.setTimeout(() => setOpen(false), 150)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter' && results[0]) go(results[0]);
+          if (e.key === 'Enter' && results[0]) openResult(results[0]);
           if (e.key === 'Escape') {
             setQ('');
             input.current?.blur();
@@ -244,7 +242,7 @@ const Search = ({ mode }: { mode: Mode }) => {
           {results.length === 0 && <li className="pd-muted">{t.noResults}</li>}
           {results.map((s) => (
             <li key={s.id}>
-              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => go(s)}>
+              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => openResult(s)}>
                 <b>{s.code ?? s.id}</b> {s.title}
               </button>
             </li>
@@ -305,7 +303,7 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
   const { selected, select } = useShell();
   const statuses = useStatuses();
   const t = useT();
-  const base = mode === 'flows' ? 'flows' : 'board';
+  const base = canvasOf(mode);
   const byId = new Map(project.screens.map((s) => [s.id, s]));
   const [open, setOpen] = useState<Set<string>>(() => new Set(flowKey ? [flowKey] : page?.flows.slice(0, 2).map((f) => f.key)));
   const [pageOpen, setPageOpen] = useState(true);
@@ -316,10 +314,6 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
   }, [flowKey]);
   useEffect(() => setPageOpen(true), [page?.key]);
 
-  const pick = (id: string) => {
-    if (mode === 'prototype') return void (window.location.hash = screenHash(id));
-    select(id, { focus: true });
-  };
   const row = (id: string, extra?: string) => {
     const s = byId.get(id);
 
@@ -330,8 +324,8 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
         <button
           type="button"
           className={`pd-tree__row pd-tree__screen${selected === id ? ' is-on' : ''}`}
-          onClick={() => pick(id)}
-          onDoubleClick={() => (window.location.hash = screenHash(id))}
+          onClick={() => pickScreen(mode, id, select)}
+          onDoubleClick={() => openScreen(id)}
           title={s.title}
         >
           <span className="pd-tree__name">{s.title.split(' / ').pop()}</span>
@@ -355,9 +349,9 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
                 <Chevron
                   open={expanded}
                   label={expanded ? t.collapse : t.expand}
-                  onClick={() => (current ? setPageOpen((v) => !v) : void (window.location.hash = `#/${base}/${p.key}`))}
+                  onClick={() => (current ? setPageOpen((v) => !v) : go(canvasHash(base, p.key)))}
                 />
-                <a className="pd-tree__row" href={`#/${base}/${p.key}`}>
+                <a className="pd-tree__row" href={canvasHash(base, p.key)}>
                   <span className="pd-tree__name">{p.name}</span>
                   <small className="pd-tree__code">{p.flows.length}</small>
                 </a>
@@ -367,7 +361,7 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
                   <li>
                     <div className="pd-tree__line">
                       <span className="pd-tree__spacer" />
-                      <a className={`pd-tree__row${flowKey ? '' : ' is-on'}`} href={`#/${base}/${p.key}`}>
+                      <a className={`pd-tree__row${flowKey ? '' : ' is-on'}`} href={canvasHash(base, p.key)}>
                         <span className="pd-tree__name">{t.allFlows}</span>
                       </a>
                     </div>
@@ -380,7 +374,7 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
                       <li key={f.key}>
                         <div className="pd-tree__line">
                           <Chevron open={isOpen} label={isOpen ? t.collapse : t.expand} onClick={() => toggle(f.key)} />
-                          <a className={`pd-tree__row pd-tree__flow${flowKey === f.key ? ' is-on' : ''}`} href={`#/${base}/${p.key}/${f.key}`} title={`${f.name} · ${t.pathKinds[f.path ?? 'happy']}`}>
+                          <a className={`pd-tree__row pd-tree__flow${flowKey === f.key ? ' is-on' : ''}`} href={canvasHash(base, p.key, f.key)} title={`${f.name} · ${t.pathKinds[f.path ?? 'happy']}`}>
                             <i className={`pd-pathmark pd-path--${f.path ?? 'happy'}`} />
                             <span className="pd-tree__name">{f.name}</span>
                             <small className="pd-tree__code">{f.key}</small>
@@ -423,15 +417,15 @@ const DsTree = ({ section }: { section?: string }) => {
 
   return (
     <nav className="pd-tree" aria-label={t.designSystem}>
-      <a className={`pd-tree__item${!section ? ' is-on' : ''}`} href="#/ds">
+      <a className={`pd-tree__item${!section ? ' is-on' : ''}`} href={dsHash()}>
         {t.overview}
       </a>
-      <a className={`pd-tree__item${section === 'health' ? ' is-on' : ''}`} href="#/ds/health">
+      <a className={`pd-tree__item${section === 'health' ? ' is-on' : ''}`} href={dsHash('health')}>
         {t.health} {report.counts.error + report.counts.warning > 0 ? <span className="pd-count is-error">{report.counts.error + report.counts.warning}</span> : <span className="pd-count is-ok">✓</span>}
       </a>
       <h4>{t.tokens}</h4>
       {Object.keys(report.tokens).map((g) => (
-        <a key={g} className={`pd-tree__item${section === `tokens/${g}` ? ' is-on' : ''}`} href={`#/ds/tokens/${g}`}>
+        <a key={g} className={`pd-tree__item${section === `tokens/${g}` ? ' is-on' : ''}`} href={dsHash(`tokens/${g}`)}>
           {t.groups[g] ?? g} <small>{report.tokens[g]?.length}</small>
         </a>
       ))}
@@ -442,7 +436,7 @@ const DsTree = ({ section }: { section?: string }) => {
           <div key={level}>
             <h4>{t.levels[level]}</h4>
             {list.map((c) => (
-              <a key={c.name} className={`pd-tree__item${section === c.name ? ' is-on' : ''}`} href={`#/ds/${c.name}`}>
+              <a key={c.name} className={`pd-tree__item${section === c.name ? ' is-on' : ''}`} href={dsHash(c.name)}>
                 {c.name}
                 {issuesOf(c.name) && <i className="pd-dot pd-status--changes" />}
               </a>
@@ -490,7 +484,7 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
   const inFlows = project.pages.flatMap((p) => p.flows.filter((f) => f.screens.includes(s.id)).map((f) => ({ p, f })));
   const parts = ds.report.screens[s.id] ?? [];
   const chip = (id: string) => (
-    <button key={id} type="button" className="pd-mini-chip" onClick={() => (mode === 'prototype' ? (window.location.hash = screenHash(id)) : select(id, { focus: true }))}>
+    <button key={id} type="button" className="pd-mini-chip" onClick={() => pickScreen(mode, id, select)}>
       {byId.get(id)?.title.split(' / ').pop() ?? id} <small>{byId.get(id)?.code}</small>
     </button>
   );
@@ -530,7 +524,7 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
         <section>
           <h4>{t.inFlows}</h4>
           {inFlows.map(({ p, f }) => (
-            <a key={`${p.key}${f.key}`} className="pd-insp__flow" href={`#/${mode === 'flows' ? 'flows' : 'board'}/${p.key}/${f.key}`}>
+            <a key={`${p.key}${f.key}`} className="pd-insp__flow" href={canvasHash(canvasOf(mode), p.key, f.key)}>
               <i className={`pd-pathmark pd-path--${f.path ?? 'happy'}`} /> {f.name} <small className="pd-tree__code">{f.key}</small>
             </a>
           ))}
@@ -547,7 +541,7 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
           <h4>{t.builtWith}</h4>
           <div className="pd-insp__chips">
             {parts.map((c) => (
-              <a key={c} className="pd-mini-chip" href={`#/ds/${c}`}>
+              <a key={c} className="pd-mini-chip" href={dsHash(c)}>
                 {c}
               </a>
             ))}
@@ -676,17 +670,16 @@ const Island = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
   const zoom = useZoom();
   const t = useT();
   const flow = page?.flows.find((f) => f.key === flowKey);
-  const suffix = page ? `/${page.key}${flow ? `/${flow.key}` : ''}` : '';
   const firstScreen = selected ?? flow?.screens[0] ?? page?.flows[0]?.screens[0];
   const canZoom = mode === 'board' || mode === 'flows';
 
   return (
     <div className="pd-island" data-pd-ui role="toolbar" aria-label={t.modes}>
       <div className="pd-island__modes">
-        <a className={mode === 'board' ? 'is-on' : ''} href={`#/board${suffix}`}>
+        <a className={mode === 'board' ? 'is-on' : ''} href={canvasHash('board', page?.key, flow?.key)}>
           {t.board}
         </a>
-        <a className={mode === 'flows' ? 'is-on' : ''} href={`#/flows${suffix}`}>
+        <a className={mode === 'flows' ? 'is-on' : ''} href={canvasHash('flows', page?.key, flow?.key)}>
           {t.flows}
         </a>
         <a className={mode === 'prototype' ? 'is-on' : ''} href={firstScreen ? screenHash(firstScreen) : '#/'}>

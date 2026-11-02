@@ -4,7 +4,6 @@ import { computeLayout, flowStatusId, statusOf, STATUSES, targetsOf } from '@unc
 import type { Card, Page, Status } from '@uncool-pro/orbito-core';
 
 import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
-import { screenHash } from '@uncool-pro/orbito-runtime';
 
 import { useViewer } from '../app/context';
 import { useT } from '../i18n';
@@ -15,6 +14,7 @@ import { CanvasController } from '../canvas/controller';
 import { sharpWhenStill } from '../canvas/sharp';
 import type { Scroller } from '../canvas/controller';
 import { StatusChip } from '../app/StatusChip';
+import { canvasHash, openScreen } from '../app/routes';
 import { BoardCard } from './BoardCard';
 import { useFindingTitles } from './findings';
 
@@ -208,7 +208,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
 
     if (card?.dataset.screen) {
       select(card.dataset.screen);
-      window.location.hash = screenHash(card.dataset.screen);
+      openScreen(card.dataset.screen);
 
       return;
     }
@@ -288,7 +288,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
         <ul className="pd-insp__features">
           {page.flows.map((f) => (
             <li key={f.key}>
-              <a href={`#/board/${page.key}/${f.key}`}>
+              <a href={canvasHash('board', page.key, f.key)}>
                 {f.name} <small className="pd-insp__key">{f.key}</small>
               </a>
               <StatusChip id={flowStatusId(page.key, f.key)} entry={flowStatus(f.key)} />

@@ -2,14 +2,14 @@ import type { ReactNode } from 'react';
 
 import { contrastRatio, DS_LEVELS, TOKEN_GROUPS } from '@uncool-pro/orbito-core';
 import type { ComponentDocs, DsComponent, DsIssue, Token } from '@uncool-pro/orbito-core';
-import { FrameContext, screenHash } from '@uncool-pro/orbito-runtime';
+import { FrameContext } from '@uncool-pro/orbito-runtime';
 
+import { dsHash, screenHash } from '../app/routes';
 import { ErrorBoundary } from '../app/ErrorBoundary';
 import { useViewer } from '../app/context';
 import { useT } from '../i18n';
 
 
-export const dsHash = (section?: string) => `#/ds${section ? `/${section}` : ''}`;
 
 /**
  * The design-system catalog: a reference for product designers (not a developer storybook). Tokens with their usage
