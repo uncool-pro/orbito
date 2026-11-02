@@ -1,6 +1,8 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -86,5 +88,55 @@ describe('orbito update', () => {
     expect(r.removed).toEqual(['skill ux-design']);
     expect(existsSync(join(root, '.claude/skills/my-checklist'))).toBe(true);
     expect(existsSync(join(root, '.claude/skills/sales-copy'))).toBe(true);
+  });
+
+  it('saves a copy of a skill with a retired name in a project without a manifest', () => {
+    put(join(root, '.claude/skills/landing-page/SKILL.md'), 'mine');
+    const r = run();
+
+    expect(r.backedUp).toEqual(['.orbito/backup/2026-10-26/.claude/skills/landing-page']);
+    expect(read(join(root, '.orbito/backup/2026-10-26/.claude/skills/landing-page/SKILL.md'))).toBe('mine');
+  });
+
+  it('adds compose.yaml only to a project that runs in a container', () => {
+    put(join(tool, 'templates/base/compose.yaml'), 'image: orbito:{{version}}');
+    run();
+    expect(existsSync(join(root, 'compose.yaml'))).toBe(false);
+
+    put(join(root, '.orbito/runtime'), 'docker\n');
+    run();
+    expect(read(join(root, 'compose.yaml'))).toBe('image: orbito:0.9.4');
+  });
+});
+
+describe('a project made by create', () => {
+  const create = fileURLToPath(new URL('../../create/src/index.ts', import.meta.url));
+  const make = () => {
+    const target = join(base, 'made');
+
+    execFileSync(process.execPath, [create, target, '--title', 'T', '--platform', 'web', '--locale', 'en', '--no-install'], { stdio: 'ignore' });
+
+    return target;
+  };
+
+  it("has a manifest from the start, so the first update leaves the person's skill alone", () => {
+    const target = make();
+
+    expect(Object.keys(JSON.parse(read(join(target, MANIFEST))).items)).toContain('.claude/skills/wireframes');
+    put(join(target, '.claude/skills/landing-page/SKILL.md'), 'mine');
+    const r = updateProject({ root: target, install: false });
+
+    expect(r.removed).toEqual([]);
+    expect(read(join(target, '.claude/skills/landing-page/SKILL.md'))).toBe('mine');
+  });
+
+  it('has no compose.yaml when it runs without a container', () => {
+    expect(existsSync(join(make(), 'compose.yaml'))).toBe(false);
+  });
+
+  it('the first update changes nothing and saves no copies', () => {
+    const r = updateProject({ root: make(), install: false });
+
+    expect([r.added, r.updated, r.removed, r.conflicts, r.backedUp]).toEqual([[], [], [], [], []]);
   });
 });

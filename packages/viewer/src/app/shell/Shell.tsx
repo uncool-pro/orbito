@@ -575,7 +575,9 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
  * design-system components, so the file and its components say more than a dump of HTML and CSS.
  */
 const DevSection = ({ screen: s }: { screen: Screen<ComponentType> }) => {
-  const env = useDevEnv();
+  const dev = useDevEnv();
+  // in a container the path inside it means nothing to the person: only the path within the project
+  const env = dev?.container ? null : dev;
   const t = useT();
   const [copied, setCopied] = useState<string | null>(null);
   const copy = (what: string, text: string) =>

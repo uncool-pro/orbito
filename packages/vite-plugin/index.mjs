@@ -17,7 +17,7 @@
 //      GET  /__orbito/env                    the project folder and the system (for the developer section of screen details)
 //      POST /__orbito/reveal?path=<rel>      shows a project file in Explorer / Finder / the file manager
 import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -26,8 +26,8 @@ import { searchForWorkspaceRoot } from 'vite';
 import { analyzeProject } from '@uncool-pro/orbito-cli/analyze';
 import { buildTeam, listOf, modelFor, parseFrontmatter, resolveMode, skillModels, tokensToCss } from '@uncool-pro/orbito-core';
 
-// keep in sync with packages/core/src/status.ts (the tool owns the list)
-const STATUSES = ['todo', 'wip', 'review', 'changes', 'approved', 'onHold', 'dropped'];
+import { saveStatus } from './status.mjs';
+
 const VIRTUAL = 'virtual:orbito/project';
 const RESOLVED = '\0' + VIRTUAL;
 const STATUS_FILE = '.orbito/status.json';
@@ -149,9 +149,11 @@ export default function orbito(options = {}) {
       return [
         `import config from ${JSON.stringify(configPath)};`,
         `import { loadProject } from '@uncool-pro/orbito-core';`,
-        `const screens = import.meta.glob('/screens/**/*.screen.{tsx,jsx}', { eager: true });`,
-        `const pages = import.meta.glob('/flows/**/*.flow.{ts,tsx,js}', { eager: true });`,
-        `const docs = Object.values(import.meta.glob('/design-system/**/*.docs.{tsx,jsx}', { eager: true })).map((m) => m.default).filter(Boolean);`,
+        // loaded one by one: a file that throws while loading becomes a problem on the board, not an empty page
+        `const settle = async (files) => Object.fromEntries(await Promise.all(Object.entries(files).map(([file, load]) => load().then((m) => [file, m], (e) => [file, { loadError: String(e) }]))));`,
+        `const screens = await settle(import.meta.glob('/screens/**/*.screen.{tsx,jsx}'));`,
+        `const pages = await settle(import.meta.glob('/flows/**/*.flow.{ts,tsx,js}'));`,
+        `const docs = Object.values(await settle(import.meta.glob('/design-system/**/*.docs.{tsx,jsx}'))).map((m) => m.default).filter(Boolean);`,
         `const { project, problems } = loadProject(config, screens, pages);`,
         `const ds = { tokens: ${JSON.stringify(report.tokens)}, css: ${JSON.stringify(tokensToCss(report.tokens))}, report: ${JSON.stringify(report)}, fonts: ${JSON.stringify(existsSync(fontsPath) ? readFileSync(fontsPath, 'utf8') : '')}, docs };`,
         `const team = ${JSON.stringify(readTeam(root))};`,
@@ -207,11 +209,13 @@ export default function orbito(options = {}) {
 
           return reply(200, readFileSync(file, 'utf8'), 'text/plain; charset=utf-8');
         }
-        if (url.pathname === '/__orbito/env') return reply(200, { root: resolve(root), platform: process.platform, sep });
+        if (url.pathname === '/__orbito/env') return reply(200, { root: resolve(root), platform: process.platform, sep, container: !!process.env.ORBITO_CONTAINER });
         if (url.pathname === '/__orbito/reveal') {
           const file = resolve(root, url.searchParams.get('path') ?? '');
 
           if (req.method !== 'POST') return reply(405, { error: 'POST' });
+          // in a container there is no file manager to open, and the system's own is out of reach
+          if (process.env.ORBITO_CONTAINER) return reply(501, { error: 'not available in the container' });
           if (!inside(root, file) || !existsSync(file)) return reply(404, { error: 'not found' });
           // the file manager of the system, the file selected; arguments, never a shell string
           const [cmd, args] =
@@ -231,21 +235,11 @@ export default function orbito(options = {}) {
         req.on('data', (c) => (raw += c));
         req.on('end', () => {
           try {
-            const { id, status, note } = JSON.parse(raw || '{}');
+            const change = JSON.parse(raw || '{}');
 
-            if (typeof id !== 'string' || !/^[\w.:/-]+$/.test(id)) return reply(400, { error: 'invalid status id' });
-            if (!STATUSES.includes(status)) return reply(400, { error: `status must be one of: ${STATUSES.join(', ')}` });
-            if (note !== undefined && note !== null && typeof note !== 'string') return reply(400, { error: 'note must be text' });
-            const all = readJson(statusPath, {});
-
-            all[id] = { status, ...(note?.trim() ? { note: note.trim() } : {}), updatedAt: new Date().toISOString().slice(0, 10) };
-            const sorted = Object.fromEntries(Object.entries(all).sort(([a], [b]) => a.localeCompare(b, 'en', { numeric: true })));
-
-            mkdirSync(dirname(statusPath), { recursive: true });
-            writeFileSync(statusPath, JSON.stringify(sorted, null, 2) + '\n');
-            reply(200, { id, ...all[id] });
+            reply(200, { id: change.id, ...saveStatus(statusPath, change) });
           } catch (e) {
-            reply(400, { error: String(e) });
+            reply(e.code === 409 ? 409 : 400, { error: e instanceof Error ? e.message : String(e) });
           }
         });
       });

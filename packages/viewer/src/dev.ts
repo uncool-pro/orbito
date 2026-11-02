@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
  * What the dev server tells the viewer about the machine: the project folder and the system (to name the file manager:
  * Explorer, Finder or the folder). Nothing in a build — there is no server to open files there.
  */
-export type DevEnv = { root: string; platform: string; sep: string };
+export type DevEnv = { root: string; platform: string; sep: string; /** Running in Docker: the root is the container's, the person's system is out of reach. */ container?: boolean };
 
 let env: Promise<DevEnv | null> | undefined;
 

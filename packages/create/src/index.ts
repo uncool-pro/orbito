@@ -7,10 +7,12 @@
  * kickoff in Claude Code (`/orbito-init`). Every option has a flag, so an agent can run it without prompts.
  */
 import { execSync } from 'node:child_process';
-import { cpSync, existsSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
+
+import { fingerprint, MANIFEST } from '../../cli/src/manifest.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
 // in the repository the template sits next to the packages; a published package will carry its own copy
@@ -20,6 +22,8 @@ const SKILLS = [join(here, '../skills'), join(here, '../../../skills')].find((p)
 const AGENTS = [join(here, '../agents'), join(here, '../../../agents')].find((p) => existsSync(p));
 const PACKAGES = resolve(here, '../..');
 const PD_PACKAGES = ['cli', 'core', 'runtime', 'viewer', 'vite-plugin'];
+// inside the Orbito image: the engine stays in the image, the project gets no packages of its own
+const DOCKER = !!process.env.ORBITO_CONTAINER;
 const PLATFORMS = { mobile: 'mobile', web: 'desktop', both: 'mobile' } as const;
 
 type Platform = keyof typeof PLATFORMS;
@@ -92,7 +96,18 @@ const main = async () => {
   };
   const platforms = platform === 'both' ? 'mobile + web' : platform;
 
-  ['CLAUDE.md', 'README.md', 'index.html', '.orbito/process.md'].forEach((f) => fill(f, { '{{title}}': title, '{{viewport}}': platforms, '{{date}}': new Date().toISOString().slice(0, 10) }));
+  const version = (JSON.parse(readFileSync(join(PACKAGES, '../package.json'), 'utf8')) as { version?: string }).version ?? 'latest';
+
+  ['CLAUDE.md', 'README.md', 'index.html', '.orbito/process.md', 'compose.yaml'].forEach((f) => fill(f, { '{{title}}': title, '{{viewport}}': platforms, '{{date}}': new Date().toISOString().slice(0, 10), '{{version}}': version }));
+  writeFileSync(join(target, '.orbito', 'runtime'), DOCKER ? 'docker\n' : 'local\n');
+  if (!DOCKER) rmSync(join(target, 'compose.yaml'), { force: true });
+  // what Orbito installed, from the first moment: later updates must be able to tell the person's own items from Orbito's
+  const installed = ['.claude/skills', '.claude/agents', '.claude/commands'].flatMap((dir) => (existsSync(join(target, dir)) ? readdirSync(join(target, dir)).map((name) => `${dir}/${name}`) : []));
+
+  ['.orbito/models.json', 'compose.yaml'].forEach((file) => {
+    if (existsSync(join(target, file))) installed.push(file);
+  });
+  writeFileSync(join(target, MANIFEST), JSON.stringify({ version, items: Object.fromEntries(installed.map((item) => [item, fingerprint(join(target, item))])) }, null, 2) + '\n');
   fill('orbito.config.ts', { "title: 'My product'": `title: ${JSON.stringify(title).replace(/^"|"$/g, "'")}`, "locale: 'en'": `locale: '${locale}'`, "defaultViewport: 'mobile'": `defaultViewport: '${PLATFORMS[platform]}'` });
 
   const pkgPath = join(target, 'package.json');
@@ -100,11 +115,11 @@ const main = async () => {
 
   pkg.name = slug(basename(target));
   PD_PACKAGES.forEach((p) => {
-    pkg.dependencies[`@uncool-pro/orbito-${p}`] = local ? `file:${relative(target, join(PACKAGES, p)).split('\\').join('/')}` : '^0.1.0';
+    if (!DOCKER) pkg.dependencies[`@uncool-pro/orbito-${p}`] = local ? `file:${relative(target, join(PACKAGES, p)).split('\\').join('/')}` : '^0.1.0';
   });
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 
-  if (!flag('no-install')) {
+  if (!flag('no-install') && !DOCKER) {
     console.log('Installing…');
     execSync('npm install --no-audit --no-fund', { cwd: target, stdio: 'inherit' });
     execSync('npm run check:ds', { cwd: target, stdio: 'inherit' });
@@ -115,7 +130,7 @@ const main = async () => {
 
   cd ${relative(process.cwd(), target) || '.'}
   raw/                 put everything you have here first (old site, brand, texts, notes), unsorted
-  npm run dev          board #/board · design system #/ds
+  ${DOCKER ? 'docker compose up -d' : 'npm run dev         '} board http://localhost:5190 · design system #/ds
   claude               then /orbito-init: Orbito sorts raw/ and kicks off the project
 
 The design process lives in .orbito/process.md; the rules for Claude in CLAUDE.md.

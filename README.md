@@ -12,7 +12,10 @@ Orbito turns Claude Code into a product designer's agent. Its skills are a produ
 > **Beta 0.9** — free and open source (MIT). It works, it still has rough edges, and it grows week by week: see [CHANGELOG.md](CHANGELOG.md).
 
 ## Get started
-You need [Claude Code](https://claude.com/claude-code) (a paid Claude plan), [Node.js](https://nodejs.org) 22.18 or newer and git. Everything runs on your computer.
+You need [Claude Code](https://claude.com/claude-code) (a paid Claude plan). Everything runs on your computer. Orbito runs in one of two ways, with the same project files:
+
+- **In Docker, for client and company work:** the engine and its packages stay sealed in a container with no internet, and see only the project's design folders. Follow [DOCKER.md](DOCKER.md).
+- **From the code, for trying it out or changing Orbito:** you need [Node.js](https://nodejs.org) 22.18 or newer and git; the packages run on your computer with your permissions. Follow the steps below.
 
 **The easy way:** open Claude Code in the folder where you keep your projects and write:
 

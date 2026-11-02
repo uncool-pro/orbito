@@ -2,6 +2,13 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
+## 0.9.6 — not released yet
+Fixes from the first independent review of the code.
+- **Fix: the first update no longer removes a skill of yours.** A new project had no list of what Orbito installed until its first update, so a skill of yours named like one Orbito retired (for example `landing-page`) was deleted with no copy. New projects now have the list from the start, and in an older project without it such a skill is saved to `.orbito/backup/` first and listed in the output.
+- **Fix: a click on a status no longer wipes the other statuses.** When `.orbito/status.json` could not be read, for example after a merge conflict, saving a status replaced the whole file. Now nothing is written and the board tells you to fix the file.
+- **Fix: one broken file no longer leaves an empty page.** A screen or flow file that throws while loading, an unknown viewport, a page without flows or an unknown language now show up as problems in the top bar, and the rest of the board keeps working. Screens now load one by one, so `npm run build` makes one small file per screen.
+- **Changed: the spacing rule works for values written as text.** `padding: '8px 0'` used to pass `check:ds` by mistake. **What to do:** run `npm run check:ds`; you may see new `raw-spacing` warnings, and with `--strict` they fail the check. Use a `var(--space-…)` token, or mark a deliberate one-off with `// ds-exception: <why>`.
+
 ## 0.9.5 — 2026-10-29
 Security fixes from the first security audit of Orbito (dependencies were clean: no known vulnerabilities, no telemetry), and a full-size prototype for responsive pages.
 - **Changed: a responsive page shows one size at a time in the prototype.** A screen with `viewports` (e.g. a landing page) used to show all its sizes side by side, each one small. Now the prototype shows one size, as big as the window allows, and a **Desktop / Tablet / Mobile** switch in the top right corner changes it; the size you pick stays while you click through and after a reload. Nothing to change in your project. The look & feel and landing-page skills tell Claude to check all three sizes and point you to the switch.

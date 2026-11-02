@@ -53,9 +53,9 @@ const hasRawLength = (v: string | number) =>
   typeof v === 'number'
     ? v !== 0
     : v
-        .replace(/var([^)]*)/g, '')
-        .split(/s+/)
-        .some((part) => /^-?d*.?d+(px|rem|em)?$/.test(part) && parseFloat(part) !== 0);
+        .replace(/var\([^)]*\)/g, '')
+        .split(/\s+/)
+        .some((part) => /^-?\d*\.?\d+(px|rem|em)?$/.test(part) && parseFloat(part) !== 0);
 
 type FileFacts = {
   imports: { spec: string; resolved: string | null; names: string[]; line: number }[];

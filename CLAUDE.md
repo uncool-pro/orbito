@@ -43,6 +43,9 @@ People's projects depend on how the board, the flows diagram and the prototype b
 - Every fix in the core comes with a test that fails without it (e.g. `viewer/test/controller.test.ts`: a click must reach the screen under the cursor). Test real input in the browser too — a synthetic `click()` on an element skips what the browser does between press and click.
 - A change of behaviour there (a default, a gesture, a file format) needs Jakub's OK and a "Changed" note in the changelog with what people must do; anything that would break existing projects ships with its migration in `orbito update`.
 
+## Docker
+`Dockerfile` + `docker/` (entry, the sealed dev server with its CSP, the gate) + `templates/base/compose.yaml` + `.github/workflows/image.yml` (publishes to ghcr.io on a `v*` tag). One codebase, two ways to run: `ORBITO_CONTAINER` is the only switch, and code must work with it on and off. In a container everything but `.orbito/status.json` is read-only for the renderer, the project's own `vite.config` is not run, and system actions (reveal, open in editor) are hidden. User guide: `DOCKER.md`. A change to which folders a project needs must update `compose.yaml` and `DOCKER.md` together.
+
 ## Template vs demo
 `templates/base` is what every new project starts from: keep it neutral, generic and passing `check:ds` with 0 errors and 0 warnings. `demo/` is a finished example project with its own design system. Changes to the base kit go to the template; the demo shows what a project looks like after the kickoff.
 

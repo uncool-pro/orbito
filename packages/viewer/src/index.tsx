@@ -6,6 +6,7 @@ import type { LinkMap, Project, ProjectProblem, StatusFile, Team } from '@uncool
 import { registerParents } from '@uncool-pro/orbito-runtime';
 
 import { App } from './app/App';
+import { ErrorBoundary } from './app/ErrorBoundary';
 import { setFavicon } from './app/Logo';
 import { ViewerContext } from './app/context';
 import { ShellProvider } from './app/shell/state';
@@ -23,12 +24,19 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
   useEffect(() => {
     let live = true;
 
-    probeLinks(loaded.project).then((l) => {
-      if (!live) return;
-      setLinks(l);
-      // read by the CLI and by agents (e.g. to check that every flow step is reachable)
-      (window as unknown as Record<string, unknown>).__orbito = { screens: loaded.project.screens.map(({ component: _c, ...s }) => s), pages: loaded.project.pages, links: l, problems: loaded.problems };
-    });
+    probeLinks(loaded.project)
+      .catch((err: unknown) => {
+        // without links the board still shows every screen, only the arrows are missing
+        console.error('[orbito] could not read the links of the screens', err);
+
+        return {} as LinkMap;
+      })
+      .then((l) => {
+        if (!live) return;
+        setLinks(l);
+        // read by agents (e.g. to check that every flow step is reachable)
+        (window as unknown as Record<string, unknown>).__orbito = { screens: loaded.project.screens.map(({ component: _c, ...s }) => s), pages: loaded.project.pages, links: l, problems: loaded.problems };
+      });
 
     return () => {
       live = false;
@@ -39,7 +47,10 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
     <ViewerContext.Provider value={{ project: loaded.project, problems: loaded.problems, ds: loaded.ds, team: loaded.team ?? null, links }}>
       <MessagesContext.Provider value={LOCALES[loaded.project.config.locale ?? 'en']}>
         <ShellProvider>
-          <App />
+          {/* the last line of defence: a message instead of an empty page */}
+          <ErrorBoundary name="Orbito">
+            <App />
+          </ErrorBoundary>
         </ShellProvider>
       </MessagesContext.Provider>
     </ViewerContext.Provider>

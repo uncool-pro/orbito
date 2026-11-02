@@ -71,7 +71,9 @@ export const exportSite = async ({ root, screen, out }: ExportOptions): Promise<
   const vite = await import('vite');
   const server = await vite.createServer({
     root,
-    configFile: ['vite.config.ts', 'vite.config.mts', 'vite.config.js', 'vite.config.mjs'].map((f) => join(root, f)).find(existsSync) ?? false,
+    // in the container the project's own Vite config is not run, and its folders are read-only
+    configFile: process.env.ORBITO_CONTAINER ? false : (['vite.config.ts', 'vite.config.mts', 'vite.config.js', 'vite.config.mjs'].map((f) => join(root, f)).find(existsSync) ?? false),
+    ...(process.env.ORBITO_CONTAINER ? { cacheDir: '/tmp/orbito-vite-export' } : {}),
     logLevel: 'error',
     appType: 'custom',
     server: { middlewareMode: true, hmr: false, ws: false },
@@ -127,8 +129,9 @@ export const exportSite = async ({ root, screen, out }: ExportOptions): Promise<
     if (existsSync(target) && readdirSync(target).length && !existsSync(join(target, EXPORT_MARKER)))
       throw new Error(`${relative(root, target)} is not empty and was not made by orbito export — pick another --out (e.g. site)`);
     // the folder belongs to the export: start clean so removed files do not linger
-    rmSync(target, { recursive: true, force: true });
+    // its contents, not the folder itself: in a container the folder is a mount and cannot be removed
     mkdirSync(target, { recursive: true });
+    for (const name of readdirSync(target)) rmSync(join(target, name), { recursive: true, force: true });
     writeFileSync(join(target, EXPORT_MARKER), 'Made by orbito export. Everything in this folder is replaced by the next export.\n');
     let copied = 0;
     const pub = join(root, 'public');

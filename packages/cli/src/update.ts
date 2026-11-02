@@ -8,16 +8,21 @@
  *    - an item of the person's with a name Orbito uses is never overwritten (reported as a conflict);
  *    - an Orbito item edited in the project is saved to `.orbito/backup/<date>/` before it is replaced;
  *    - retired Orbito items are removed only if Orbito installed them.
- * The project's own work (screens, flows, design system, .orbito/, raw/) is never touched; template changes such as new
- * base components are listed in CHANGELOG.md for Orbito to apply on request.
+ *    - in a project without that list (made before it existed), a retired item is saved the same way before it goes.
+ * The project's own work (screens, flows, design system, process and status files, raw/) is never touched; template
+ * changes such as new base components are listed in CHANGELOG.md for Orbito to apply on request.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { fingerprint, MANIFEST } from './manifest.ts';
+import type { Manifest } from './manifest.ts';
 import { LOCAL_SETTINGS, PROFILES } from './models.ts';
+
+export { fingerprint, MANIFEST };
 
 /** Files that are personal to each person and never shared through git. */
 const PERSONAL_FILES = [LOCAL_SETTINGS, 'feedback.md'];
@@ -26,27 +31,6 @@ const PERSONAL_FILES = [LOCAL_SETTINGS, 'feedback.md'];
 const RETIRED_SKILLS = ['orbito-lead', 'ux-design', 'requirements', 'rapid-prototyping', 'landing-page', 'sales-copy', 'ux-review'];
 /** Agents whose work moved to other roles. */
 const RETIRED_AGENTS = ['prototyper', 'copywriter'];
-
-/** What Orbito installed in a project, with a fingerprint of each item as installed. */
-export const MANIFEST = '.orbito/managed.json';
-export type Manifest = { version: string; items: Record<string, string> };
-
-/** Fingerprint of a file or a folder (names and contents, in a stable order). */
-export const fingerprint = (path: string): string => {
-  const h = createHash('sha1');
-  const walk = (p: string, rel: string) => {
-    if (statSync(p).isDirectory()) {
-      for (const n of readdirSync(p).sort()) walk(join(p, n), `${rel}/${n}`);
-    } else {
-      h.update(rel);
-      h.update(readFileSync(p));
-    }
-  };
-
-  walk(path, '');
-
-  return h.digest('hex').slice(0, 16);
-};
 
 /** The Orbito folder (the repository with skills/, agents/, templates/) this CLI runs from. */
 export const toolRoot = (): string => resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -152,13 +136,13 @@ export const updateProject = ({ root, pull, install = true, tool = toolRoot(), t
     mkdirSync(dirname(to), { recursive: true });
     cpSync(from, to, { recursive: true });
   };
-  /** Removes a retired Orbito item, only if Orbito installed it (or the project predates the manifest). */
+  /** Removes a retired Orbito item, only if Orbito installed it; a project without the list cannot tell, so a copy is saved first. */
   const retire = (path: string, label: string) => {
     if (!existsSync(path)) return;
     const known = before?.items[rel(path)];
 
     if (before && !known) return;
-    if (known && fingerprint(path) !== known) backup(path);
+    if (!before || fingerprint(path) !== known) backup(path);
     rmSync(path, { recursive: true, force: true });
     result.removed.push(label);
   };
@@ -189,6 +173,24 @@ export const updateProject = ({ root, pull, install = true, tool = toolRoot(), t
 
   if (existsSync(commands)) {
     for (const f of readdirSync(commands)) copy(join(commands, f), join(claude, 'commands', f), `command /${f.replace(/\.md$/, '')}`);
+  }
+  // the container setup, pinned to this version of Orbito, only where it is used; a project moves to a container by running the update from the image
+  const composeTemplate = join(tool, 'templates/base/compose.yaml');
+  const runtimeFile = join(root, '.orbito', 'runtime');
+  const inContainer = !!process.env.ORBITO_CONTAINER || (existsSync(runtimeFile) && readFileSync(runtimeFile, 'utf8').trim() === 'docker');
+
+  if (inContainer && existsSync(composeTemplate)) {
+    const dir = mkdtempSync(join(tmpdir(), 'orbito-'));
+    const filled = join(dir, 'compose.yaml');
+
+    writeFileSync(filled, readFileSync(composeTemplate, 'utf8').split('{{version}}').join(version(tool)));
+    copy(filled, join(root, 'compose.yaml'), 'compose.yaml');
+    rmSync(dir, { recursive: true, force: true });
+  }
+  if (process.env.ORBITO_CONTAINER) {
+    writeFileSync(join(root, '.orbito', 'runtime'), 'docker\n');
+    // mounted on its own: if it were missing, Docker would create a folder in its place
+    if (!existsSync(join(root, '.orbito', 'status.json'))) writeFileSync(join(root, '.orbito', 'status.json'), '{}\n');
   }
   // projects created before `npm run update` existed get the script once
   const pkgFile = join(root, 'package.json');
