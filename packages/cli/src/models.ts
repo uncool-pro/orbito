@@ -9,9 +9,11 @@ import { dirname, join } from 'node:path';
 import { MODEL_MODES, resolveMode } from '@uncool-pro/orbito-core';
 import type { ModelMode, ModelProfiles, ModeSource, OrbitoSettings } from '@uncool-pro/orbito-core';
 
+import { LOCAL_SETTINGS, PROFILES } from './manifest.ts';
+
+export { LOCAL_SETTINGS, PROFILES };
+
 export const TEAM_SETTINGS = '.orbito/settings.json';
-export const LOCAL_SETTINGS = '.orbito/settings.local.json';
-export const PROFILES = '.orbito/models.json';
 
 const readJson = <T>(file: string): T | undefined => {
   try {

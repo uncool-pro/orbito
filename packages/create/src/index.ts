@@ -7,19 +7,16 @@
  * kickoff in Claude Code (`/orbito-init`). Every option has a flag, so an agent can run it without prompts.
  */
 import { execSync } from 'node:child_process';
-import { cpSync, existsSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
-import { fingerprint, MANIFEST } from '../../cli/src/manifest.ts';
+import { installTeam } from '../../cli/src/install.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
-// in the repository the template sits next to the packages; a published package will carry its own copy
-const TEMPLATE = [join(here, '../template'), join(here, '../../../templates/base')].find((p) => existsSync(p));
-// the product skills and agents: one source in the repository, copied into every project's .claude/
-const SKILLS = [join(here, '../skills'), join(here, '../../../skills')].find((p) => existsSync(p));
-const AGENTS = [join(here, '../agents'), join(here, '../../../agents')].find((p) => existsSync(p));
+const TOOL = resolve(here, '../../..');
+const TEMPLATE = join(TOOL, 'templates/base');
 const PACKAGES = resolve(here, '../..');
 const PD_PACKAGES = ['cli', 'core', 'runtime', 'viewer', 'vite-plugin'];
 // inside the Orbito image: the engine stays in the image, the project gets no packages of its own
@@ -61,7 +58,7 @@ const slug = (s: string) =>
     .replace(/^-+|-+$/g, '') || 'mockups';
 
 const main = async () => {
-  if (!TEMPLATE) fail('template not found next to the package');
+  if (!existsSync(TEMPLATE)) fail('template not found next to the package');
   const dirArg = positional[0] ?? (await ask('Project folder', 'my-mockups'));
   const target = resolve(dirArg);
 
@@ -76,14 +73,8 @@ const main = async () => {
   const local = flag('local') || existsSync(join(PACKAGES, 'core', 'src', 'index.ts'));
 
   console.log(`\nCreating ${title} in ${target}`);
-  cpSync(TEMPLATE!, target, { recursive: true, filter: (src) => !/[\\/](node_modules|dist)([\\/]|$)/.test(src) });
+  cpSync(TEMPLATE, target, { recursive: true, filter: (src) => !/[\\/](node_modules|dist)([\\/]|$)/.test(src) });
   if (existsSync(join(target, 'gitignore'))) renameSync(join(target, 'gitignore'), join(target, '.gitignore'));
-  if (SKILLS) cpSync(SKILLS, join(target, '.claude', 'skills'), { recursive: true, filter: (src) => !/README.md$/.test(src) || statSync(src).isDirectory() });
-  if (AGENTS) {
-    cpSync(AGENTS, join(target, '.claude', 'agents'), { recursive: true, filter: (src) => !src.endsWith('models.json') });
-    // the two model profiles are Orbito's, next to the settings that pick one
-    if (existsSync(join(AGENTS, 'models.json'))) cpSync(join(AGENTS, 'models.json'), join(target, '.orbito', 'models.json'));
-  }
 
   const fill = (file: string, map: Record<string, string>) => {
     const p = join(target, file);
@@ -101,13 +92,8 @@ const main = async () => {
   ['CLAUDE.md', 'README.md', 'index.html', '.orbito/process.md', 'compose.yaml'].forEach((f) => fill(f, { '{{title}}': title, '{{viewport}}': platforms, '{{date}}': new Date().toISOString().slice(0, 10), '{{version}}': version }));
   writeFileSync(join(target, '.orbito', 'runtime'), DOCKER ? 'docker\n' : 'local\n');
   if (!DOCKER) rmSync(join(target, 'compose.yaml'), { force: true });
-  // what Orbito installed, from the first moment: later updates must be able to tell the person's own items from Orbito's
-  const installed = ['.claude/skills', '.claude/agents', '.claude/commands'].flatMap((dir) => (existsSync(join(target, dir)) ? readdirSync(join(target, dir)).map((name) => `${dir}/${name}`) : []));
-
-  ['.orbito/models.json', 'compose.yaml'].forEach((file) => {
-    if (existsSync(join(target, file))) installed.push(file);
-  });
-  writeFileSync(join(target, MANIFEST), JSON.stringify({ version, items: Object.fromEntries(installed.map((item) => [item, fingerprint(join(target, item))])) }, null, 2) + '\n');
+  // what Orbito installed is recorded from the first moment: later updates must be able to tell the person's own items from Orbito's
+  installTeam({ root: target, tool: TOOL });
   fill('orbito.config.ts', { "title: 'My product'": `title: ${JSON.stringify(title).replace(/^"|"$/g, "'")}`, "locale: 'en'": `locale: '${locale}'`, "defaultViewport: 'mobile'": `defaultViewport: '${PLATFORMS[platform]}'` });
 
   const pkgPath = join(target, 'package.json');

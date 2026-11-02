@@ -32,6 +32,35 @@ beforeEach(() => {
 afterEach(() => rmSync(base, { recursive: true, force: true }));
 
 describe('orbito update', () => {
+  it('lets the version it just pulled finish the update, so new migrations work on the first run', () => {
+    const remote = join(base, 'remote');
+    const g = (cwd: string, ...args: string[]) => execFileSync('git', ['-C', cwd, ...args], { stdio: 'pipe', encoding: 'utf8' });
+
+    put(join(remote, 'package.json'), '{ "version": "0.9.4" }');
+    put(join(remote, 'skills/wireframes/SKILL.md'), 'wireframes');
+    put(join(remote, 'agents/models.json'), '{}');
+    mkdirSync(join(base, 'empty'));
+    g(remote, 'init', '-q', '-b', 'main');
+    g(remote, 'config', 'user.email', 'test@example.com');
+    g(remote, 'config', 'user.name', 'Test');
+    g(remote, 'add', '-A');
+    g(remote, 'commit', '-q', '-m', 'first');
+    const clone = join(base, 'clone');
+
+    g(base, 'clone', '-q', remote, clone);
+    // the next version knows something the running code does not
+    put(join(remote, 'package.json'), '{ "version": "0.9.5" }');
+    put(join(remote, 'packages/cli/src/bin.ts'), "process.stdout.write(JSON.stringify({ added: ['done by the new version'], updated: [], removed: [], conflicts: [], backedUp: [] }));");
+    g(remote, 'add', '-A');
+    g(remote, 'commit', '-q', '-m', 'second');
+
+    const r = updateProject({ root, tool: clone, pull: true, install: false });
+
+    expect(r.added).toEqual(['done by the new version']);
+    expect(r.tool.to).toContain('0.9.5');
+    expect(r.tool.commits).toEqual(['second']);
+  });
+
   it('installs Orbito items and lists them in the manifest', () => {
     const r = run();
 

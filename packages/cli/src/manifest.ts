@@ -7,6 +7,8 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 export const MANIFEST = '.orbito/managed.json';
+export const PROFILES = '.orbito/models.json';
+export const LOCAL_SETTINGS = '.orbito/settings.local.json';
 export type Manifest = { version: string; items: Record<string, string> };
 
 /** Fingerprint of a file or a folder (names and contents, in a stable order). */

@@ -5,7 +5,7 @@
  *   orbito check ds [--json] [--root <dir>] [--strict] [--verbose]   design-system rules; exit 1 on errors (--strict: also on warnings); --verbose also lists info
  *   orbito export [<screen-id>] [--out <dir>] [--root <dir>]          one screen as a static site (default: site.screen from orbito.config.ts)
  *   orbito models [optimal|high] [--team] [--root <dir>]               show or switch how the agents use models, for you (or --team: the team's default)
- *   orbito update [--pull] [--no-install] [--root <dir>]               refresh the project's Orbito skills, agents and commands (--pull: update Orbito from GitHub first)
+ *   orbito update [--pull] [--no-install] [--json] [--root <dir>]               refresh the project's Orbito skills, agents and commands (--pull: update Orbito from GitHub first)
  */
 import { resolve } from 'node:path';
 
@@ -65,6 +65,8 @@ const exportCmd = async (screen: string | undefined) => {
 const updateCmd = () => {
   try {
     const r = updateProject({ root: resolve(opt('root') ?? process.cwd()), pull: flag('pull'), install: !flag('no-install') });
+
+    if (flag('json')) return void process.stdout.write(JSON.stringify(r));
 
     console.log(r.tool.from === r.tool.to ? `Orbito ${r.tool.to}` : `Orbito ${r.tool.from} → ${r.tool.to}`);
     r.tool.commits?.forEach((c) => console.log(`  · ${c}`));
