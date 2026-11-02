@@ -1,6 +1,6 @@
 # Orbito as one sealed image: the engine and its packages live here, never on the person's computer.
 # The project's folders are mounted from outside (see templates/base/compose.yaml). Details: DOCKER.md
-FROM node:24-slim
+FROM node:24-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c
 
 WORKDIR /orbito
 COPY package.json package-lock.json ./

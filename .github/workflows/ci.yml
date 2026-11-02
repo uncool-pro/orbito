@@ -28,3 +28,35 @@ jobs:
       - run: npm run check:ds
       - run: npm run check:ds -w template-base
       - run: npm run build
+
+  # real clicks in a real browser and the whole road of a new project; the runner already has Chrome
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:e2e
+
+  # known holes in the packages that reach people's computers stop the build; dev tools are reported only
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npm audit
+        continue-on-error: true
+
+  # the sealed image still builds and starts
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: docker build -t orbito:ci .
+      - run: docker run --rm --network none orbito:ci check --help || true

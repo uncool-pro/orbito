@@ -10,23 +10,19 @@
 //      design-system/**/*.docs.tsx       component docs and variants for the catalog
 //      .claude/skills, .claude/agents    the team (Orbito → agents → skills) for the skills map; in the tool repo: skills/, agents/
 //    plus the design-system report (`orbito check ds`), recomputed when design-system/ or screens/ change.
-// 2. Dev endpoints (never in a build):
-//      GET  /__orbito/status                 the status file
-//      POST /__orbito/status  {id,status,note?}  writes that one entry, nothing else
-//      GET  /__orbito/file?path=<rel>        a .md / .txt / .json file inside the project (e.g. a review report)
-//      GET  /__orbito/env                    the project folder and the system (for the developer section of screen details)
-//      POST /__orbito/reveal?path=<rel>      shows a project file in Explorer / Finder / the file manager
-import { spawn } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
+// 2. Dev endpoints: endpoints.mjs. The team: team.mjs. The status file: status.mjs.
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { searchForWorkspaceRoot } from 'vite';
 
 import { analyzeProject } from '@uncool-pro/orbito-cli/analyze';
-import { buildTeam, listOf, modelFor, parseFrontmatter, resolveMode, skillModels, tokensToCss } from '@uncool-pro/orbito-core';
+import { tokensToCss } from '@uncool-pro/orbito-core';
 
-import { saveStatus } from './status.mjs';
+import { devEndpoints } from './endpoints.mjs';
+import { inside, readJson } from './files.mjs';
+import { readTeam, teamDirs } from './team.mjs';
 
 const VIRTUAL = 'virtual:orbito/project';
 const RESOLVED = '\0' + VIRTUAL;
@@ -34,70 +30,6 @@ const STATUS_FILE = '.orbito/status.json';
 const FONTS_FILE = 'design-system/fonts.css';
 // the tool's packages: linked from outside the project (file: dependencies), the dev server must be allowed to serve them
 const PACKAGES_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-
-/** True when `file` is inside `dir` (works with Windows separators and drive letters). */
-const inside = (dir, file) => {
-  const rel = relative(dir, file);
-
-  return !!rel && !rel.startsWith('..') && !isAbsolute(rel);
-};
-
-/** Where the team lives: the project's .claude/ folder, or (in the tool repository, e.g. the demo) the nearest skills/ + agents/ above. */
-const teamDirs = (root) => {
-  if (existsSync(resolve(root, '.claude/skills'))) return { skills: resolve(root, '.claude/skills'), agents: resolve(root, '.claude/agents') };
-  for (let dir = root, i = 0; i < 4; i++, dir = dirname(dir)) {
-    if (existsSync(resolve(dir, 'skills')) && existsSync(resolve(dir, 'agents'))) return { skills: resolve(dir, 'skills'), agents: resolve(dir, 'agents') };
-  }
-
-  return undefined;
-};
-
-/** Reads skills and agents from their markdown files (front matter + the skills each agent's instructions name). */
-const readTeam = (root) => {
-  const dirs = teamDirs(root);
-
-  if (!dirs) return null;
-  // the project's own items: neither installed by Orbito (`.orbito/managed.json`) nor shipped with it
-  const managed = readJson(resolve(root, '.orbito/managed.json'), { items: {} }).items ?? {};
-  const shipped = resolve(PACKAGES_ROOT, '..');
-  const inProject = dirs.skills === resolve(root, '.claude/skills');
-  const ownSkill = (name) => inProject && !managed[`.claude/skills/${name}`] && !existsSync(resolve(shipped, 'skills', name));
-  const ownAgent = (file) => inProject && !managed[`.claude/agents/${file}`] && !existsSync(resolve(shipped, 'agents', file));
-  const skills = (existsSync(dirs.skills) ? readdirSync(dirs.skills, { withFileTypes: true }) : [])
-    .filter((d) => d.isDirectory() && existsSync(resolve(dirs.skills, d.name, 'SKILL.md')))
-    .map((d) => {
-      const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.skills, d.name, 'SKILL.md'), 'utf8'));
-
-      return { name: data.name || d.name, description: data.description || '', body, own: ownSkill(d.name) };
-    });
-  const agents = (existsSync(dirs.agents) ? readdirSync(dirs.agents) : [])
-    .filter((f) => f.endsWith('.md'))
-    .map((f) => {
-      const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.agents, f), 'utf8'));
-
-      return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, effort: data.effort, skills: listOf(data.skills), body, own: ownAgent(f) };
-    });
-
-  // the model mode of the person running the viewer: environment → personal settings → the team's default
-  const { mode, source } = resolveMode({
-    env: process.env.ORBITO_MODELS,
-    local: readJson(resolve(root, '.orbito/settings.local.json'), {}),
-    team: readJson(resolve(root, '.orbito/settings.json'), {}),
-  });
-  const profiles = readJson(resolve(root, '.orbito/models.json'), null) ?? readJson(resolve(dirs.agents, 'models.json'), null);
-  // each agent as Orbito will call it in this mode (the profile wins over the agent file's own values)
-  const inMode = agents.map((a) => ({ ...a, ...(modelFor(profiles ?? undefined, mode, a.name) ?? {}), skillModels: skillModels(profiles ?? undefined, mode, a.name) }));
-
-  return { ...buildTeam(skills, inMode), models: mode, modelsSource: source };
-};
-
-const readJson = (file, fallback) => {
-  try {
-    return JSON.parse(readFileSync(file, 'utf8'));
-  } catch {
-    return fallback;
-  }
-};
 
 /**
  * @param {{ config?: string }} [options] config: project config file relative to the Vite root (default `orbito.config.ts`)
@@ -185,64 +117,7 @@ export default function orbito(options = {}) {
         if (mod) server.moduleGraph.invalidateModule(mod);
         server.ws.send({ type: 'full-reload' });
       });
-      server.middlewares.use((req, res, next) => {
-        const url = new URL(req.url ?? '/', 'http://x');
-        const reply = (code, body, type = 'application/json; charset=utf-8') => {
-          res.statusCode = code;
-          res.setHeader('Content-Type', type);
-          res.end(typeof body === 'string' ? body : JSON.stringify(body));
-        };
-
-        // only the board itself may call these: a page from another site open in the same browser must not write the status
-        // file (text Claude reads), open the file manager or read project files (the browser says where a request comes from)
-        if (url.pathname.startsWith('/__orbito/')) {
-          const site = req.headers['sec-fetch-site'];
-          const origin = req.headers.origin;
-
-          if (site === 'cross-site' || site === 'same-site' || (origin && origin !== 'null' && new URL(origin).host !== req.headers.host) || origin === 'null')
-            return reply(403, { error: 'requests from other sites are not allowed' });
-        }
-        if (url.pathname === '/__orbito/file') {
-          const file = resolve(root, url.searchParams.get('path') ?? '');
-
-          if (!inside(root, file) || !/\.(md|txt|json)$/i.test(file) || !existsSync(file)) return reply(404, { error: 'not found' });
-
-          return reply(200, readFileSync(file, 'utf8'), 'text/plain; charset=utf-8');
-        }
-        if (url.pathname === '/__orbito/env') return reply(200, { root: resolve(root), platform: process.platform, sep, container: !!process.env.ORBITO_CONTAINER });
-        if (url.pathname === '/__orbito/reveal') {
-          const file = resolve(root, url.searchParams.get('path') ?? '');
-
-          if (req.method !== 'POST') return reply(405, { error: 'POST' });
-          // in a container there is no file manager to open, and the system's own is out of reach
-          if (process.env.ORBITO_CONTAINER) return reply(501, { error: 'not available in the container' });
-          if (!inside(root, file) || !existsSync(file)) return reply(404, { error: 'not found' });
-          // the file manager of the system, the file selected; arguments, never a shell string
-          const [cmd, args] =
-            process.platform === 'win32' ? ['explorer.exe', [`/select,${file}`]] : process.platform === 'darwin' ? ['open', ['-R', file]] : ['xdg-open', [dirname(file)]];
-
-          spawn(cmd, args, { detached: true, stdio: 'ignore' }).on('error', () => undefined).unref();
-
-          return reply(200, { ok: true });
-        }
-        if (url.pathname !== '/__orbito/status') return next();
-        const statusPath = resolve(root, STATUS_FILE);
-
-        if (req.method === 'GET') return reply(200, readJson(statusPath, {}));
-        if (req.method !== 'POST') return reply(405, { error: 'GET or POST' });
-        let raw = '';
-
-        req.on('data', (c) => (raw += c));
-        req.on('end', () => {
-          try {
-            const change = JSON.parse(raw || '{}');
-
-            reply(200, { id: change.id, ...saveStatus(statusPath, change) });
-          } catch (e) {
-            reply(e.code === 409 ? 409 : 400, { error: e instanceof Error ? e.message : String(e) });
-          }
-        });
-      });
+      server.middlewares.use(devEndpoints(root, resolve(root, STATUS_FILE)));
     },
     handleHotUpdate(ctx) {
       const file = resolve(ctx.file);
