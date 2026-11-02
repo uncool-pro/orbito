@@ -1,0 +1,16 @@
+/* The prototype: one screen on its stage. */
+.pd-screen-page { min-height: 100vh; background: var(--pd-bg); }
+.pd-stage { display: flex; justify-content: center; padding: 32px 24px 64px; }
+.pd-stage--device .pd-stage__frame { border-radius: 44px; overflow: hidden; box-shadow: 0 0 0 10px #15181f, 0 24px 60px rgba(16, 24, 40, 0.25); }
+.pd-stage--page .pd-stage__frame { box-shadow: 0 12px 40px rgba(16, 24, 40, 0.16); border-radius: 8px; overflow: hidden; }
+/* prototype stage inside the shell */
+.pd-main .pd-screen-page { position: absolute; inset: 0; overflow: auto; min-height: 0; }
+.pd-main .pd-stage { padding: 32px 24px 96px; }
+/* a responsive page: one size at a time, the switch stays in the top right corner while the page scrolls */
+.pd-sizebar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: flex-end; padding: 12px 16px 0; pointer-events: none; }
+.pd-main .pd-sizebar + .pd-stage { padding-top: 12px; }
+.pd-sizes { pointer-events: auto; display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px; background: var(--pd-panel); border: 1px solid var(--pd-panel-line); box-shadow: 0 2px 8px rgba(16, 24, 40, 0.08); }
+.pd-sizes button { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border: 0; border-radius: 7px; background: transparent; color: var(--pd-muted); font: 600 13px var(--pd-font); cursor: pointer; }
+.pd-sizes button:hover { color: var(--pd-ink); background: var(--pd-bg); }
+.pd-sizes button[aria-pressed='true'] { background: var(--pd-ink); color: var(--pd-panel); }
+.pd-sizes button:focus-visible { outline: 2px solid var(--pd-accent); outline-offset: 1px; }
