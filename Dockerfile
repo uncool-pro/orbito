@@ -14,7 +14,7 @@ COPY CHANGELOG.md DOCKER.md ./
 
 # versions exactly as in the lockfile, no install scripts; test tools are not needed at run time
 RUN npm ci --ignore-scripts --no-audit --no-fund \
-  && rm -rf node_modules/vitest node_modules/@vitest \
+  && rm -rf node_modules/vitest node_modules/@vitest node_modules/@playwright node_modules/playwright node_modules/playwright-core \
   && ln -s /orbito/node_modules /node_modules \
   && mkdir /project /work \
   && chown node /project /work

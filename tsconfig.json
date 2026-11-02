@@ -3,6 +3,8 @@
   "include": [
     "packages/*/src",
     "packages/*/test",
+    "e2e",
+    "playwright.config.ts",
     "demo/src",
     "demo/*.ts",
     "demo/design-system",
