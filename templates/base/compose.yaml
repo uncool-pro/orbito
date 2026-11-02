@@ -3,7 +3,7 @@
 #   docker compose down                         stop it
 #   docker compose run --rm tools check ds      design-system check
 #   docker compose run --rm tools typecheck     type check
-#   docker compose run --rm export              one page as a static site in site/
+#   docker compose run --rm export <screen>     one page as a static site in site/
 #   docker compose run --rm admin models        show or switch the model mode
 # The renderer sees only the folders listed here, read-only: never raw/, .env or .git. `orbito update` manages this file.
 x-sealed: &sealed
@@ -54,7 +54,7 @@ services:
     <<: *sealed
     profiles: [tools]
     network_mode: none
-    command: export
+    entrypoint: [node, /orbito/docker/entry.mjs, export]
     volumes:
       - ./screens:/project/screens:ro
       - ./flows:/project/flows:ro

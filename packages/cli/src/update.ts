@@ -45,12 +45,14 @@ export const updateProject = ({ root, pull, install = true, tool = toolRoot(), t
   if (pull) {
     if (!existsSync(join(tool, '.git'))) {
       throw new Error(
-        `the Orbito folder is not a git clone, so it cannot pull updates: ${tool}\n` +
-          `  make it one (your projects keep working, they link to this path):\n` +
+        `the Orbito folder was not downloaded with git, so it cannot fetch updates by itself: ${tool}\n` +
+          `  Your projects keep working, they link to this path. To update, replace the folder and keep its path:\n` +
           `    1. move or rename the folder\n` +
-          `    2. git clone https://github.com/uncool-pro/orbito "${tool}"\n` +
+          `    2. download the new version to the same path, either way:\n` +
+          `         git clone https://github.com/uncool-pro/orbito "${tool}"   (later updates then work by themselves)\n` +
+          `         or unpack https://github.com/uncool-pro/orbito/archive/refs/heads/main.zip there\n` +
           `    3. npm install --prefix "${tool}"\n` +
-          `  then run orbito update again`,
+          `    4. in your project, run: npx --no orbito update`,
       );
     }
     const before = git(tool, ['rev-parse', 'HEAD']);

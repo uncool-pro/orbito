@@ -64,7 +64,7 @@ Linux only: files keep your user id, so set it first: `export ORBITO_UID=$(id -u
 | Stop the board | `docker compose down` | Ctrl+C |
 | Design-system check | `docker compose run --rm tools check ds` | `npm run check:ds` |
 | Type check | `docker compose run --rm tools typecheck` | `npm run typecheck` |
-| One page as a static site | `docker compose run --rm export` | `npm run export` |
+| One page as a static site | `docker compose run --rm export <screen-id>` (or set `site.screen` in `orbito.config.ts`) | `npm run export` |
 | Model mode | `docker compose run --rm admin models high` | `npx --no orbito models high` |
 
 The board as a static site (`npm run build`) is available only from the code for now.
@@ -87,12 +87,17 @@ Run the two update commands above in the project folder. It adds `compose.yaml` 
 
 ## When something does not work
 
-- **Port 5190 is taken:** another project's board is running. `docker compose down` there, or stop `npm run dev`.
+- **The `docker` command is not found, though Docker Desktop is installed:** this window started before the installation and does not know the new path yet. Close it and open a new one. On Windows, Claude can also find the command in `%LOCALAPPDATA%\Programs\DockerDesktop\resources\bin` or `C:\Program Files\Docker\Docker\resources\bin`.
+- **Docker says it cannot connect:** Docker Desktop is closed, or still starting. Open it and wait for "Engine running".
+- **Windows asks for administrator rights or a restart while Docker is being installed:** that is the first start of WSL, the small Linux Docker runs on. It happens once. On a company computer it may need your IT department.
+- **Port 5190 is taken, or the board shows another project:** another project's board is running. `docker compose down` there, or stop `npm run dev`. Note that `npm run dev` and the container can both start at once without an error, and the browser then shows only one of them.
 - **A font or a picture is missing on the board:** it comes from the internet. Put the file in `public/`.
 - **"cannot resolve" for a package:** the project imports a package that is not in the image. Build it from the design system instead, or use the "from the code" way.
 - **A folder outside the list in `compose.yaml`:** if screens import from another top-level folder, add it to `volumes` of `renderer` and `tools`, read-only. The next update reports your edit and keeps a copy in `.orbito/backup/`.
 
 ## For Claude
+
+The person may not be technical. Say what is happening in plain words, one step at a time, tell them exactly what to click, and do not ask about things you can check yourself. Installing Docker Desktop and changing system settings is theirs to do: give them the link, wait until they say it is open, then carry on.
 
 Check `.orbito/runtime` at the start of a session. If it says `docker`:
 

@@ -141,6 +141,13 @@ export const installTeam = ({ root, tool, today = new Date().toISOString().slice
     writeFileSync(filled, readFileSync(composeTemplate, 'utf8').split('{{version}}').join(toolVersion(tool)));
     copy(filled, join(root, 'compose.yaml'), 'compose.yaml');
     rmSync(dir, { recursive: true, force: true });
+    // every folder compose.yaml mounts must exist: a missing one would be created by Docker, owned by root on Linux
+    for (const folder of ['public', 'src', 'content', 'reviews']) {
+      if (existsSync(join(root, folder))) continue;
+      mkdirSync(join(root, folder));
+      writeFileSync(join(root, folder, '.gitkeep'), '');
+    }
+    mkdirSync(join(root, 'site'), { recursive: true });
   }
   for (const name of RETIRED_SKILLS) retire(join(claude, 'skills', name), `skill ${name}`);
   for (const name of RETIRED_AGENTS) retire(join(claude, 'agents', `${name}.md`), `agent ${name}`);

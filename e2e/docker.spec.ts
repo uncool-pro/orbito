@@ -1,0 +1,133 @@
+// The whole road in the container, and what the seal promises. Runs only with a built image: ORBITO_IMAGE=orbito:dev npm run test:e2e
+import { execFileSync } from 'node:child_process';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+import { expect, test } from '@playwright/test';
+
+const IMAGE = process.env.ORBITO_IMAGE;
+const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const VERSION = (JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8')) as { version: string }).version;
+const BOARD = 'http://localhost:5190';
+
+const docker = (cwd: string, ...args: string[]) => execFileSync('docker', args, { cwd, encoding: 'utf8', stdio: 'pipe', timeout: 180_000 });
+const refuses = (cwd: string, ...args: string[]) => expect(() => docker(cwd, ...args)).toThrow();
+
+test.describe.serial('Orbito in a container', () => {
+  test.skip(!IMAGE, 'set ORBITO_IMAGE to a built image');
+  test.setTimeout(240_000);
+  let dir: string;
+  let project: string;
+
+  test.beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), 'orbito-docker-'));
+    project = join(dir, 'moj-produkt');
+    // the project's compose.yaml names the published image: the one under test stands in for it
+    docker(dir, 'tag', IMAGE!, `ghcr.io/uncool-pro/orbito:${VERSION}`);
+    docker(dir, 'run', '--rm', '--network', 'none', '-v', `${dir}:/work`, '-w', '/work', IMAGE!, 'create', 'moj-produkt', '--title', 'Mój produkt', '--platform', 'web', '--locale', 'pl');
+  });
+
+  test.afterAll(() => {
+    try {
+      docker(project, 'compose', 'down', '--timeout', '2');
+    } finally {
+      rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 500 });
+    }
+  });
+
+  test('creates a project with no packages on the computer, ready for the board', () => {
+    expect(existsSync(join(project, 'node_modules'))).toBe(false);
+    expect(readFileSync(join(project, '.orbito/runtime'), 'utf8').trim()).toBe('docker');
+    expect(readFileSync(join(project, 'compose.yaml'), 'utf8')).toContain(`orbito:${VERSION}`);
+    expect(existsSync(join(project, '.orbito/managed.json'))).toBe(true);
+    expect(existsSync(join(project, '.orbito/status.json'))).toBe(true);
+    for (const folder of ['screens', 'flows', 'design-system', 'public', 'src', 'content', 'reviews']) expect(existsSync(join(project, folder)), folder).toBe(true);
+  });
+
+  test('checks the design system and the types inside the container', () => {
+    expect(docker(project, 'compose', 'run', '--rm', 'tools', 'check', 'ds')).toContain('0 errors, 0 warnings');
+    docker(project, 'compose', 'run', '--rm', 'tools', 'typecheck');
+  });
+
+  test('opens the board, only for this computer', async ({ page, request }) => {
+    const errors: string[] = [];
+
+    page.on('pageerror', (e) => errors.push(String(e)));
+    page.on('console', (m) => {
+      if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) errors.push(m.text());
+    });
+    page.on('response', (r) => {
+      if (r.status() >= 400 && !r.url().endsWith('/favicon.ico')) errors.push(`${r.status()} ${r.url()}`);
+    });
+    docker(project, 'compose', 'up', '-d');
+    await expect(async () => {
+      expect((await request.get(BOARD)).ok()).toBe(true);
+    }).toPass({ timeout: 90_000 });
+    expect(docker(project, 'compose', 'port', 'gate', '5190').trim()).toBe('127.0.0.1:5190');
+    expect((await request.get(BOARD)).headers()['content-security-policy']).toContain("default-src 'self'");
+    await page.goto(`${BOARD}/#/board`);
+    await expect(page.locator('[data-card]').first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('.pd-crumbs')).toContainText('Mój produkt');
+    expect(errors).toEqual([]);
+  });
+
+  test('shows a change made from outside the container by itself', async ({ page }) => {
+    await page.goto(`${BOARD}/#/board`);
+    const card = page.locator('[data-card]').first();
+
+    await expect(card).toBeVisible({ timeout: 60_000 });
+    const screens = readdirSync(join(project, 'screens'), { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.screen.tsx'));
+    const file = join(project, 'screens', screens[0]!);
+    const before = readFileSync(file, 'utf8');
+    const title = /title: '([^']+)'/.exec(before)?.[1];
+
+    expect(title).toBeTruthy();
+    writeFileSync(file, before.replace(`title: '${title}'`, "title: 'Zmiana z zewnątrz'"));
+    await expect(page.locator('.pd-tree, [data-card]').filter({ hasText: 'Zmiana z zewnątrz' }).first()).toBeVisible({ timeout: 30_000 });
+    writeFileSync(file, before);
+  });
+
+  test('saves a status from the board into the project', async ({ page }) => {
+    await page.goto(`${BOARD}/#/board`);
+    await page.locator('.pd-insp__features select').first().selectOption('review');
+    await expect(async () => {
+      expect(readFileSync(join(project, '.orbito/status.json'), 'utf8')).toContain('"review"');
+    }).toPass({ timeout: 10_000 });
+  });
+
+  test('keeps its promises: no internet, no other files, nothing to write', () => {
+    mkdirSync(join(project, 'raw'), { recursive: true });
+    writeFileSync(join(project, 'raw/poufne.md'), 'tajne');
+    writeFileSync(join(project, '.env'), 'KLUCZ=tajny');
+    const inside = (...args: string[]) => ['compose', 'exec', '-T', 'renderer', ...args];
+
+    refuses(project, ...inside('node', '-e', "fetch('https://example.com').then(() => process.exit(0), () => process.exit(1))"));
+    refuses(project, ...inside('ls', '/project/raw'));
+    refuses(project, ...inside('ls', '/project/.env'));
+    refuses(project, ...inside('ls', '/project/.git'));
+    refuses(project, ...inside('touch', '/project/screens/zapis'));
+    refuses(project, ...inside('touch', '/project/orbito.config.ts'));
+    refuses(project, ...inside('touch', '/orbito/zapis'));
+    expect(docker(project, ...inside('id', '-u')).trim()).not.toBe('0');
+  });
+
+  test('exports one page as a static site', () => {
+    docker(project, 'compose', 'run', '--rm', 'export', 'start');
+    expect(existsSync(join(project, 'site/index.html'))).toBe(true);
+  });
+
+  test('switches the model mode, the one writable tool', () => {
+    expect(docker(project, 'compose', 'run', '--rm', 'admin', 'models', 'high')).toContain('models: high');
+  });
+
+  test('updates the project from the image without touching the work or making copies', () => {
+    const screens = readdirSync(join(project, 'screens'), { recursive: true, encoding: 'utf8' }).length;
+
+    docker(project, 'run', '--rm', '--network', 'none', '-v', `${project}:/project`, IMAGE!, 'update');
+    expect(readdirSync(join(project, 'screens'), { recursive: true, encoding: 'utf8' }).length).toBe(screens);
+    expect(existsSync(join(project, '.orbito/backup'))).toBe(false);
+    expect(readFileSync(join(project, 'raw/poufne.md'), 'utf8')).toBe('tajne');
+  });
+});
