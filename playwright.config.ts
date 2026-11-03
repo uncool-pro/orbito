@@ -7,7 +7,8 @@ export default defineConfig({
   testDir: 'e2e',
   outputDir: 'node_modules/.cache/orbito-e2e',
   workers: 1,
-  reporter: 'list',
+  // on GitHub each failure also shows in the pull request, readable without the full log
+  reporter: process.env.CI ? [['list'], ['github']] : 'list',
   use: { baseURL: `http://localhost:${PORT}`, channel: 'chrome', viewport: { width: 1440, height: 900 } },
   webServer: { command: `npm run dev -w demo -- --port ${PORT} --strictPort`, url: `http://localhost:${PORT}`, reuseExistingServer: false },
 });
