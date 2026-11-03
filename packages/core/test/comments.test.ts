@@ -1,32 +1,27 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatComments, parseComments } from '../src';
+import { byCreated, formatComment, parseComment } from '../src';
 import type { ScreenComment } from '../src';
 
-const comments: ScreenComment[] = [
-  { id: 'c2', status: 'done', text: 'Rename "Add" to "Add a plant".', author: 'Ola', createdAt: '2026-11-03', note: 'renamed the button' },
-  { id: 'c1', status: 'open', text: 'Too many filters on the list.\nMaybe a sheet?', author: 'Ola', createdAt: '2026-11-03' },
-  { id: 'c3', status: 'doing', text: 'Bigger touch targets.', createdAt: '2026-11-04' },
-];
+const done: ScreenComment = { id: 'm1a2-x7', status: 'done', text: 'Rename "Add" to "Add a plant".\nShorter is fine too.', author: 'Ola', createdAt: '2026-11-03T14:05:12Z', note: 'renamed the button' };
 
-describe('comments files', () => {
-  const md = formatComments('PL-01 · List', comments);
+describe('comment files', () => {
+  it('writes front matter and the text, and reads it back', () => {
+    const md = formatComment(done);
 
-  it('writes open ones first, then in progress, then done', () => {
-    expect(md.indexOf('## open · c1')).toBeLessThan(md.indexOf('## doing · c3'));
-    expect(md.indexOf('## doing · c3')).toBeLessThan(md.indexOf('## done · c2'));
-    expect(md).toContain('Ola · 2026-11-03 · note: renamed the button');
+    expect(md).toBe('---\nstatus: done\nauthor: Ola\ncreated: 2026-11-03T14:05:12Z\nnote: renamed the button\n---\nRename "Add" to "Add a plant".\nShorter is fine too.\n');
+    expect(parseComment('m1a2-x7', md)).toEqual(done);
   });
 
-  it('reads back what it wrote, multi-line text, notes and a missing author', () => {
-    const back = parseComments(md);
-
-    expect(back.find((c) => c.id === 'c1')).toEqual(comments[1]);
-    expect(back.find((c) => c.id === 'c2')).toEqual(comments[0]);
-    expect(back.find((c) => c.id === 'c3')).toEqual(comments[2]);
+  it('reads a comment Claude or a person wrote by hand, and leaves out what is not one', () => {
+    expect(parseComment('c9', '---\nstatus: open\ncreated: 2026-11-05T09:00:00Z\n---\n\nCheck the copy.\n')).toEqual({ id: 'c9', status: 'open', text: 'Check the copy.', createdAt: '2026-11-05T09:00:00Z' });
+    expect(parseComment('c9', 'Just text')).toBeNull();
+    expect(parseComment('c9', '---\nstatus: closed\n---\nx')).toBeNull();
   });
 
-  it('reads a comment Claude or a person wrote by hand', () => {
-    expect(parseComments('# Comments on X\n\n## open · c9\nKuba · 2026-11-05\n\nCheck the copy.\n')).toEqual([{ id: 'c9', status: 'open', text: 'Check the copy.', author: 'Kuba', createdAt: '2026-11-05' }]);
+  it('orders by the time they were written', () => {
+    const at = (createdAt: string, id: string): ScreenComment => ({ id, status: 'open', text: '', createdAt });
+
+    expect([at('2026-11-03T15:00:00Z', 'b'), at('2026-11-03T09:00:00Z', 'a')].sort(byCreated).map((c) => c.id)).toEqual(['a', 'b']);
   });
 });

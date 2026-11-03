@@ -12,6 +12,8 @@ export type DevEnv = {
   container?: boolean;
   /** In Docker: the project folder on the person's computer, as compose passed it (ORBITO_HOST_ROOT). */
   hostRoot?: string;
+  /** The person's name from git, when git has one (not in a container). */
+  name?: string;
 };
 
 let env: Promise<DevEnv | null> | undefined;

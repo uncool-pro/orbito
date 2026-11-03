@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -127,25 +127,27 @@ test.describe('prototype', () => {
 });
 
 test.describe('screen details', () => {
-  test('a comment is an open change in the screen\'s own file, moved along and removed', async ({ page }) => {
-    const file = join(DEMO, 'comments/plant-list.md');
+  test('a comment is an open change in a file of its own, moved along and removed', async ({ page }) => {
+    const folder = join(DEMO, 'comments/plant-list');
     const comment = page.locator('.pd-insp .pd-comment', { hasText: 'Too many plants at once' });
+    const only = () => join(folder, readdirSync(folder)[0]!);
 
-    expect(existsSync(file)).toBe(false);
+    expect(existsSync(folder)).toBe(false);
     await page.goto('/#/s/plant-list');
     await page.locator('.pd-insp').getByPlaceholder('What should change on this screen?').fill('Too many plants at once');
     await page.locator('.pd-insp').getByPlaceholder('Your name').fill('Test');
     await page.locator('.pd-insp').getByRole('button', { name: 'Add', exact: true }).click();
     await expect(comment).toBeVisible();
-    expect(readFileSync(file, 'utf8')).toMatch(/# Comments on PL-01 · List\n\n## open · c\w+\nTest · \d{4}-\d{2}-\d{2}\n\nToo many plants at once/);
+    expect(readdirSync(folder)).toHaveLength(1);
+    expect(readFileSync(only(), 'utf8')).toMatch(/^---\nstatus: open\nauthor: Test\ncreated: \d{4}-\d{2}-\d{2}T[\d:]+Z\n---\nToo many plants at once\n$/);
     // the screen in the prototype shows it waits
     await expect(page.locator('.pd-commentstoggle .pd-count')).toHaveText('1');
     await comment.locator('select').selectOption('done');
-    await expect.poll(() => readFileSync(file, 'utf8')).toMatch(/## done · c\w+/);
+    await expect.poll(() => readFileSync(only(), 'utf8')).toContain('status: done');
     await page.locator('.pd-insp .pd-insp__more', { hasText: '1 done' }).click();
     await comment.getByRole('button', { name: 'Remove this comment' }).click();
     await expect(comment).toHaveCount(0);
-    expect(existsSync(file)).toBe(false);
+    expect(existsSync(folder)).toBe(false);
   });
 
   test('a requirement shows its text from requirements/', async ({ page }) => {
@@ -234,4 +236,23 @@ test('the whole tour runs without an error in the console', async ({ page }) => 
     await expect(page.locator('.pd-top')).toBeVisible();
   }
   expect(errors).toEqual([]);
+});
+
+test.describe('the first time', () => {
+  test.use({ storageState: { cookies: [], origins: [] } });
+
+  test('says how Orbito works, asks for a name once and signs comments with it', async ({ page }) => {
+    await page.goto('/#/board/plants');
+    const welcome = page.getByRole('dialog', { name: 'Welcome to Orbito' });
+
+    await expect(welcome).toContainText('agent first');
+    await welcome.getByRole('textbox').fill('Ola');
+    await welcome.getByRole('button', { name: 'Start' }).click();
+    await expect(welcome).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator('.pd-top')).toBeVisible();
+    await expect(welcome).toHaveCount(0);
+    await page.goto('/#/s/plant-list');
+    await expect(page.locator('.pd-insp').getByPlaceholder('Your name')).toHaveValue('Ola');
+  });
 });

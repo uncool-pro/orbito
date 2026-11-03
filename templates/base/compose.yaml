@@ -35,7 +35,7 @@ services:
       - ./index.html:/project/index.html:ro
       - ./orbito.config.ts:/project/orbito.config.ts:ro
       - ./tsconfig.json:/project/tsconfig.json:ro
-      # what the board writes, both set by the person: the statuses, and the comments on screens (one file per screen)
+      # what the board writes, both set by the person: the statuses, and the comments on screens (one file per comment)
       - ./.orbito/status.json:/project/.orbito/status.json
       - ./comments:/project/comments
     networks: [sealed]

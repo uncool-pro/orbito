@@ -7,13 +7,26 @@
 //   GET  /__orbito/comments               every screen's comments (comments/<screen-id>.md)
 //   POST /__orbito/comments {action,screen,...}  adds a comment to one screen, changes its status or removes it
 //   GET  /__orbito/source?path=<rel>      the code of a screen or a design-system component (dev mode)
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, relative, resolve, sep } from 'node:path';
 
 import { changeComments, readComments } from './comments.mjs';
 import { inside, readJson } from './files.mjs';
 import { saveStatus } from './status.mjs';
+
+/**
+ * The person's name as git knows it (`git config user.name`), to sign comments without asking; nothing in a container,
+ * where git is not there, or when git has no name. A fixed command, no shell, a short timeout.
+ */
+const gitName = (root) => {
+  if (process.env.ORBITO_CONTAINER) return undefined;
+  try {
+    return execFileSync('git', ['config', 'user.name'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 2000 }).trim().slice(0, 80) || undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 /** Reads a JSON body and answers with what `handle` returns, or with the error it throws. */
 const withBody = (req, reply, handle) => {
@@ -89,8 +102,11 @@ export const devEndpoints = (root, statusFile, commentsDir = resolve(root, 'comm
     return withBody(req, reply, (change) => ({ screen: change.screen, comments: changeComments(commentsDir, change) }));
   }
   // in a container the root is the container's; the folder on the person's computer comes from compose (ORBITO_HOST_ROOT)
-  if (url.pathname === '/__orbito/env')
-    return reply(200, { root: resolve(root), platform: process.platform, sep, container: !!process.env.ORBITO_CONTAINER, ...(process.env.ORBITO_HOST_ROOT ? { hostRoot: process.env.ORBITO_HOST_ROOT } : {}) });
+  if (url.pathname === '/__orbito/env') {
+    const name = gitName(root);
+
+    return reply(200, { root: resolve(root), platform: process.platform, sep, container: !!process.env.ORBITO_CONTAINER, ...(process.env.ORBITO_HOST_ROOT ? { hostRoot: process.env.ORBITO_HOST_ROOT } : {}), ...(name ? { name } : {}) });
+  }
   if (url.pathname === '/__orbito/reveal') {
     const file = resolve(root, url.searchParams.get('path') ?? '');
 

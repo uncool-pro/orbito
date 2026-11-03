@@ -12,6 +12,7 @@ import { TopBar } from './TopBar';
 import { Drawer } from './Drawer';
 import { Inspector } from './Inspector';
 import { Island } from './Island';
+import { Welcome } from '../Welcome';
 
 type ShellProps = { mode: Mode; page?: Page; flowKey?: string; dsSection?: string; children: ReactNode };
 
@@ -28,6 +29,7 @@ export const Shell = ({ mode, page, flowKey, dsSection, children }: ShellProps) 
   return (
     <div className={`pd-shell${drawerOpen ? '' : ' no-drawer'}${inspectorOpen && !isPage(mode) ? '' : ' no-inspector'}`} style={width}>
       <TopBar mode={mode} page={page} flowKey={flowKey} />
+      <Welcome />
       {drawerOpen && <Drawer mode={mode} page={page} flowKey={flowKey} dsSection={dsSection} />}
       <main className="pd-main">
         {isPage(mode) && <BackBar />}

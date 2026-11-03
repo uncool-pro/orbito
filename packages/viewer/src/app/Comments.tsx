@@ -9,9 +9,18 @@ import { useT } from '../i18n';
 
 /**
  * The comments on a screen: changes people ask for, each with a status (open → doing → done) that the person or Claude
- * moves along. Open ones first; done ones fold away under one line. Kept in `comments/<screen-id>.md`, so they travel
- * through git with the mockups. Shown in the screen details and next to the screen in the prototype.
+ * moves along. Open ones first, each group oldest first; done ones fold away under one line. One file per comment in
+ * `comments/<screen-id>/`, so they travel through git with the mockups and two people commenting never touch one file. Shown in the screen details and next to the screen in the prototype.
  */
+/** When a comment was written, short: "3 Nov, 14:05" (older files have the date only). */
+const when = (iso: string) => {
+  const d = new Date(iso);
+
+  if (Number.isNaN(d.getTime())) return iso;
+
+  return /T/.test(iso) ? d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+};
+
 export const Comments = ({ screen }: { screen: Screen<ComponentType> }) => {
   const list = useComments(screen.id);
   const t = useT();
@@ -23,7 +32,6 @@ export const Comments = ({ screen }: { screen: Screen<ComponentType> }) => {
   const editable = canComment();
   const waiting = list.filter((c) => c.status !== 'done');
   const done = list.filter((c) => c.status === 'done');
-  const heading = `${screen.code ? `${screen.code} · ` : ''}${screen.title.split(' / ').pop()}`;
   const run = (job: Promise<void>, after?: () => void) => {
     setBusy(true);
     setError(null);
@@ -44,7 +52,7 @@ export const Comments = ({ screen }: { screen: Screen<ComponentType> }) => {
       {c.note && <p className="pd-comment__note">{c.note}</p>}
       <footer>
         <span>
-          {c.author ?? t.anonymous} · {c.createdAt}
+          {c.author ?? t.anonymous} · {when(c.createdAt)}
         </span>
         {editable ? (
           <span className="pd-comment__actions">
@@ -83,7 +91,7 @@ export const Comments = ({ screen }: { screen: Screen<ComponentType> }) => {
           className="pd-comment__form"
           onSubmit={(e) => {
             e.preventDefault();
-            if (text.trim()) run(addComment(screen.id, heading, text, author), () => setText(''));
+            if (text.trim()) run(addComment(screen.id, text, author), () => setText(''));
           }}
         >
           <textarea className="pd-input" rows={2} placeholder={t.commentPlaceholder} value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} />

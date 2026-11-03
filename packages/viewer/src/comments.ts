@@ -8,7 +8,7 @@ export type CommentsFile = Record<string, ScreenComment[]>;
 
 /**
  * Comments on screens, as changes with a status: open (asked), doing (Claude is on it), done (made). The build ships
- * them read-only; the dev server reads and writes `comments/<screen-id>.md` through the Vite plugin
+ * them read-only; the dev server reads and writes `comments/<screen-id>/<comment-id>.md` (one file per comment) through the Vite plugin
  * (`/__orbito/comments`), so a comment travels through git with the mockups and Claude reads and moves it along too.
  */
 let state: CommentsFile = {};
@@ -23,7 +23,7 @@ export const initComments = (initial: CommentsFile | undefined, canEdit: boolean
   editable = canEdit;
 };
 
-// the dev server pushes the comments whenever a file changes, also when Claude edits one
+// the dev server pushes the comments whenever a comment file changes, also when Claude edits one
 const hot = (import.meta as unknown as { hot?: { on: (event: string, cb: (data: CommentsFile) => void) => void } }).hot;
 
 hot?.on('orbito:comments', (all) => {
@@ -56,11 +56,13 @@ const send = async (body: Record<string, string>) => {
   emit();
 };
 
-/** `heading` names the file when it is first made, e.g. "PL-01 · List". */
-export const addComment = (screen: string, heading: string, text: string, author: string) => {
-  remember(AUTHOR_KEY, author);
+/** Remembers the name comments are signed with, on this computer. */
+export const saveAuthor = (author: string) => remember(AUTHOR_KEY, author);
 
-  return send({ action: 'add', screen, heading, text, author });
+export const addComment = (screen: string, text: string, author: string) => {
+  saveAuthor(author);
+
+  return send({ action: 'add', screen, text, author });
 };
 
 export const setCommentStatus = (screen: string, id: string, status: CommentStatus) => send({ action: 'status', screen, id, status });

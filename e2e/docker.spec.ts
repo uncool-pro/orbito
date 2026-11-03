@@ -143,7 +143,7 @@ test.describe.serial('Orbito in a container', () => {
     const added = await request.post(`${BOARD}/__orbito/comments`, { data: { action: 'add', screen: 'start', text: 'Z kontenera' } });
 
     expect(added.ok()).toBe(true);
-    expect(readFileSync(join(project, 'comments/start.md'), 'utf8')).toContain('Z kontenera');
+    expect(readdirSync(join(project, 'comments/start')).map((f) => readFileSync(join(project, 'comments/start', f), 'utf8')).join()).toContain('Z kontenera');
     // dev mode shows real paths: compose passes the project folder in
     expect(((await (await request.get(`${BOARD}/__orbito/env`)).json()) as { hostRoot?: string }).hostRoot).toBeTruthy();
   });
