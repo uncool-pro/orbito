@@ -18,6 +18,9 @@ services:
   renderer:
     <<: *sealed
     command: serve
+    # the project folder on this computer, so dev mode can show and copy real paths; the container still sees only what is mounted
+    environment:
+      ORBITO_HOST_ROOT: ${PWD}
     volumes: &project
       - ./screens:/project/screens:ro
       - ./flows:/project/flows:ro
@@ -26,13 +29,15 @@ services:
       - ./src:/project/src:ro
       - ./content:/project/content:ro
       - ./reviews:/project/reviews:ro
+      - ./requirements:/project/requirements:ro
       - ./.claude:/project/.claude:ro
       - ./.orbito:/project/.orbito:ro
       - ./index.html:/project/index.html:ro
       - ./orbito.config.ts:/project/orbito.config.ts:ro
       - ./tsconfig.json:/project/tsconfig.json:ro
-      # the one file the board writes: statuses set by the person
+      # the two files the board writes: statuses and comments on screens, set by the person
       - ./.orbito/status.json:/project/.orbito/status.json
+      - ./.orbito/comments.json:/project/.orbito/comments.json
     networks: [sealed]
     restart: unless-stopped
 

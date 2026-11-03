@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { ComponentType, ReactNode } from 'react';
+import type { ComponentType, CSSProperties, ReactNode } from 'react';
 
-import { DS_LEVELS, flowStatusId, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
-import type { Page, Project, Screen, Status } from '@uncool-pro/orbito-core';
+import { DS_LEVELS, featureOf, flowStatusId, groupTargets, sharedTargets, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
+import type { Flow, Page, Project, Screen, Status } from '@uncool-pro/orbito-core';
 
 import { LiveScreen } from '../../board/BoardCard';
+import { CodePanel } from '../CodePanel';
 import { OrbitoWordmark } from '../Logo';
-import { absolutePath, openInEditor, revealFile, useDevEnv } from '../../dev';
+import { addComment, canComment, readAuthor, resolveComment, useComments } from '../../comments';
+import { openInEditor, pathOnComputer, revealFile, useDevEnv, vscodeLink } from '../../dev';
 import { useT } from '../../i18n';
 import { useStatuses } from '../../status';
 import { useViewer } from '../context';
@@ -37,10 +39,12 @@ const PANEL_RIGHT = 'M4 5h16v14H4zM15 5v14';
  * an inspector on the right (the selected screen, or view options), and an island at the bottom to switch modes and zoom.
  */
 export const Shell = ({ mode, page, flowKey, dsSection, children }: ShellProps) => {
-  const { drawerOpen, inspectorOpen } = useShell();
+  const { drawerOpen, inspectorOpen, devMode, selected, codeWidth } = useShell();
+  // in dev mode the right panel shows the selected screen's code, as wide as the person dragged it
+  const width = devMode && selected && !isPage(mode) ? ({ '--pd-insp-w': `${codeWidth}px` } as CSSProperties) : undefined;
 
   return (
-    <div className={`pd-shell${drawerOpen ? '' : ' no-drawer'}${inspectorOpen && !isPage(mode) ? '' : ' no-inspector'}`}>
+    <div className={`pd-shell${drawerOpen ? '' : ' no-drawer'}${inspectorOpen && !isPage(mode) ? '' : ' no-inspector'}`} style={width}>
       <TopBar mode={mode} page={page} flowKey={flowKey} />
       {drawerOpen && <Drawer mode={mode} page={page} flowKey={flowKey} dsSection={dsSection} />}
       <main className="pd-main">
@@ -48,7 +52,7 @@ export const Shell = ({ mode, page, flowKey, dsSection, children }: ShellProps) 
         {children}
         {!isPage(mode) && <Island mode={mode} page={page} flowKey={flowKey} />}
       </main>
-      {inspectorOpen && !isPage(mode) && <Inspector mode={mode} />}
+      {inspectorOpen && !isPage(mode) && <Inspector mode={mode} page={page} flowKey={flowKey} />}
     </div>
   );
 };
@@ -88,7 +92,7 @@ const BackBar = () => {
 
 const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: string }) => {
   const { project, problems, ds } = useViewer();
-  const { togglePanel } = useShell();
+  const { togglePanel, devMode, toggleDev } = useShell();
   const t = useT();
   const flow = page?.flows.find((f) => f.key === flowKey);
   const issues = problems.length + ds.report.counts.error + ds.report.counts.warning;
@@ -143,6 +147,12 @@ const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: st
       <a className={`pd-health-pill${issues ? ' is-warn' : ''}`} href={dsHash('health')} title={t.health}>
         {issues ? `${issues} ${t.issuesShort}` : `✓ ${t.health}`}
       </a>
+      {!isPage(mode) && (
+        <button type="button" className={`pd-devtoggle${devMode ? ' is-on' : ''}`} aria-pressed={devMode} onClick={toggleDev} title={t.devModeTip}>
+          <Glyph d="M8 7l-5 5 5 5M16 7l5 5-5 5" />
+          {t.devMode}
+        </button>
+      )}
       {!isPage(mode) && (
         <button type="button" className="pd-iconbtn" onClick={() => togglePanel('inspector')} aria-label={t.toggleInspector} title={t.toggleInspector}>
           <Glyph d={PANEL_RIGHT} />
@@ -297,6 +307,7 @@ const BranchIcon = () => (
 /**
  * Pages → features (flows) → screens. Every level has the same row: a chevron (or its space), the name first, the code
  * small and grey after it. A flow shows its path as the line of the flows legend and its status as the only dot.
+ * A page's name shows the whole page; a feature shows only that feature, and a second click on it the whole page again.
  */
 const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: string }) => {
   const { project } = useViewer();
@@ -358,23 +369,20 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
               </div>
               {expanded && (
                 <ul className="pd-tree__level pd-tree__level--nested">
-                  <li>
-                    <div className="pd-tree__line">
-                      <span className="pd-tree__spacer" />
-                      <a className={`pd-tree__row${flowKey ? '' : ' is-on'}`} href={canvasHash(base, p.key)}>
-                        <span className="pd-tree__name">{t.allFlows}</span>
-                      </a>
-                    </div>
-                  </li>
                   {p.flows.map((f) => {
                     const isOpen = open.has(f.key);
                     const st = statusOf(statuses, flowStatusId(p.key, f.key)).status;
+                    const on = current && flowKey === f.key;
 
                     return (
                       <li key={f.key}>
                         <div className="pd-tree__line">
                           <Chevron open={isOpen} label={isOpen ? t.collapse : t.expand} onClick={() => toggle(f.key)} />
-                          <a className={`pd-tree__row pd-tree__flow${flowKey === f.key ? ' is-on' : ''}`} href={canvasHash(base, p.key, f.key)} title={`${f.name} · ${t.pathKinds[f.path ?? 'happy']}`}>
+                          <a
+                            className={`pd-tree__row pd-tree__flow${on ? ' is-on' : ''}`}
+                            href={on ? canvasHash(base, p.key) : canvasHash(base, p.key, f.key)}
+                            title={`${f.name} · ${t.pathKinds[f.path ?? 'happy']}${on ? ` · ${t.backToPage}` : ''}`}
+                          >
                             <i className={`pd-pathmark pd-path--${f.path ?? 'happy'}`} />
                             <span className="pd-tree__name">{f.name}</span>
                             <small className="pd-tree__code">{f.key}</small>
@@ -450,17 +458,25 @@ const DsTree = ({ section }: { section?: string }) => {
 
 // ---------------------------------------------------------------- inspector
 
-const Inspector = ({ mode }: { mode: Mode }) => {
-  const { selected } = useShell();
+/** The right panel answers by mode: product mode, what the screen is and what was agreed on it; dev mode, its code. */
+const Inspector = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: string }) => {
+  const { selected, devMode } = useShell();
   const t = useT();
   const { project } = useViewer();
   const extra = useInspectorExtra();
   const s = selected ? project.screens.find((x) => x.id === selected) : undefined;
 
+  if (s && devMode)
+    return (
+      <aside className="pd-inspector pd-inspector--code" data-pd-ui aria-label={t.code}>
+        <DevInspector screen={s} />
+      </aside>
+    );
+
   return (
     <aside className="pd-inspector" data-pd-ui aria-label={t.details}>
       {s ? (
-        <ScreenInspector screen={s} mode={mode} />
+        <ScreenInspector key={s.id} screen={s} mode={mode} page={page} flowKey={flowKey} />
       ) : (
         <>
           {mode !== 'prototype' && extra}
@@ -471,23 +487,25 @@ const Inspector = ({ mode }: { mode: Mode }) => {
   );
 };
 
-const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; mode: Mode }) => {
+/**
+ * What a person looking at a screen asks first: what it is, which features it belongs to, what the team said about it and
+ * where it leads within the feature. Ways out to other features fold into one line, the menu shows once, and everything
+ * for developers waits in dev mode.
+ */
+const ScreenInspector = ({ screen: s, mode, page, flowKey }: { screen: Screen<ComponentType>; mode: Mode; page?: Page; flowKey?: string }) => {
   const { project, links, ds } = useViewer();
   const { select, togglePanel } = useShell();
   const t = useT();
   const vp = project.viewports[s.viewport ?? project.config.defaultViewport]!;
   const scale = Math.min(236 / vp.width, 300 / vp.height);
   const frame = { x: 0, y: 0, w: Math.round(vp.width * scale), h: Math.round(vp.height * scale), scale };
-  const byId = new Map(project.screens.map((x) => [x.id, x]));
   const out = links ? targetsOf(links, s.id) : [];
   const into = links ? Object.keys(links).filter((id) => targetsOf(links, id).includes(s.id)) : [];
   const inFlows = project.pages.flatMap((p) => p.flows.filter((f) => f.screens.includes(s.id)).map((f) => ({ p, f })));
   const parts = ds.report.screens[s.id] ?? [];
-  const chip = (id: string) => (
-    <button key={id} type="button" className="pd-mini-chip" onClick={() => pickScreen(mode, id, select)}>
-      {byId.get(id)?.title.split(' / ').pop() ?? id} <small>{byId.get(id)?.code}</small>
-    </button>
-  );
+  // the feature the screen is seen in: the one open on the canvas, or the first on its page that lists it
+  const open = page?.flows.find((f) => f.key === flowKey);
+  const feature = open?.screens.includes(s.id) ? open : page ? featureOf(page, s.id) : undefined;
 
   return (
     <div className="pd-insp">
@@ -512,14 +530,6 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
           <p>{s.note}</p>
         </section>
       )}
-      <section>
-        <h4>{t.leadsTo}</h4>
-        <div className="pd-insp__chips">{out.length ? out.map(chip) : <span className="pd-muted">—</span>}</div>
-      </section>
-      <section>
-        <h4>{t.comesFrom}</h4>
-        <div className="pd-insp__chips">{into.length ? into.map(chip) : <span className="pd-muted">—</span>}</div>
-      </section>
       {inFlows.length > 0 && (
         <section>
           <h4>{t.inFlows}</h4>
@@ -530,12 +540,10 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
           ))}
         </section>
       )}
-      {s.requirements?.length ? (
-        <section>
-          <h4>{t.requirementsLabel}</h4>
-          <p>{s.requirements.join(', ')}</p>
-        </section>
-      ) : null}
+      <Comments screen={s.id} />
+      <Connections title={t.leadsTo} ids={out} mode={mode} page={page} feature={feature} onPick={(id) => pickScreen(mode, id, select)} />
+      <Connections title={t.comesFrom} ids={into} mode={mode} page={page} feature={feature} onPick={(id) => pickScreen(mode, id, select)} />
+      <Requirements ids={s.requirements?.length ? s.requirements : (feature?.requirements ?? [])} ofFeature={!s.requirements?.length} />
       {parts.length > 0 && (
         <section>
           <h4>{t.builtWith}</h4>
@@ -553,7 +561,7 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
           ? `${t.responsive}: ${s.viewports.map((k) => project.viewports[k]?.label ?? k).join(' · ')}`
           : `${vp.label} · ${vp.width}×${vp.height}`}
       </p>
-      <DevSection screen={s} />
+      <ClaudeRef screen={s} />
       {mode !== 'prototype' && (
         <a className="pd-btn pd-btn--primary pd-insp__open" href={screenHash(s.id)}>
           {t.openPrototype}
@@ -563,40 +571,241 @@ const ScreenInspector = ({ screen: s, mode }: { screen: Screen<ComponentType>; m
   );
 };
 
-/**
- * Where the screen lives in code, for whoever builds it: the file path to copy, the file in the system's file manager or the
- * editor (dev only), and a reference to paste into the chat with Claude. No code to copy: a screen is assembled from
- * design-system components, so the file and its components say more than a dump of HTML and CSS.
- */
-const DevSection = ({ screen: s }: { screen: Screen<ComponentType> }) => {
-  const dev = useDevEnv();
-  // in a container the path inside it means nothing to the person: only the path within the project
-  const env = dev?.container ? null : dev;
+/** Ways in or out of a screen, in the three kinds a person reads differently: this feature, other features (folded), the menu (once). */
+const Connections = ({ title, ids, mode, page, feature, onPick }: { title: string; ids: string[]; mode: Mode; page?: Page; feature?: Flow; onPick: (id: string) => void }) => {
+  const { project, links } = useViewer();
   const t = useT();
+  const [open, setOpen] = useState(false);
+  const shared = useMemo(() => (links ? sharedTargets(links) : new Set<string>()), [links]);
+  const byId = useMemo(() => new Map(project.screens.map((x) => [x.id, x])), [project]);
+  const g = groupTargets(ids, { page, feature, shared });
+  const others = g.elsewhere.reduce((n, e) => n + e.ids.length, 0);
+  const name = (id: string) => byId.get(id)?.title.split(' / ').pop() ?? id;
+  const chip = (id: string) => (
+    <button key={id} type="button" className="pd-mini-chip" onClick={() => onPick(id)}>
+      {name(id)} <small>{byId.get(id)?.code}</small>
+    </button>
+  );
+
+  return (
+    <section>
+      <h4>{title}</h4>
+      <div className="pd-insp__chips">{g.here.length ? g.here.map(chip) : <span className="pd-muted">{ids.length ? t.noneInFeature : '—'}</span>}</div>
+      {others > 0 && (
+        <button type="button" className="pd-insp__more" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+          {t.elsewhereCount(others, g.elsewhere.length)}
+        </button>
+      )}
+      {open &&
+        g.elsewhere.map((e) => (
+          <div key={e.feature?.key ?? '-'} className="pd-insp__group">
+            {e.feature && page ? (
+              <a className="pd-insp__flow" href={canvasHash(canvasOf(mode), page.key, e.feature.key)}>
+                <i className={`pd-pathmark pd-path--${e.feature.path ?? 'happy'}`} /> {e.feature.name} <small className="pd-tree__code">{e.feature.key}</small>
+              </a>
+            ) : (
+              <small className="pd-muted">{t.otherPages}</small>
+            )}
+            <div className="pd-insp__chips">{e.ids.map(chip)}</div>
+          </div>
+        ))}
+      {g.shared.length > 0 && (
+        <p className="pd-insp__shared">
+          {t.sharedNav}: {g.shared.map(name).join(' · ')}
+        </p>
+      )}
+    </section>
+  );
+};
+
+/**
+ * The functional requirements the screen implements (or, when it names none, those of its feature), with their text as
+ * the tracker has it: the story and its acceptance criteria open under the title. An id with no story in
+ * `requirements/` shows as the bare id.
+ */
+const Requirements = ({ ids, ofFeature }: { ids: string[]; ofFeature: boolean }) => {
+  const { requirements } = useViewer();
+  const t = useT();
+
+  if (!ids.length) return null;
+
+  return (
+    <section className="pd-insp__reqs">
+      <h4>{ofFeature ? t.featureRequirements : t.requirementsLabel}</h4>
+      {ids.map((id) => {
+        const r = requirements.get(id);
+
+        return r ? (
+          <details key={id} className="pd-req">
+            <summary>
+              <b>{r.id}</b> {r.title}
+              {r.status && <small className="pd-req__status">{r.status}</small>}
+            </summary>
+            {r.priority && (
+              <p className="pd-req__meta">
+                {t.priority}: {r.priority}
+              </p>
+            )}
+            <p className="pd-req__text">{r.text}</p>
+            <p className="pd-req__meta">{r.file}</p>
+          </details>
+        ) : (
+          <p key={id} className="pd-req pd-req--missing" title={t.requirementMissing}>
+            <b>{id}</b> <span className="pd-muted">{t.requirementMissing}</span>
+          </p>
+        );
+      })}
+    </section>
+  );
+};
+
+/** Comments on the screen, kept in `.orbito/comments.json`: added here or by Claude, resolved when done. */
+const Comments = ({ screen }: { screen: string }) => {
+  const list = useComments(screen);
+  const t = useT();
+  const [text, setText] = useState('');
+  const [author, setAuthor] = useState(readAuthor);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const editable = canComment();
+  const run = (job: Promise<void>, after?: () => void) => {
+    setBusy(true);
+    setError(null);
+    job.then(
+      () => {
+        setBusy(false);
+        after?.();
+      },
+      (e: unknown) => {
+        setBusy(false);
+        setError(e instanceof Error ? e.message : String(e));
+      },
+    );
+  };
+
+  return (
+    <section className="pd-insp__comments">
+      <h4>
+        {t.comments} {list.length > 0 && <span className="pd-count">{list.length}</span>}
+      </h4>
+      {list.map((c) => (
+        <article key={c.id} className="pd-comment">
+          <p>{c.text}</p>
+          <footer>
+            <span>
+              {c.author ?? t.anonymous} · {c.createdAt}
+            </span>
+            {editable && (
+              <button type="button" className="pd-comment__done" title={t.resolveTip} disabled={busy} onClick={() => run(resolveComment(screen, c.id))}>
+                ✓ {t.resolve}
+              </button>
+            )}
+          </footer>
+        </article>
+      ))}
+      {editable ? (
+        <form
+          className="pd-comment__form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (text.trim()) run(addComment(screen, text, author), () => setText(''));
+          }}
+        >
+          <textarea className="pd-input" rows={2} placeholder={t.commentPlaceholder} value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} />
+          <div className="pd-comment__row">
+            <input className="pd-input" placeholder={t.yourName} value={author} maxLength={80} onChange={(e) => setAuthor(e.target.value)} />
+            <button type="submit" className="pd-btn pd-btn--sm" disabled={!text.trim() || busy}>
+              {t.addComment}
+            </button>
+          </div>
+          {error && <p className="pd-warn">{error}</p>}
+          <p className="pd-insp__fine">{t.commentsWhere}</p>
+        </form>
+      ) : (
+        list.length === 0 && <p className="pd-muted">{t.noComments}</p>
+      )}
+    </section>
+  );
+};
+
+const useCopy = () => {
   const [copied, setCopied] = useState<string | null>(null);
   const copy = (what: string, text: string) =>
     void navigator.clipboard?.writeText(text).then(() => {
       setCopied(what);
       setTimeout(() => setCopied((c) => (c === what ? null : c)), 1400);
     });
+
+  return { copied, copy };
+};
+
+/** Outside dev mode one thing stays for designers too: a reference to the screen to paste into the chat with Claude. */
+const ClaudeRef = ({ screen: s }: { screen: Screen<ComponentType> }) => {
+  const t = useT();
+  const { copied, copy } = useCopy();
+
+  return (
+    <button type="button" className="pd-btn pd-btn--sm" title={t.copyForClaudeTip} onClick={() => copy('claude', t.claudeRef(s.title.split(' / ').pop() ?? s.id, s.code ?? '', s.file))}>
+      {copied === 'claude' ? `✓ ${t.copied}` : t.copyForClaude}
+    </button>
+  );
+};
+
+/** Dev mode with a screen selected: where it lives, then its code and the code of its components, filling the panel. */
+const DevInspector = ({ screen: s }: { screen: Screen<ComponentType> }) => {
+  const { togglePanel } = useShell();
+  const t = useT();
+
+  return (
+    <>
+      <div className="pd-insp pd-insp--devhead">
+        <div className="pd-insp__head">
+          <b>
+            {s.title.split(' / ').pop()} <small className="pd-insp__key">{s.code}</small>
+          </b>
+          <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => togglePanel('inspector')} aria-label={t.hidePanel} title={t.hidePanel}>
+            <Glyph d={PANEL_RIGHT} />
+          </button>
+        </div>
+        <DevSection screen={s} />
+      </div>
+      <CodePanel screen={s} />
+    </>
+  );
+};
+
+/**
+ * Where the screen lives in code, for whoever builds it (dev mode): the path on this computer to copy, the file in the
+ * editor, the file manager outside a container, and a reference for Claude.
+ */
+const DevSection = ({ screen: s }: { screen: Screen<ComponentType> }) => {
+  const dev = useDevEnv();
+  const t = useT();
+  const { copied, copy } = useCopy();
+  const full = pathOnComputer(dev, s.file);
   const name = s.title.split(' / ').pop() ?? s.id;
 
   return (
     <section className="pd-insp__dev">
       <h4>{t.devTitle}</h4>
       <div className="pd-insp__path">
-        <code title={env ? absolutePath(env, s.file) : s.file}>{s.file}</code>
-        <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => copy('path', env ? absolutePath(env, s.file) : s.file)} aria-label={t.copyPath} title={t.copyPath}>
+        <code title={full ?? s.file}>{s.file}</code>
+        <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => copy('path', full ?? s.file)} aria-label={t.copyPath} title={t.copyPath}>
           {copied === 'path' ? '✓' : '⧉'}
         </button>
       </div>
       <div className="pd-insp__devbtns">
-        {env && (
+        {full && (
+          <a className="pd-btn pd-btn--sm" href={vscodeLink(full)}>
+            {t.openVsCode}
+          </a>
+        )}
+        {dev && !dev.container && (
           <>
             <button type="button" className="pd-btn pd-btn--sm" onClick={() => void revealFile(s.file)}>
-              {t.reveal(env.platform)}
+              {t.reveal(dev.platform)}
             </button>
-            <button type="button" className="pd-btn pd-btn--sm" onClick={() => void openInEditor(env, s.file)}>
+            <button type="button" className="pd-btn pd-btn--sm" onClick={() => void openInEditor(dev, s.file)}>
               {t.openEditor}
             </button>
           </>

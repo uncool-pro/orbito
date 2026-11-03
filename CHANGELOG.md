@@ -2,6 +2,17 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
+## 0.9.61 — not released yet (MVP to test with people)
+What the board shows next to a screen, a mode for whoever builds it, and phones of every size. A version to try with users before 1.0.
+- **Comments on screens.** Next to a screen, write what should change; it lands in `.orbito/comments.json`, where Claude reads it too, and leaves the file when you mark it done (git keeps the history). Works in Docker as well: the file is the second one the board may write.
+- **Requirements with their text.** A screen's details show its stories from `requirements/*.md` (the tracker's local mirror): the title, the status, and the story with its acceptance criteria under it. A screen with no ids of its own shows its feature's. In Docker the renderer now reads `requirements/` (read-only).
+- **Ways out, sorted.** The details list the screens of the same feature; the ones in other features fold into one line ("→ 3 screens in 3 other features"), and the menu most screens repeat (a tab bar) is named once.
+- **Dev mode.** A "Dev" switch in the top bar. The right panel then shows the selected screen's code and the code of each component it uses, with a copy button and a width you drag; the prototype shows the file's path above the screen (copy it, or open it in VS Code) and measures like Figma: hover for the size and the distances to the edges, click an element and hover another for the distance between them, named by the spacing token when one fits. While dev mode is on, a click measures instead of navigating.
+- **Phones of every size.** A phone screen in the prototype switches between a small phone (iPhone SE, 375 × 667), its own size and a large one (Pro Max, 430 × 932).
+- **The page as features.** The flows view of a whole page can switch from screens to features: one box per feature, arrows with the number of links between features, the menu left out. A click opens the feature.
+- **The left panel without "All flows".** The page's name shows the whole page; a second click on the open feature does too.
+- **Docker:** compose passes the project folder on your computer to the board (`ORBITO_HOST_ROOT`), so dev mode copies real paths there too. **What to do:** update as DOCKER.md says ("Update"); the update writes the new `compose.yaml` and adds `.orbito/comments.json` and `requirements/` to the project.
+
 ## 0.9.6 — not released yet
 Fixes from the first independent review of the code, and tests that click through the board, a new project and the container.
 - **Fix: names with spaces or Polish letters.** A page or flow named that way could send the board into a redirect loop, and a malformed address broke the page. Neither happens now.

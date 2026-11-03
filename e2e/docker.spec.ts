@@ -124,6 +124,15 @@ test.describe.serial('Orbito in a container', () => {
     }).toPass({ timeout: 10_000 });
   });
 
+  test('saves a comment into the project and knows the folder on this computer', async ({ request }) => {
+    const added = await request.post(`${BOARD}/__orbito/comments`, { data: { action: 'add', screen: 'start', text: 'Z kontenera' } });
+
+    expect(added.ok()).toBe(true);
+    expect(readFileSync(join(project, '.orbito/comments.json'), 'utf8')).toContain('Z kontenera');
+    // dev mode shows real paths: compose passes the project folder in
+    expect(((await (await request.get(`${BOARD}/__orbito/env`)).json()) as { hostRoot?: string }).hostRoot).toBeTruthy();
+  });
+
   test('keeps its promises: no internet, no other files, nothing to write', () => {
     mkdirSync(join(project, 'raw'), { recursive: true });
     writeFileSync(join(project, 'raw/poufne.md'), 'tajne');

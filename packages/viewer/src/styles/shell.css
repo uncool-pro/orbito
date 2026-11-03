@@ -1,6 +1,6 @@
 /* The app shell, after Figma: top bar, left panel, canvas, inspector, island. */
-.pd-shell { position: fixed; inset: 0; display: grid; grid-template-columns: 268px minmax(0, 1fr) 300px; grid-template-rows: 48px minmax(0, 1fr); grid-template-areas: 'top top top' 'drawer main inspector'; font-family: var(--pd-font); color: var(--pd-ink); background: var(--pd-bg); }
-.pd-shell.no-drawer { grid-template-columns: 0 minmax(0, 1fr) 300px; }
+.pd-shell { position: fixed; inset: 0; display: grid; grid-template-columns: 268px minmax(0, 1fr) var(--pd-insp-w, 300px); grid-template-rows: 48px minmax(0, 1fr); grid-template-areas: 'top top top' 'drawer main inspector'; font-family: var(--pd-font); color: var(--pd-ink); background: var(--pd-bg); }
+.pd-shell.no-drawer { grid-template-columns: 0 minmax(0, 1fr) var(--pd-insp-w, 300px); }
 .pd-shell.no-inspector { grid-template-columns: 268px minmax(0, 1fr) 0; }
 .pd-shell.no-drawer.no-inspector { grid-template-columns: 0 minmax(0, 1fr) 0; }
 .pd-main { grid-area: main; position: relative; overflow: hidden; min-width: 0; }
@@ -143,3 +143,48 @@
 .pd-backbar { position: sticky; top: 0; z-index: 5; padding: 10px 16px 0; pointer-events: none; }
 .pd-backbar__link { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px 5px 6px; border-radius: 8px; font: 600 13px var(--pd-font); color: var(--pd-ink); text-decoration: none; background: var(--pd-panel); border: 1px solid var(--pd-panel-line); box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06); }
 .pd-backbar__link:hover { background: var(--pd-bg); }
+/* dev mode switch in the top bar */
+.pd-devtoggle { display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 10px 0 8px; border: 1px solid var(--pd-panel-line); border-radius: 8px; background: transparent; color: var(--pd-muted); font: 600 12.5px var(--pd-font); cursor: pointer; }
+.pd-devtoggle svg { width: 16px; height: 16px; }
+.pd-devtoggle:hover { background: var(--pd-bg); color: var(--pd-ink); }
+.pd-devtoggle.is-on { background: var(--pd-ink); border-color: var(--pd-ink); color: #fff; }
+/* screen details: connections in three kinds */
+.pd-insp__more { align-self: flex-start; font: 12px var(--pd-font); padding: 3px 0; border: 0; background: transparent; color: var(--pd-accent); cursor: pointer; text-align: left; }
+.pd-insp__more:hover { text-decoration: underline; }
+.pd-insp__group { display: flex; flex-direction: column; gap: 4px; padding-left: 8px; border-left: 2px solid var(--pd-panel-line); }
+.pd-insp p.pd-insp__shared { font-size: 12px; color: var(--pd-muted); }
+/* screen details: comments */
+.pd-insp__comments .pd-count { background: var(--pd-accent-soft); color: var(--pd-accent); }
+.pd-comment { padding: 8px 10px; border-radius: 8px; background: #faf6e7; border: 1px solid #efe4bd; }
+.pd-comment p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.pd-comment footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; font-size: 11.5px; color: var(--pd-muted); }
+.pd-comment__done { font: 600 11.5px var(--pd-font); border: 0; background: transparent; color: var(--pd-happy); cursor: pointer; padding: 2px 4px; border-radius: 5px; }
+.pd-comment__done:hover { background: #e4f5ea; }
+.pd-comment__form { display: flex; flex-direction: column; gap: 6px; }
+.pd-comment__row { display: flex; gap: 6px; }
+.pd-comment__row .pd-input { flex: 1; min-width: 0; }
+.pd-input { font: inherit; font-size: 13px; padding: 6px 9px; border: 1px solid var(--pd-line); border-radius: 8px; background: #fff; color: var(--pd-ink); box-sizing: border-box; width: 100%; resize: vertical; }
+.pd-input:focus { outline: 2px solid var(--pd-accent-soft); border-color: var(--pd-accent); }
+.pd-insp p.pd-insp__fine { font-size: 11px; color: var(--pd-muted); }
+/* screen details: functional requirements with their text */
+.pd-req { border: 1px solid var(--pd-panel-line); border-radius: 8px; background: #fff; }
+.pd-req summary { cursor: pointer; padding: 7px 10px; line-height: 1.4; list-style-position: inside; }
+.pd-req summary b { font-size: 12px; margin-right: 2px; }
+.pd-req[open] summary { border-bottom: 1px solid var(--pd-panel-line); }
+.pd-req__status { margin-left: 6px; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; background: var(--pd-bg); color: var(--pd-muted); white-space: nowrap; }
+.pd-insp p.pd-req__text { padding: 8px 10px 4px; white-space: pre-wrap; font-size: 12.5px; }
+.pd-insp p.pd-req__meta { padding: 0 10px 8px; font-size: 11px; color: var(--pd-muted); }
+.pd-insp p.pd-req--missing { padding: 6px 10px; font-size: 12px; }
+/* dev mode: the right panel shows the code of the selected screen */
+.pd-inspector.pd-inspector--code { position: relative; display: flex; flex-direction: column; overflow: hidden; }
+.pd-insp--devhead { flex: none; }
+.pd-code { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; background: #151923; color: #e6e8ee; }
+.pd-code__grip { position: fixed; top: 48px; bottom: 0; width: 8px; margin-left: -4px; cursor: col-resize; z-index: 25; }
+.pd-code__grip:hover { background: rgba(146, 95, 152, 0.4); }
+.pd-code__head { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; font-size: 13px; }
+.pd-code__files { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; border-bottom: 1px solid #262c3a; }
+.pd-code__files button { font: 12px var(--pd-font); padding: 3px 8px; border-radius: 6px; border: 1px solid #2c3343; background: transparent; color: #b8bfcd; cursor: pointer; }
+.pd-code__files button.is-on { background: #e6e8ee; color: #151923; border-color: #e6e8ee; }
+.pd-code__note { margin: 8px 12px 0; font-size: 11.5px; color: #8e96a7; }
+.pd-code__text { flex: 1; min-height: 0; margin: 8px 0 0; padding: 0 12px 24px; overflow: auto; font: 12px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; tab-size: 2; white-space: pre; }
+.pd-code__text i { display: inline-block; width: 32px; margin-right: 12px; text-align: right; font-style: normal; color: #59617a; user-select: none; }

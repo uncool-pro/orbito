@@ -1,5 +1,11 @@
+import { readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+
+const DEMO = resolve(dirname(fileURLToPath(import.meta.url)), '../demo');
 
 const cardOf = (page: Page, id: string) => page.locator(`[data-card][data-screen="${id}"]`).first();
 
@@ -58,6 +64,12 @@ test.describe('board', () => {
     await expect(page).toHaveURL(/#\/board\/plants\/P2$/);
   });
 
+  test('a second click on the open feature shows the whole page again', async ({ page }) => {
+    await openBoard(page, '#/board/plants/P2');
+    await page.locator('.pd-tree__flow', { hasText: 'Add a plant' }).click();
+    await expect(page).toHaveURL(/#\/board\/plants$/);
+  });
+
   test('search selects a screen on its own page, without opening the prototype', async ({ page }) => {
     await openBoard(page);
     const search = page.locator('.pd-search__input');
@@ -88,6 +100,68 @@ test.describe('prototype', () => {
     await expect(page.getByText('nope')).toBeVisible();
     await page.locator('.pd-doc a').click();
     await expect(page).toHaveURL(/#\/board/);
+  });
+});
+
+test.describe('screen details', () => {
+  test('a comment is saved in the project and leaves it when done', async ({ page }) => {
+    const file = join(DEMO, '.orbito/comments.json');
+    const before = readFileSync(file, 'utf8');
+
+    await page.goto('/#/s/plant-list');
+    await page.getByPlaceholder('What should change on this screen?').fill('Too many plants at once');
+    await page.getByPlaceholder('Your name').fill('Test');
+    await page.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(page.locator('.pd-comment', { hasText: 'Too many plants at once' })).toBeVisible();
+    expect(JSON.parse(readFileSync(file, 'utf8'))['plant-list'][0]).toMatchObject({ text: 'Too many plants at once', author: 'Test' });
+    await page.locator('.pd-comment', { hasText: 'Too many plants at once' }).getByRole('button').click();
+    await expect(page.locator('.pd-comment', { hasText: 'Too many plants at once' })).toHaveCount(0);
+    expect(readFileSync(file, 'utf8')).toBe(before);
+  });
+
+  test('a requirement shows its text from requirements/', async ({ page }) => {
+    await page.goto('/#/s/plant-detail');
+    const req = page.locator('.pd-req', { hasText: 'REQ-03' });
+
+    await req.locator('summary').click();
+    await expect(req).toContainText('Acceptance criteria');
+  });
+
+  test('ways out to other features fold into one line', async ({ page }) => {
+    await page.goto('/#/s/plant-list');
+    const more = page.locator('.pd-insp__more').first();
+
+    await expect(more).toBeVisible();
+    await expect(page.locator('.pd-insp__group')).toHaveCount(0);
+    await more.click();
+    await expect(page.locator('.pd-insp__group').first()).toBeVisible();
+  });
+});
+
+test.describe('prototype sizes and dev mode', () => {
+  test('a phone screen shows on a small, a standard and a large phone', async ({ page }) => {
+    await page.goto('/#/s/plant-list');
+    const frame = page.locator('.pd-stage__frame > *').first();
+
+    await page.locator('.pd-sizes button', { hasText: 'SE' }).click();
+    await expect.poll(async () => (await frame.evaluate((el) => (el as HTMLElement).offsetWidth))).toBe(375);
+    await page.locator('.pd-sizes button', { hasText: 'Pro Max' }).click();
+    await expect.poll(async () => (await frame.evaluate((el) => (el as HTMLElement).offsetWidth))).toBe(430);
+  });
+
+  test('dev mode shows the path, the code and measures without leaving the screen', async ({ page }) => {
+    await page.goto('/#/s/plant-list');
+    await page.locator('.pd-devtoggle').click();
+    await expect(page.locator('.pd-devpath code')).toHaveText('screens/plants/plant-list.screen.tsx');
+    await expect(page.locator('.pd-code__text')).toContainText('defineScreen');
+    const item = page.locator('.pd-stage__frame [data-pd-to]').first();
+    const box = (await item.boundingBox())!;
+
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.locator('.pd-measure__box')).toBeVisible();
+    // a click picks the element to measure from, it does not navigate
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page).toHaveURL(/#\/s\/plant-list$/);
   });
 });
 
@@ -122,6 +196,10 @@ test('the whole tour runs without an error in the console', async ({ page }) => 
   page.on('response', (r) => {
     if (r.status() >= 400 && !r.url().endsWith('/favicon.ico')) errors.push(`${r.status()} ${r.url()}`);
   });
+  await page.goto('/#/flows/plants');
+  // the feature map too: the switch is remembered, so every later visit to the page's flows shows it
+  await page.locator('.pd-mapswitch button', { hasText: 'Features' }).click();
+  await expect(page.locator('.pd-fmap__box').first()).toBeVisible();
   for (const address of ['#/board/plants', '#/flows/plants', '#/s/plant-list', '#/ds', '#/ds/health', '#/skills']) {
     await page.goto(`/${address}`);
     await expect(page.locator('.pd-top')).toBeVisible();

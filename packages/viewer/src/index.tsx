@@ -1,8 +1,8 @@
-import { StrictMode, useEffect, useState } from 'react';
+import { StrictMode, useEffect, useMemo, useState } from 'react';
 import type { ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import type { LinkMap, Project, ProjectProblem, StatusFile, Team } from '@uncool-pro/orbito-core';
+import type { LinkMap, Project, ProjectProblem, Requirement, StatusFile, Team } from '@uncool-pro/orbito-core';
 import { registerParents } from '@uncool-pro/orbito-runtime';
 
 import { App } from './app/App';
@@ -13,13 +13,16 @@ import { ShellProvider } from './app/shell/state';
 import type { DsData } from './app/context';
 import { probeLinks } from './board/probe';
 import { LOCALES, MessagesContext } from './i18n';
+import { initComments } from './comments';
+import type { CommentsFile } from './comments';
 import { initStatuses } from './status';
 import './viewer.css';
 
-export type LoadedProject = { project: Project<ComponentType>; problems: ProjectProblem[]; statuses: StatusFile; dev: boolean; ds: DsData; team?: Team | null };
+export type LoadedProject = { project: Project<ComponentType>; problems: ProjectProblem[]; statuses: StatusFile; comments?: CommentsFile; dev: boolean; ds: DsData; team?: Team | null; requirements?: Requirement[] };
 
 const Root = ({ loaded }: { loaded: LoadedProject }) => {
   const [links, setLinks] = useState<LinkMap | null>(null);
+  const requirements = useMemo(() => new Map((loaded.requirements ?? []).map((r) => [r.id, r])), [loaded]);
 
   useEffect(() => {
     let live = true;
@@ -44,7 +47,7 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
   }, [loaded]);
 
   return (
-    <ViewerContext.Provider value={{ project: loaded.project, problems: loaded.problems, ds: loaded.ds, team: loaded.team ?? null, links }}>
+    <ViewerContext.Provider value={{ project: loaded.project, problems: loaded.problems, ds: loaded.ds, team: loaded.team ?? null, links, requirements }}>
       <MessagesContext.Provider value={LOCALES[loaded.project.config.locale ?? 'en']}>
         <ShellProvider>
           {/* the last line of defence: a message instead of an empty page */}
@@ -70,6 +73,7 @@ export const mount = (loaded: LoadedProject, container: HTMLElement | null = doc
 
   fonts.textContent = loaded.ds.fonts ?? '';
   initStatuses(loaded.statuses, loaded.dev);
+  initComments(loaded.comments, loaded.dev);
   setFavicon();
   loaded.problems.forEach((p) => console[p.level === 'error' ? 'error' : 'warn'](`[orbito] ${p.file ? `${p.file}: ` : ''}${p.message}`));
   const root = createRoot(container);

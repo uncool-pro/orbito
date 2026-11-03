@@ -24,6 +24,12 @@ type Shell = {
   drawerOpen: boolean;
   inspectorOpen: boolean;
   togglePanel: (which: 'drawer' | 'inspector') => void;
+  /** Dev mode: the screen's code, real paths and distances, for whoever builds the product. Remembered on this computer. */
+  devMode: boolean;
+  toggleDev: () => void;
+  /** Width of the right panel while it shows code (dev mode), dragged at its edge. */
+  codeWidth: number;
+  setCodeWidth: (w: number) => void;
 };
 
 const ShellContext = createContext<Shell | null>(null);
@@ -44,6 +50,22 @@ const readWheel = () => {
   }
 };
 
+const readDev = () => {
+  try {
+    return localStorage.getItem('pd.devMode') === '1';
+  } catch {
+    return false;
+  }
+};
+
+const readCodeWidth = () => {
+  try {
+    return Number(localStorage.getItem('pd.codeWidth')) || 420;
+  } catch {
+    return 420;
+  }
+};
+
 const narrow = () => typeof window !== 'undefined' && window.innerWidth < 900;
 
 export const ShellProvider = ({ children }: { children: ReactNode }) => {
@@ -52,6 +74,8 @@ export const ShellProvider = ({ children }: { children: ReactNode }) => {
   const [options, setOpts] = useState<ViewOptions>(() => ({ statusFilter: '', showClosed: false, showOther: false, wheelZooms: readWheel() }));
   const [drawerOpen, setDrawer] = useState(() => !narrow());
   const [inspectorOpen, setInspector] = useState(() => !narrow());
+  const [devMode, setDev] = useState(readDev);
+  const [codeWidth, setWidth] = useState(readCodeWidth);
   const canvas = useRef<CanvasApi | null>(null);
 
   const select = useCallback((id: string | null, opts?: { focus?: boolean }) => {
@@ -71,11 +95,32 @@ export const ShellProvider = ({ children }: { children: ReactNode }) => {
       return next;
     });
   }, []);
+  const toggleDev = useCallback(
+    () =>
+      setDev((v) => {
+        try {
+          localStorage.setItem('pd.devMode', v ? '0' : '1');
+        } catch {
+          /* storage unavailable */
+        }
+
+        return !v;
+      }),
+    [],
+  );
+  const setCodeWidth = useCallback((w: number) => {
+    setWidth(w);
+    try {
+      localStorage.setItem('pd.codeWidth', String(w));
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
   const togglePanel = useCallback((which: 'drawer' | 'inspector') => (which === 'drawer' ? setDrawer((v) => !v) : setInspector((v) => !v)), []);
 
   const value = useMemo(
-    () => ({ selected, select, focusTick, options, setOptions, canvas, drawerOpen, inspectorOpen, togglePanel }),
-    [selected, select, focusTick, options, setOptions, drawerOpen, inspectorOpen, togglePanel],
+    () => ({ selected, select, focusTick, options, setOptions, canvas, drawerOpen, inspectorOpen, togglePanel, devMode, toggleDev, codeWidth, setCodeWidth }),
+    [selected, select, focusTick, options, setOptions, drawerOpen, inspectorOpen, togglePanel, devMode, toggleDev, codeWidth, setCodeWidth],
   );
 
   return <ShellContext.Provider value={value}>{children}</ShellContext.Provider>;

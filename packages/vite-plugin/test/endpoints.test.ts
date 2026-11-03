@@ -116,6 +116,47 @@ describe('statuses', () => {
   });
 });
 
+describe('comments', () => {
+  const post = (body: unknown) => call('/__orbito/comments', { method: 'POST', body: JSON.stringify(body) });
+
+  it('adds a comment to a screen and resolves it', async () => {
+    const added = await post({ action: 'add', screen: 'plant-list', text: '  Too many filters  ', author: 'Ola' });
+
+    expect(added.code).toBe(200);
+    const [c] = JSON.parse(added.text).comments;
+
+    expect(c).toMatchObject({ text: 'Too many filters', author: 'Ola' });
+    expect(JSON.parse((await call('/__orbito/comments')).text)['plant-list']).toHaveLength(1);
+    expect((await post({ action: 'resolve', screen: 'plant-list', id: c.id })).code).toBe(200);
+    // a screen without comments leaves the file
+    expect(JSON.parse(readFileSync(join(root, '.orbito/comments.json'), 'utf8'))).toEqual({});
+  });
+
+  it('refuses a wrong request, an unknown comment and a damaged file', async () => {
+    expect((await post({ action: 'add', screen: '../x', text: 'a' })).code).toBe(400);
+    expect((await post({ action: 'add', screen: 'a', text: ' ' })).code).toBe(400);
+    expect((await post({ action: 'add', screen: 'a', text: 'x'.repeat(2001) })).code).toBe(400);
+    expect((await post({ action: 'resolve', screen: 'a', id: 'nope' })).code).toBe(404);
+    writeFileSync(join(root, '.orbito/comments.json'), '<<<<<<< HEAD');
+    expect((await post({ action: 'add', screen: 'a', text: 'b' })).code).toBe(409);
+  });
+
+  it('stops a comment from another site', async () => {
+    expect((await call('/__orbito/comments', { method: 'POST', headers: { 'sec-fetch-site': 'cross-site' }, body: '{}' })).code).toBe(403);
+  });
+});
+
+describe('source code for dev mode', () => {
+  it('gives the code of screens and components only', async () => {
+    mkdirSync(join(root, 'screens'));
+    writeFileSync(join(root, 'screens/start.screen.tsx'), 'export default 1');
+    expect(await call('/__orbito/source?path=screens/start.screen.tsx')).toMatchObject({ code: 200, text: 'export default 1' });
+    expect((await call('/__orbito/source?path=reviews/report.md')).code).toBe(404);
+    expect((await call('/__orbito/source?path=secret.env')).code).toBe(404);
+    expect((await call('/__orbito/source?path=screens/../secret.env')).code).toBe(404);
+  });
+});
+
 it('leaves every other address to the dev server', async () => {
   expect((await call('/src/main.tsx')).passed).toBe(true);
   expect((await call('/__orbito/unknown')).passed).toBe(true);

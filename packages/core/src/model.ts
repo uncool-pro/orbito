@@ -15,6 +15,9 @@ export type Viewport = {
 
 export const BUILT_IN_VIEWPORTS = {
   mobile: { key: 'mobile', label: 'Mobile', width: 390, height: 844, kind: 'device' },
+  // the smallest and the largest phone people still use, to check a phone screen at both ends in the prototype
+  'mobile-small': { key: 'mobile-small', label: 'iPhone SE', width: 375, height: 667, kind: 'device' },
+  'mobile-large': { key: 'mobile-large', label: 'iPhone Pro Max', width: 430, height: 932, kind: 'device' },
   tablet: { key: 'tablet', label: 'Tablet', width: 820, height: 1180, kind: 'device' },
   // a web page on a tablet: tablet width, the whole page scrolls
   'tablet-web': { key: 'tablet-web', label: 'Tablet web', width: 820, height: 1180, kind: 'page' },
