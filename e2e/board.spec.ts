@@ -104,6 +104,8 @@ test.describe('pages of their own', () => {
     await openBoard(page);
     await page.locator('.pd-topnav').click();
     await expect(page).toHaveURL(/#\/skills$/);
+    // the address changes before the page has drawn and started listening for Esc
+    await expect(page.locator('.pd-backbar')).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(page).toHaveURL(/#\/board\/plants$/);
   });
@@ -113,8 +115,12 @@ test('the whole tour runs without an error in the console', async ({ page }) => 
   const errors: string[] = [];
 
   page.on('pageerror', (e) => errors.push(String(e)));
+  // a failed request is reported with its address below, so the console line without one is skipped
   page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text());
+    if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) errors.push(m.text());
+  });
+  page.on('response', (r) => {
+    if (r.status() >= 400 && !r.url().endsWith('/favicon.ico')) errors.push(`${r.status()} ${r.url()}`);
   });
   for (const address of ['#/board/plants', '#/flows/plants', '#/s/plant-list', '#/ds', '#/ds/health', '#/skills']) {
     await page.goto(`/${address}`);

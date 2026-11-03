@@ -77,7 +77,15 @@ test.describe.serial('Orbito in a container', () => {
     expect(docker(project, 'compose', 'port', 'gate', '5190').trim()).toBe('127.0.0.1:5190');
     expect((await request.get(BOARD)).headers()['content-security-policy']).toContain("default-src 'self'");
     await page.goto(`${BOARD}/#/board`);
-    await expect(page.locator('[data-card]').first()).toBeVisible({ timeout: 60_000 });
+    try {
+      await expect(page.locator('[data-card]').first()).toBeVisible({ timeout: 60_000 });
+    } catch (e) {
+      // say why: what the page reported and what the renderer printed
+      const logs = docker(project, 'compose', 'logs', '--no-color', '--tail', '60', 'renderer');
+      const shown = (await page.locator('body').innerText()).slice(0, 600);
+
+      throw new Error(`${String(e)}\n--- page errors:\n${errors.join('\n')}\n--- page text:\n${shown}\n--- renderer:\n${logs}`);
+    }
     await expect(page.locator('.pd-crumbs')).toContainText('Mój produkt');
     expect(errors).toEqual([]);
   });
