@@ -78,16 +78,23 @@ test.describe.serial('Orbito in a container', () => {
     }).toPass({ timeout: 90_000 });
     expect(docker(project, 'compose', 'port', 'gate', '5190').trim()).toBe('127.0.0.1:5190');
     expect((await request.get(BOARD)).headers()['content-security-policy']).toContain("default-src 'self'");
-    await page.goto(`${BOARD}/#/board`);
-    try {
-      await expect(page.locator('[data-card]').first()).toBeVisible({ timeout: 60_000 });
-    } catch (e) {
-      // say why: what the page reported and what the renderer printed
-      const logs = docker(project, 'compose', 'logs', '--no-color', '--tail', '60', 'renderer');
-      const screen = await request.get(`${BOARD}/screens/start/start.screen.tsx`);
-      const answer = `${screen.status()} ${(await screen.text()).slice(0, 400)}`;
+    for (let attempt = 1; ; attempt++) {
+      errors.length = 0;
+      failed.length = 0;
+      await page.goto(`${BOARD}/#/board`);
+      try {
+        await expect(page.locator('[data-card]').first()).toBeVisible({ timeout: 45_000 });
+        break;
+      } catch (e) {
+        // Chrome on Linux drops the requests in flight when Docker adds a network interface; a person would reload
+        if (attempt < 3 && failed.some((f) => f.endsWith('ERR_NETWORK_CHANGED'))) continue;
+        // otherwise say why: what the page reported and what the renderer printed
+        const logs = docker(project, 'compose', 'logs', '--no-color', '--tail', '60', 'renderer');
+        const screen = await request.get(`${BOARD}/screens/start/start.screen.tsx`);
+        const answer = `${screen.status()} ${(await screen.text()).slice(0, 400)}`;
 
-      throw new Error(`${String(e)}\n--- page errors:\n${errors.join('\n')}\n--- failed requests:\n${failed.join('\n')}\n--- start screen asked again:\n${answer}\n--- renderer:\n${logs}`);
+        throw new Error(`${String(e)}\n--- page errors:\n${errors.join('\n')}\n--- failed requests:\n${failed.join('\n')}\n--- start screen asked again:\n${answer}\n--- renderer:\n${logs}`);
+      }
     }
     await expect(page.locator('.pd-crumbs')).toContainText('Mój produkt');
     expect(errors).toEqual([]);
