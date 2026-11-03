@@ -142,7 +142,7 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
         )}
         <div ref={stage} className={`pd-stage pd-stage--${vp.kind}`}>
           <Frame key={vp.key} screen={screen} vp={vp} zoom={zoom} />
-          {devMode && <Measure key={`${screen.id}/${vp.key}`} stage={stage} zoom={zoom} />}
+          {devMode && <Measure key={`${screen.id}/${vp.key}`} host={stage} on="prototype" />}
         </div>
         {devMode && <p className="pd-measure__hint">{t.measureHint}</p>}
     </div>

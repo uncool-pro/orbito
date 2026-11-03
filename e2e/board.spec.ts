@@ -23,12 +23,35 @@ const centre = async (page: Page, id: string) => {
 };
 
 test.describe('board', () => {
-  test('a click on a card opens the prototype on that screen', async ({ page }) => {
+  test('a click on a card selects the screen and shows its details, without leaving the board', async ({ page }) => {
     await openBoard(page);
     const { x, y } = await centre(page, 'plant-list');
 
     await page.mouse.click(x, y);
+    await expect(page).toHaveURL(/#\/board\/plants$/);
+    await expect(page.locator('.pd-insp__head')).toContainText('List');
+  });
+
+  test('▶ above a card and a double click start the prototype on that screen', async ({ page }) => {
+    await openBoard(page);
+    await cardOf(page, 'plant-list').locator('.pd-card__play').click();
     await expect(page).toHaveURL(/#\/s\/plant-list$/);
+    await openBoard(page);
+    const { x, y } = await centre(page, 'plant-detail');
+
+    await page.mouse.dblclick(x, y);
+    await expect(page).toHaveURL(/#\/s\/plant-detail$/);
+  });
+
+  test('dev mode measures a screen on the board and shows its code on the right', async ({ page }) => {
+    await openBoard(page);
+    await page.locator('.pd-devtoggle').click();
+    const { x, y } = await centre(page, 'plant-list');
+
+    await page.mouse.move(x, y);
+    await expect(page.locator('.pd-measure__box')).toBeVisible();
+    await page.mouse.click(x, y);
+    await expect(page.locator('.pd-code__text')).toContainText('defineScreen');
   });
 
   test('dragging over a card moves the board and opens nothing', async ({ page }) => {

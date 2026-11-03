@@ -56,12 +56,40 @@ export const distances = (a: Box, b: Box): Line[] => {
   return out;
 };
 
+/** The deepest element of `root` under the point, the last painted one winning; for screens on the board, which are inert to the pointer. */
+const deepestAt = (root: Element, x: number, y: number): Element | null => {
+  let found: Element | null = null;
+  const walk = (el: Element) => {
+    for (const c of el.children) {
+      const r = c.getBoundingClientRect();
+
+      if (r.width && r.height && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+        found = c;
+        walk(c);
+      }
+    }
+  };
+
+  walk(root);
+
+  return found;
+};
+
+/** How much a screen is scaled on the page (a page zoomed out in the prototype, a card on the board): drawn width over its own. */
+const scaleOf = (el: Element) => {
+  const screen = el.closest<HTMLElement>('.pd-card__inner, .pd-stage__frame');
+
+  return screen && screen.offsetWidth ? screen.getBoundingClientRect().width / screen.offsetWidth : 1;
+};
+
 /**
- * Dev mode on the prototype: hover an element to see its size and its distances to the edges of the element around it;
- * click one to pick it, then hover another for the distance between the two. A distance that equals a spacing token is
- * named by the token, which is what the developer should use. Clicks pick instead of navigating while dev mode is on.
+ * Dev mode: hover an element of a screen to see its size and its distances to the edges of the element around it, in the
+ * design's own pixels. A distance that equals a spacing token is named by the token, which is what the developer should
+ * use. On the prototype a click picks an element, then hovering another shows the distance between the two (clicks pick
+ * instead of navigating while dev mode is on). On the board the screens are small copies: hovering measures, a click
+ * still selects the screen.
  */
-export const Measure = ({ stage, zoom }: { stage: RefObject<HTMLDivElement | null>; zoom: number }) => {
+export const Measure = ({ host, on }: { host: RefObject<HTMLElement | null>; on: 'prototype' | 'board' }) => {
   const { ds } = useViewer();
   const [hovered, setHovered] = useState<Element | null>(null);
   const [picked, setPicked] = useState<Element | null>(null);
@@ -80,19 +108,45 @@ export const Measure = ({ stage, zoom }: { stage: RefObject<HTMLDivElement | nul
   }, [ds]);
 
   useEffect(() => {
-    const root = stage.current?.querySelector<HTMLElement>('.pd-stage__frame');
+    const el = host.current;
+
+    if (!el || on !== 'board') return;
+    const move = (e: PointerEvent) => {
+      const card = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-card]');
+      const screen = card?.querySelector('.pd-card__inner');
+
+      setHovered(screen ? deepestAt(screen, e.clientX, e.clientY) : null);
+    };
+    // the camera moves the screens: measure again once the pointer moves
+    const clear = () => setHovered(null);
+
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerleave', clear);
+    el.addEventListener('wheel', clear, { passive: true });
+    el.addEventListener('pointerdown', clear);
+
+    return () => {
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerleave', clear);
+      el.removeEventListener('wheel', clear);
+      el.removeEventListener('pointerdown', clear);
+    };
+  }, [host, on]);
+
+  useEffect(() => {
+    const root = on === 'prototype' ? host.current?.querySelector<HTMLElement>('.pd-stage__frame') : null;
 
     if (!root) return;
     const inside = (e: Event) => (e.target instanceof Element && root.contains(e.target) && e.target !== root ? e.target : null);
     const move = (e: PointerEvent) => setHovered(inside(e));
     const leave = () => setHovered(null);
     const click = (e: MouseEvent) => {
-      const el = inside(e);
+      const target = inside(e);
 
-      if (!el) return;
+      if (!target) return;
       e.preventDefault();
       e.stopPropagation();
-      setPicked((p) => (p === el ? null : el));
+      setPicked((p) => (p === target ? null : target));
     };
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setPicked(null);
@@ -113,7 +167,7 @@ export const Measure = ({ stage, zoom }: { stage: RefObject<HTMLDivElement | nul
       root.removeEventListener('scroll', scroll, true);
       window.removeEventListener('keydown', key);
     };
-  }, [stage]);
+  }, [host, on]);
 
   const origin = layer.current?.getBoundingClientRect();
 
@@ -121,7 +175,8 @@ export const Measure = ({ stage, zoom }: { stage: RefObject<HTMLDivElement | nul
   const h = boxOf(hovered, origin);
   const ref = picked && picked !== hovered ? boxOf(picked, origin) : hovered.parentElement ? boxOf(hovered.parentElement, origin) : null;
   const lines = ref ? distances(ref, h) : [];
-  // on-screen pixels back to the design's own (a page shown smaller than its width is zoomed out)
+  // on-screen pixels back to the design's own
+  const zoom = scaleOf(hovered);
   const px = (v: number) => Math.round(v / zoom);
   const label = (v: number) => {
     const n = px(v);

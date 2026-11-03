@@ -47,7 +47,7 @@ Not sure about the technical words? You do not need them. Tell Claude you are no
 3. Tell the person to put their material into `my-product/raw/`, open Claude Code in `my-product/` and type `/orbito-init`.
 
 ## What you see
-- **Board** (`#/board`) — every feature as a lane of live screens, arrows drawn from the element that triggers them, statuses per feature, review versions under their flow. Drag to move · pinch or Ctrl + scroll to zoom · click a screen to open the prototype from there · Shift+1 to fit.
+- **Board** (`#/board`) — every feature as a lane of live screens, arrows drawn from the element that triggers them, statuses per feature, review versions under their flow. Drag to move · pinch or Ctrl + scroll to zoom · click a screen for its details · ▶ above it or a double click opens the prototype from there · Shift+1 to fit.
 - **Flows** (`#/flows`) — the flows as a diagram (happy, alternative and error paths), drawn from the screens themselves, with dead ends and unreachable screens found for you.
 - **Prototype** (`#/s/<screen>`) — click through the screens like the real product; a responsive web page has a switch in the top right corner to see it at desktop, tablet or phone size.
 - **Design system** (`#/ds`) — tokens with usage notes and contrast, components by atomic level with variants and where each is used, and the rule check (`npm run check:ds`).

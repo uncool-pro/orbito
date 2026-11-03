@@ -35,7 +35,7 @@ Links are declared once, where they are drawn: an element with `data-pd-to` (via
 - The analyzer lives in `packages/cli/src/analyze.ts` (TypeScript AST, no browser). Add a rule there with a test in `packages/cli/test/analyze.test.ts`.
 
 ## Board input rules (keep them this simple)
-Drag anywhere pans; two-finger scroll / wheel pans; pinch or Ctrl/⌘ + wheel zooms at the cursor; click a card to start the prototype from that screen (no hover overlays on cards: hovering only highlights related screens and arrows); Esc leaves; Shift+1 fit. Camera math is pure (`canvas/camera.ts`, unit-tested); input handling is `canvas/controller.ts` (pointer capture, no React re-render while moving).
+Drag anywhere pans; two-finger scroll / wheel pans; pinch or Ctrl/⌘ + wheel zooms at the cursor; click a card to select it and see its details on the right (its code in dev mode); ▶ above a card or a double click starts the prototype from that screen (no hover overlays on cards: hovering only highlights related screens and arrows; in dev mode it measures); Esc leaves; Shift+1 fit. Camera math is pure (`canvas/camera.ts`, unit-tested); input handling is `canvas/controller.ts` (pointer capture, no React re-render while moving).
 
 ## Stable core (towards 1.0)
 People's projects depend on how the board, the flows diagram and the prototype behave. These parts are the stable core: **fix them, do not redesign them**, and build new things around them (new views, panels, skills), not into them.
