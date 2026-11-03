@@ -29,7 +29,10 @@ export const loadProject = <C>(
   const locale = config.locale ?? 'en';
 
   if (!viewports[wantedDefault]) problems.push({ level: 'error', message: `defaultViewport "${wantedDefault}" is not a known viewport` });
-  if (!['en', 'pl'].includes(locale)) problems.push({ level: 'error', message: `unknown locale "${locale}", using en` });
+  // a language tag: two or three letters, optionally a region (pt-BR)
+  const knownForm = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(locale);
+
+  if (!knownForm) problems.push({ level: 'error', message: `locale "${locale}" is not a language tag, using en` });
 
   const screens: Screen<C>[] = [];
   const seenCodes = new Map<string, string>();
@@ -104,7 +107,7 @@ export const loadProject = <C>(
   screens.filter((s) => s.back && !ids.has(s.back)).forEach((s) => problems.push({ level: 'warning', file: s.file, message: `back points to a missing screen "${s.back}"` }));
 
   return {
-    project: { config: { ...config, locale: locale === 'pl' ? 'pl' : 'en', defaultViewport }, viewports, screens, pages },
+    project: { config: { ...config, locale: knownForm ? locale : 'en', defaultViewport }, viewports, screens, pages },
     problems,
   };
 };

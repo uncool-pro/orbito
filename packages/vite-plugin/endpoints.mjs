@@ -4,14 +4,14 @@
 //   GET  /__orbito/file?path=<rel>        a .md / .txt / .json file inside the project (e.g. a review report)
 //   GET  /__orbito/env                    the project folder and the system (for the developer section of screen details)
 //   POST /__orbito/reveal?path=<rel>      shows a project file in Explorer / Finder / the file manager
-//   GET  /__orbito/comments               the comments file
-//   POST /__orbito/comments {action,screen,...}  adds or resolves one comment on one screen
+//   GET  /__orbito/comments               every screen's comments (comments/<screen-id>.md)
+//   POST /__orbito/comments {action,screen,...}  adds a comment to one screen, changes its status or removes it
 //   GET  /__orbito/source?path=<rel>      the code of a screen or a design-system component (dev mode)
 import { spawn } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, relative, resolve, sep } from 'node:path';
 
-import { changeComments } from './comments.mjs';
+import { changeComments, readComments } from './comments.mjs';
 import { inside, readJson } from './files.mjs';
 import { saveStatus } from './status.mjs';
 
@@ -50,10 +50,10 @@ export const fromOtherSite = ({ headers }) => {
 /**
  * @param {string} root the project folder
  * @param {string} statusFile the status file
- * @param {string} [commentsFile] the comments file
+ * @param {string} [commentsDir] the comments folder
  * @returns {(req: any, res: any, next: () => void) => void} middleware for the dev server
  */
-export const devEndpoints = (root, statusFile, commentsFile = resolve(root, '.orbito/comments.json')) => (req, res, next) => {
+export const devEndpoints = (root, statusFile, commentsDir = resolve(root, 'comments')) => (req, res, next) => {
   const url = new URL(req.url ?? '/', 'http://x');
 
   if (!url.pathname.startsWith('/__orbito/')) return next();
@@ -83,10 +83,10 @@ export const devEndpoints = (root, statusFile, commentsFile = resolve(root, '.or
     return reply(200, readFileSync(file, 'utf8'), 'text/plain; charset=utf-8');
   }
   if (url.pathname === '/__orbito/comments') {
-    if (req.method === 'GET') return reply(200, readJson(commentsFile, {}));
+    if (req.method === 'GET') return reply(200, readComments(commentsDir));
     if (req.method !== 'POST') return reply(405, { error: 'GET or POST' });
 
-    return withBody(req, reply, (change) => ({ screen: change.screen, comments: changeComments(commentsFile, change) }));
+    return withBody(req, reply, (change) => ({ screen: change.screen, comments: changeComments(commentsDir, change) }));
   }
   // in a container the root is the container's; the folder on the person's computer comes from compose (ORBITO_HOST_ROOT)
   if (url.pathname === '/__orbito/env')

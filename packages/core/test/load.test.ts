@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { loadProject } from '../src/load';
-import type { Page, ProjectConfig } from '../src/model';
+import type { Page } from '../src/model';
 
 const Screen = () => null;
 const screen = (meta: object) => ({ default: Screen, meta: { title: 'A screen', ...meta } });
@@ -45,10 +45,11 @@ describe('loadProject never lets a broken file take the board down', () => {
     expect(problems.map((p) => p.message)).toEqual(['screen file cannot be loaded: Error: boom', 'flow file cannot be loaded: Error: bang']);
   });
 
-  it('uses English for an unknown language and reports it', () => {
-    const { project, problems } = loadProject({ title: 'T', locale: 'de' } as unknown as ProjectConfig, {}, {});
+  it('takes any language of the product, and English for something that is not a language tag', () => {
+    expect(loadProject({ title: 'T', locale: 'de' }, {}, {}).project.config.locale).toBe('de');
+    const { project, problems } = loadProject({ title: 'T', locale: 'Polish!' }, {}, {});
 
     expect(project.config.locale).toBe('en');
-    expect(problems.map((p) => p.message)).toContain('unknown locale "de", using en');
+    expect(problems.map((p) => p.message)).toContain('locale "Polish!" is not a language tag, using en');
   });
 });

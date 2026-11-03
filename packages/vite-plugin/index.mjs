@@ -20,6 +20,7 @@ import { searchForWorkspaceRoot } from 'vite';
 import { analyzeProject } from '@uncool-pro/orbito-cli/analyze';
 import { parseRequirements, tokensToCss } from '@uncool-pro/orbito-core';
 
+import { readComments } from './comments.mjs';
 import { devEndpoints } from './endpoints.mjs';
 import { inside, readJson } from './files.mjs';
 import { readTeam, teamDirs } from './team.mjs';
@@ -27,7 +28,7 @@ import { readTeam, teamDirs } from './team.mjs';
 const VIRTUAL = 'virtual:orbito/project';
 const RESOLVED = '\0' + VIRTUAL;
 const STATUS_FILE = '.orbito/status.json';
-const COMMENTS_FILE = '.orbito/comments.json';
+const COMMENTS_DIR = 'comments';
 const FONTS_FILE = 'design-system/fonts.css';
 /** The stories in `requirements/**\/*.md` (the local mirror of the tracker), for the screen details. */
 const readRequirements = (root) => {
@@ -77,10 +78,8 @@ export default function orbito(options = {}) {
       const tokensPath = resolve(root, 'design-system/tokens.json');
       const fontsPath = resolve(root, FONTS_FILE);
 
-      const commentsPath = resolve(root, COMMENTS_FILE);
 
       this.addWatchFile(statusPath);
-      if (existsSync(commentsPath)) this.addWatchFile(commentsPath);
       this.addWatchFile(tokensPath);
       // watching a missing file makes Vite resolve it as an import; a new fonts.css is picked up in configureServer
       if (existsSync(fontsPath)) this.addWatchFile(fontsPath);
@@ -105,7 +104,7 @@ export default function orbito(options = {}) {
         `const ds = { tokens: ${JSON.stringify(report.tokens)}, css: ${JSON.stringify(tokensToCss(report.tokens))}, report: ${JSON.stringify(report)}, fonts: ${JSON.stringify(existsSync(fontsPath) ? readFileSync(fontsPath, 'utf8') : '')}, docs };`,
         `const team = ${JSON.stringify(readTeam(root))};`,
         `const requirements = ${JSON.stringify(readRequirements(root))};`,
-        `export default { project, problems, statuses: ${JSON.stringify(readJson(statusPath, {}))}, comments: ${JSON.stringify(readJson(commentsPath, {}))}, dev: ${dev}, ds, team, requirements };`,
+        `export default { project, problems, statuses: ${JSON.stringify(readJson(statusPath, {}))}, comments: ${JSON.stringify(readComments(resolve(root, COMMENTS_DIR)))}, dev: ${dev}, ds, team, requirements };`,
       ].join('\n');
     },
     configureServer(server) {
@@ -133,12 +132,16 @@ export default function orbito(options = {}) {
         if (mod) server.moduleGraph.invalidateModule(mod);
         server.ws.send({ type: 'full-reload' });
       });
-      // the comments file may appear after the start (the first comment, or Claude): push it like any later change
-      server.watcher.add(resolve(root, COMMENTS_FILE));
-      server.watcher.on('add', (file) => {
-        if (resolve(file) === resolve(root, COMMENTS_FILE)) server.ws.send({ type: 'custom', event: 'orbito:comments', data: readJson(file, {}) });
-      });
-      server.middlewares.use(devEndpoints(root, resolve(root, STATUS_FILE), resolve(root, COMMENTS_FILE)));
+      // a comments file added or removed (the first comment on a screen, the last one gone, or Claude): push them all
+      const commentsDir = resolve(root, COMMENTS_DIR);
+      const pushComments = (file) => {
+        if (inside(commentsDir, resolve(file))) server.ws.send({ type: 'custom', event: 'orbito:comments', data: readComments(commentsDir) });
+      };
+
+      server.watcher.add(commentsDir);
+      server.watcher.on('add', pushComments);
+      server.watcher.on('unlink', pushComments);
+      server.middlewares.use(devEndpoints(root, resolve(root, STATUS_FILE), commentsDir));
     },
     handleHotUpdate(ctx) {
       const file = resolve(ctx.file);
@@ -152,8 +155,8 @@ export default function orbito(options = {}) {
         return [];
       }
       // comments, the same way: added on the board or written by Claude
-      if (file === resolve(root, COMMENTS_FILE)) {
-        ctx.server.ws.send({ type: 'custom', event: 'orbito:comments', data: readJson(file, {}) });
+      if (rel.startsWith(`${COMMENTS_DIR}/`)) {
+        ctx.server.ws.send({ type: 'custom', event: 'orbito:comments', data: readComments(resolve(root, COMMENTS_DIR)) });
 
         return [];
       }

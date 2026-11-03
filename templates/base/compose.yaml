@@ -35,9 +35,9 @@ services:
       - ./index.html:/project/index.html:ro
       - ./orbito.config.ts:/project/orbito.config.ts:ro
       - ./tsconfig.json:/project/tsconfig.json:ro
-      # the two files the board writes: statuses and comments on screens, set by the person
+      # what the board writes, both set by the person: the statuses, and the comments on screens (one file per screen)
       - ./.orbito/status.json:/project/.orbito/status.json
-      - ./.orbito/comments.json:/project/.orbito/comments.json
+      - ./comments:/project/comments
     networks: [sealed]
     restart: unless-stopped
 

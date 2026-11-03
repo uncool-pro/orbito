@@ -12,7 +12,7 @@ import { ViewerContext } from './app/context';
 import { ShellProvider } from './app/shell/state';
 import type { DsData } from './app/context';
 import { probeLinks } from './board/probe';
-import { LOCALES, MessagesContext } from './i18n';
+import { MESSAGES, MessagesContext } from './i18n';
 import { initComments } from './comments';
 import type { CommentsFile } from './comments';
 import { initStatuses } from './status';
@@ -48,7 +48,7 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
 
   return (
     <ViewerContext.Provider value={{ project: loaded.project, problems: loaded.problems, ds: loaded.ds, team: loaded.team ?? null, links, requirements }}>
-      <MessagesContext.Provider value={LOCALES[loaded.project.config.locale ?? 'en']}>
+      <MessagesContext.Provider value={MESSAGES}>
         <ShellProvider>
           {/* the last line of defence: a message instead of an empty page */}
           <ErrorBoundary name="Orbito">

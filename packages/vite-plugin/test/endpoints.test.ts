@@ -1,5 +1,5 @@
 import { EventEmitter } from 'node:events';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -119,26 +119,36 @@ describe('statuses', () => {
 describe('comments', () => {
   const post = (body: unknown) => call('/__orbito/comments', { method: 'POST', body: JSON.stringify(body) });
 
-  it('adds a comment to a screen and resolves it', async () => {
-    const added = await post({ action: 'add', screen: 'plant-list', text: '  Too many filters  ', author: 'Ola' });
+  it('adds a comment to a screen as an open change, moves it along and removes it', async () => {
+    const added = await post({ action: 'add', screen: 'plant-list', heading: 'PL-01 · List', text: '  Too many filters  ', author: 'Ola' });
 
     expect(added.code).toBe(200);
     const [c] = JSON.parse(added.text).comments;
+    const file = join(root, 'comments/plant-list.md');
 
-    expect(c).toMatchObject({ text: 'Too many filters', author: 'Ola' });
+    expect(c).toMatchObject({ text: 'Too many filters', author: 'Ola', status: 'open' });
+    expect(readFileSync(file, 'utf8')).toContain('# Comments on PL-01 · List');
     expect(JSON.parse((await call('/__orbito/comments')).text)['plant-list']).toHaveLength(1);
-    expect((await post({ action: 'resolve', screen: 'plant-list', id: c.id })).code).toBe(200);
-    // a screen without comments leaves the file
-    expect(JSON.parse(readFileSync(join(root, '.orbito/comments.json'), 'utf8'))).toEqual({});
+    expect((await post({ action: 'status', screen: 'plant-list', id: c.id, status: 'done', note: 'moved the filters into a sheet' })).code).toBe(200);
+    expect(readFileSync(file, 'utf8')).toContain(`## done · ${c.id}`);
+    expect(readFileSync(file, 'utf8')).toContain('note: moved the filters into a sheet');
+    expect((await post({ action: 'remove', screen: 'plant-list', id: c.id })).code).toBe(200);
+    // a screen with no comments left has no file
+    expect(existsSync(file)).toBe(false);
   });
 
-  it('refuses a wrong request, an unknown comment and a damaged file', async () => {
+  it('refuses a wrong request, an unknown comment and a file with a merge conflict', async () => {
     expect((await post({ action: 'add', screen: '../x', text: 'a' })).code).toBe(400);
     expect((await post({ action: 'add', screen: 'a', text: ' ' })).code).toBe(400);
     expect((await post({ action: 'add', screen: 'a', text: 'x'.repeat(2001) })).code).toBe(400);
-    expect((await post({ action: 'resolve', screen: 'a', id: 'nope' })).code).toBe(404);
-    writeFileSync(join(root, '.orbito/comments.json'), '<<<<<<< HEAD');
+    expect((await post({ action: 'status', screen: 'a', id: 'nope', status: 'done' })).code).toBe(404);
+    await post({ action: 'add', screen: 'a', text: 'b' });
+    const id = JSON.parse((await call('/__orbito/comments')).text).a[0].id;
+
+    expect((await post({ action: 'status', screen: 'a', id, status: 'closed' })).code).toBe(400);
+    writeFileSync(join(root, 'comments/a.md'), '<<<<<<< HEAD\n## open · c1\n');
     expect((await post({ action: 'add', screen: 'a', text: 'b' })).code).toBe(409);
+    expect(readFileSync(join(root, 'comments/a.md'), 'utf8')).toContain('<<<<<<< HEAD');
   });
 
   it('stops a comment from another site', async () => {

@@ -7,6 +7,8 @@ import { FrameContext } from '@uncool-pro/orbito-runtime';
 import { pathOnComputer, useDevEnv, vscodeLink } from '../dev';
 import { useT } from '../i18n';
 import { recall, remember } from '../remembered';
+import { useOpenCount } from '../comments';
+import { Comments } from './Comments';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Measure } from './Measure';
 import { useViewer } from './context';
@@ -16,6 +18,7 @@ import { useShell } from './shell/state';
 const CHROME = 640;
 const SIZE_KEY = 'pd.viewport';
 const PHONE_KEY = 'pd.phone';
+const COMMENTS_KEY = 'pd.prototypeComments';
 // a phone screen is also shown on the smallest and the largest phone, around the size it was designed for
 const PHONES = { small: 'mobile-small', large: 'mobile-large' } as const;
 
@@ -110,6 +113,9 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
   const size = sizes.find((s) => s.key === chosen) ?? sizes.find((s) => s.key === 'standard') ?? sizes[0]!;
   const vp = size.vp;
   const stage = useRef<HTMLDivElement>(null);
+  const [commentsOpen, setCommentsOpen] = useState(() => recall(COMMENTS_KEY) === '1');
+
+  useEffect(() => remember(COMMENTS_KEY, commentsOpen ? '1' : '0'), [commentsOpen]);
 
   useEffect(() => select(screen.id), [screen.id, select]);
   useEffect(() => setChosen(recall(store)), [store]);
@@ -125,27 +131,49 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
 
   return (
     <div className={`pd-screen-page${devMode ? ' is-dev' : ''}`}>
-        {(sizes.length > 1 || devMode) && (
-          <div className="pd-sizebar">
-            {devMode && <DevPath file={screen.file} />}
-            {sizes.length > 1 && (
-              <div className="pd-sizes" role="group" aria-label={t.responsive}>
-                {sizes.map((s) => (
-                  <button key={s.key} type="button" aria-pressed={s.key === size.key} title={`${s.vp.label} · ${s.vp.width}×${s.vp.height}`} onClick={() => pick(s.key)}>
-                    <SizeIcon width={s.vp.width} />
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        <div ref={stage} className={`pd-stage pd-stage--${vp.kind}`}>
-          <Frame key={vp.key} screen={screen} vp={vp} zoom={zoom} />
-          {devMode && <Measure key={`${screen.id}/${vp.key}`} host={stage} on="prototype" />}
+      <div className="pd-sizebar">
+        {devMode && <DevPath file={screen.file} />}
+        <div className="pd-sizebar__end">
+          <CommentsToggle open={commentsOpen} onClick={() => setCommentsOpen((v) => !v)} screen={screen.id} />
+          {sizes.length > 1 && (
+            <div className="pd-sizes" role="group" aria-label={t.responsive}>
+              {sizes.map((s) => (
+                <button key={s.key} type="button" aria-pressed={s.key === size.key} title={`${s.vp.label} · ${s.vp.width}×${s.vp.height}`} onClick={() => pick(s.key)}>
+                  <SizeIcon width={s.vp.width} />
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
-        {devMode && <p className="pd-measure__hint">{t.measureHint}</p>}
+      </div>
+      {commentsOpen && (
+        <div className="pd-commentpanel" data-pd-ui>
+          <Comments screen={screen} />
+        </div>
+      )}
+      <div ref={stage} className={`pd-stage pd-stage--${vp.kind}`}>
+        <Frame key={vp.key} screen={screen} vp={vp} zoom={zoom} />
+        {devMode && <Measure key={`${screen.id}/${vp.key}`} host={stage} on="prototype" />}
+      </div>
+      {devMode && <p className="pd-measure__hint">{t.measureHint}</p>}
     </div>
+  );
+};
+
+/** Next to the screen in the prototype: the comments on it, with how many still wait to be made. */
+const CommentsToggle = ({ open, onClick, screen }: { open: boolean; onClick: () => void; screen: string }) => {
+  const t = useT();
+  const waiting = useOpenCount(screen);
+
+  return (
+    <button type="button" className="pd-commentstoggle" aria-pressed={open} onClick={onClick}>
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" aria-hidden="true">
+        <path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" />
+      </svg>
+      {t.comments}
+      {waiting > 0 && <span className="pd-count">{waiting}</span>}
+    </button>
   );
 };
 

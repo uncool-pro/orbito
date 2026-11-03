@@ -1,43 +1,46 @@
 import { useSyncExternalStore } from 'react';
 
+import type { CommentStatus, ScreenComment } from '@uncool-pro/orbito-core';
+
 import { recall, remember } from './remembered';
 
-/** One comment on a screen, as `.orbito/comments.json` keeps it. */
-export type ScreenComment = { id: string; text: string; author?: string; createdAt: string };
 export type CommentsFile = Record<string, ScreenComment[]>;
 
 /**
- * Comments on screens. The build ships them read-only; the dev server reads and writes `.orbito/comments.json` through the
- * Vite plugin (`/__orbito/comments`), so a comment is a line in the repo that Claude reads too.
+ * Comments on screens, as changes with a status: open (asked), doing (Claude is on it), done (made). The build ships
+ * them read-only; the dev server reads and writes `comments/<screen-id>.md` through the Vite plugin
+ * (`/__orbito/comments`), so a comment travels through git with the mockups and Claude reads and moves it along too.
  */
 let state: CommentsFile = {};
 let editable = false;
 const subs = new Set<() => void>();
 const emit = () => subs.forEach((f) => f());
 const AUTHOR_KEY = 'pd.author';
+const NONE: ScreenComment[] = [];
 
 export const initComments = (initial: CommentsFile | undefined, canEdit: boolean) => {
   state = initial ?? {};
   editable = canEdit;
 };
 
-// the dev server pushes the file whenever it changes, also when Claude edits it
+// the dev server pushes the comments whenever a file changes, also when Claude edits one
 const hot = (import.meta as unknown as { hot?: { on: (event: string, cb: (data: CommentsFile) => void) => void } }).hot;
 
-hot?.on('orbito:comments', (file) => {
-  state = file;
+hot?.on('orbito:comments', (all) => {
+  state = all;
   emit();
 });
 
-export const useComments = (screen: string) =>
-  useSyncExternalStore(
-    (f) => {
-      subs.add(f);
+const subscribe = (f: () => void) => {
+  subs.add(f);
 
-      return () => subs.delete(f);
-    },
-    () => state[screen],
-  ) ?? [];
+  return () => subs.delete(f);
+};
+
+export const useComments = (screen: string) => useSyncExternalStore(subscribe, () => state[screen] ?? NONE);
+
+/** How many comments on a screen still wait to be made (open or in progress). */
+export const useOpenCount = (screen: string) => useComments(screen).filter((c) => c.status !== 'done').length;
 
 export const canComment = () => editable;
 
@@ -53,10 +56,13 @@ const send = async (body: Record<string, string>) => {
   emit();
 };
 
-export const addComment = (screen: string, text: string, author: string) => {
+/** `heading` names the file when it is first made, e.g. "PL-01 · List". */
+export const addComment = (screen: string, heading: string, text: string, author: string) => {
   remember(AUTHOR_KEY, author);
 
-  return send({ action: 'add', screen, text, author });
+  return send({ action: 'add', screen, heading, text, author });
 };
 
-export const resolveComment = (screen: string, id: string) => send({ action: 'resolve', screen, id });
+export const setCommentStatus = (screen: string, id: string, status: CommentStatus) => send({ action: 'status', screen, id, status });
+
+export const removeComment = (screen: string, id: string) => send({ action: 'remove', screen, id });

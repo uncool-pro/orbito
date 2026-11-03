@@ -102,8 +102,11 @@ export type Page = { key: string; name: string; flows: Flow[] };
 
 export type ProjectConfig = {
   title: string;
-  /** UI language of the tool. */
-  locale?: 'en' | 'pl';
+  /**
+   * Language of the product: what the mockups are written in (`en`, `pl`, `de`…), and the `lang` of an exported page.
+   * Orbito's own interface is in English whatever this says.
+   */
+  locale?: string;
   /** Viewport used by screens that do not set one. */
   defaultViewport?: string;
   /** Extra or overridden viewports. */

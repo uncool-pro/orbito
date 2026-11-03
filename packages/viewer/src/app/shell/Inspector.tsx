@@ -6,7 +6,7 @@ import type { Flow, Page, Screen } from '@uncool-pro/orbito-core';
 
 import { LiveScreen } from '../../board/BoardCard';
 import { CodePanel } from '../CodePanel';
-import { addComment, canComment, readAuthor, resolveComment, useComments } from '../../comments';
+import { Comments } from '../Comments';
 import { openInEditor, pathOnComputer, revealFile, useDevEnv, vscodeLink } from '../../dev';
 import { useT } from '../../i18n';
 import { useViewer } from '../context';
@@ -97,7 +97,7 @@ const ScreenInspector = ({ screen: s, mode, page, flowKey }: { screen: Screen<Co
           ))}
         </section>
       )}
-      <Comments screen={s.id} />
+      <Comments screen={s} />
       <Connections title={t.leadsTo} ids={out} mode={mode} page={page} feature={feature} onPick={(id) => pickScreen(mode, id, select)} />
       <Connections title={t.comesFrom} ids={into} mode={mode} page={page} feature={feature} onPick={(id) => pickScreen(mode, id, select)} />
       <Requirements ids={s.requirements?.length ? s.requirements : (feature?.requirements ?? [])} ofFeature={!s.requirements?.length} />
@@ -212,75 +212,6 @@ const Requirements = ({ ids, ofFeature }: { ids: string[]; ofFeature: boolean })
           </p>
         );
       })}
-    </section>
-  );
-};
-
-/** Comments on the screen, kept in `.orbito/comments.json`: added here or by Claude, resolved when done. */
-const Comments = ({ screen }: { screen: string }) => {
-  const list = useComments(screen);
-  const t = useT();
-  const [text, setText] = useState('');
-  const [author, setAuthor] = useState(readAuthor);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const editable = canComment();
-  const run = (job: Promise<void>, after?: () => void) => {
-    setBusy(true);
-    setError(null);
-    job.then(
-      () => {
-        setBusy(false);
-        after?.();
-      },
-      (e: unknown) => {
-        setBusy(false);
-        setError(e instanceof Error ? e.message : String(e));
-      },
-    );
-  };
-
-  return (
-    <section className="pd-insp__comments">
-      <h4>
-        {t.comments} {list.length > 0 && <span className="pd-count">{list.length}</span>}
-      </h4>
-      {list.map((c) => (
-        <article key={c.id} className="pd-comment">
-          <p>{c.text}</p>
-          <footer>
-            <span>
-              {c.author ?? t.anonymous} · {c.createdAt}
-            </span>
-            {editable && (
-              <button type="button" className="pd-comment__done" title={t.resolveTip} disabled={busy} onClick={() => run(resolveComment(screen, c.id))}>
-                ✓ {t.resolve}
-              </button>
-            )}
-          </footer>
-        </article>
-      ))}
-      {editable ? (
-        <form
-          className="pd-comment__form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (text.trim()) run(addComment(screen, text, author), () => setText(''));
-          }}
-        >
-          <textarea className="pd-input" rows={2} placeholder={t.commentPlaceholder} value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} />
-          <div className="pd-comment__row">
-            <input className="pd-input" placeholder={t.yourName} value={author} maxLength={80} onChange={(e) => setAuthor(e.target.value)} />
-            <button type="submit" className="pd-btn pd-btn--sm" disabled={!text.trim() || busy}>
-              {t.addComment}
-            </button>
-          </div>
-          {error && <p className="pd-warn">{error}</p>}
-          <p className="pd-insp__fine">{t.commentsWhere}</p>
-        </form>
-      ) : (
-        list.length === 0 && <p className="pd-muted">{t.noComments}</p>
-      )}
     </section>
   );
 };

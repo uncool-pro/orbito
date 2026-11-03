@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * npm create orbito <folder> [--title "My product"] [--platform mobile|web|both] [--locale en|pl] [--local] [--no-install]
+ * npm create orbito <folder> [--title "My product"] [--platform mobile|web|both] [--locale <language of the product, e.g. en, pl>] [--local] [--no-install]
  *
  * The technical start of a project: copies the template (base design-system kit, conventions, CLAUDE.md, process file),
  * fills in the name, platform and language, installs and checks it. No design questions: those belong to the project
@@ -65,10 +65,10 @@ const main = async () => {
   if (existsSync(target) && readdirSync(target).length) fail(`${target} is not empty. Choose a new folder.`);
   const title = opt('title') ?? (await ask('Product name', basename(target)));
   const platform = (opt('platform') ?? (await ask('Platform: mobile, web or both', 'mobile'))) as Platform;
-  const locale = opt('locale') ?? (await ask('Language of the tool: en or pl', 'en'));
+  const locale = opt('locale') ?? (await ask('Language of the product (the mockups are written in it), e.g. en, pl, de', 'en'));
 
   if (!(platform in PLATFORMS)) fail(`--platform must be mobile, web or both (got "${platform}")`);
-  if (!['en', 'pl'].includes(locale)) fail(`--locale must be en or pl (got "${locale}")`);
+  if (!/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(locale)) fail(`--locale must be a language tag such as en, pl or pt-BR (got "${locale}")`);
   // a local checkout of the tool (or an explicit --local) links the packages instead of downloading them
   const local = flag('local') || existsSync(join(PACKAGES, 'core', 'src', 'index.ts'));
 

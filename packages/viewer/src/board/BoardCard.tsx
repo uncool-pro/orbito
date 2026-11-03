@@ -6,6 +6,7 @@ import { FrameContext } from '@uncool-pro/orbito-runtime';
 
 import { ErrorBoundary } from '../app/ErrorBoundary';
 import { screenHash } from '../app/routes';
+import { useOpenCount } from '../comments';
 import { useT } from '../i18n';
 
 /**
@@ -45,6 +46,7 @@ type Props = {
 
 export const BoardCard = memo(({ card, screen, viewport, live, state, active, findingTitles }: Props) => {
   const t = useT();
+  const waiting = useOpenCount(card.screenId);
 
   return (
     <div
@@ -56,9 +58,14 @@ export const BoardCard = memo(({ card, screen, viewport, live, state, active, fi
       {/* a light caption above the screen, as in design tools: the code (and a version's findings) small on top, the
           functional name right over the screen, up to two lines */}
       <div className="pd-card__head" title={screen.title}>
-        {(screen.code || card.version) && (
+        {(screen.code || card.version || waiting > 0) && (
           <div className="pd-card__meta">
             {screen.code && <span className="pd-card__code">{screen.code}</span>}
+            {waiting > 0 && (
+              <i className="pd-badge pd-badge--comments" title={t.commentsWaiting(waiting)}>
+                {t.comments.toLowerCase()} {waiting}
+              </i>
+            )}
             {card.version && !card.version.replaces && <i className="pd-badge pd-badge--new">{t.newScreen}</i>}
             {card.version?.findings.map((n) => (
               <i key={n} className="pd-badge" title={findingTitles?.[n]}>

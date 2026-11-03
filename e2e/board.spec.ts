@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -127,19 +127,25 @@ test.describe('prototype', () => {
 });
 
 test.describe('screen details', () => {
-  test('a comment is saved in the project and leaves it when done', async ({ page }) => {
-    const file = join(DEMO, '.orbito/comments.json');
-    const before = readFileSync(file, 'utf8');
+  test('a comment is an open change in the screen\'s own file, moved along and removed', async ({ page }) => {
+    const file = join(DEMO, 'comments/plant-list.md');
+    const comment = page.locator('.pd-insp .pd-comment', { hasText: 'Too many plants at once' });
 
+    expect(existsSync(file)).toBe(false);
     await page.goto('/#/s/plant-list');
-    await page.getByPlaceholder('What should change on this screen?').fill('Too many plants at once');
-    await page.getByPlaceholder('Your name').fill('Test');
-    await page.getByRole('button', { name: 'Add', exact: true }).click();
-    await expect(page.locator('.pd-comment', { hasText: 'Too many plants at once' })).toBeVisible();
-    expect(JSON.parse(readFileSync(file, 'utf8'))['plant-list'][0]).toMatchObject({ text: 'Too many plants at once', author: 'Test' });
-    await page.locator('.pd-comment', { hasText: 'Too many plants at once' }).getByRole('button').click();
-    await expect(page.locator('.pd-comment', { hasText: 'Too many plants at once' })).toHaveCount(0);
-    expect(readFileSync(file, 'utf8')).toBe(before);
+    await page.locator('.pd-insp').getByPlaceholder('What should change on this screen?').fill('Too many plants at once');
+    await page.locator('.pd-insp').getByPlaceholder('Your name').fill('Test');
+    await page.locator('.pd-insp').getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(comment).toBeVisible();
+    expect(readFileSync(file, 'utf8')).toMatch(/# Comments on PL-01 · List\n\n## open · c\w+\nTest · \d{4}-\d{2}-\d{2}\n\nToo many plants at once/);
+    // the screen in the prototype shows it waits
+    await expect(page.locator('.pd-commentstoggle .pd-count')).toHaveText('1');
+    await comment.locator('select').selectOption('done');
+    await expect.poll(() => readFileSync(file, 'utf8')).toMatch(/## done · c\w+/);
+    await page.locator('.pd-insp .pd-insp__more', { hasText: '1 done' }).click();
+    await comment.getByRole('button', { name: 'Remove this comment' }).click();
+    await expect(comment).toHaveCount(0);
+    expect(existsSync(file)).toBe(false);
   });
 
   test('a requirement shows its text from requirements/', async ({ page }) => {

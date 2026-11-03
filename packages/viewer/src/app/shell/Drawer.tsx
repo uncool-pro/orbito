@@ -6,7 +6,7 @@ import type { Page } from '@uncool-pro/orbito-core';
 import { useT } from '../../i18n';
 import { useStatuses } from '../../status';
 import { useViewer } from '../context';
-import { canvasHash, canvasOf, dsHash, go, openScreen, pickScreen } from '../routes';
+import { canvasHash, canvasOf, dsHash, openScreen, pickScreen } from '../routes';
 import type { Mode } from '../routes';
 import { useShell } from './state';
 
@@ -50,9 +50,11 @@ const BranchIcon = () => (
 );
 
 /**
- * Pages → features (flows) → screens. Every level has the same row: a chevron (or its space), the name first, the code
- * small and grey after it. A flow shows its path as the line of the flows legend and its status as the only dot.
- * A page's name shows the whole page; a feature shows only that feature, and a second click on it the whole page again.
+ * The project, as in Figma: a small list of the pages on top (it scrolls on its own when there are many), and under it
+ * the features of the page you are on, each opening into its screens. Every row has the same shape: a chevron (or its
+ * space), the name first, the code small and grey after it. A feature shows its path as the line of the flows legend and
+ * its status as the only dot. A page's name shows the whole page; a feature shows only that feature, and a second click
+ * on it the whole page again.
  */
 const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: string }) => {
   const { project } = useViewer();
@@ -62,13 +64,11 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
   const base = canvasOf(mode);
   const byId = new Map(project.screens.map((s) => [s.id, s]));
   const [open, setOpen] = useState<Set<string>>(() => new Set(flowKey ? [flowKey] : page?.flows.slice(0, 2).map((f) => f.key)));
-  const [pageOpen, setPageOpen] = useState(true);
   const toggle = (key: string) => setOpen((o) => (o.has(key) ? new Set([...o].filter((k) => k !== key)) : new Set([...o, key])));
 
   useEffect(() => {
     if (flowKey) setOpen((o) => new Set([...o, flowKey]));
   }, [flowKey]);
-  useEffect(() => setPageOpen(true), [page?.key]);
 
   const row = (id: string, extra?: string) => {
     const s = byId.get(id);
@@ -92,73 +92,70 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
   };
 
   return (
-    <nav className="pd-tree" aria-label={t.pages}>
-      <h4>{t.pages}</h4>
-      <ul className="pd-tree__level">
-        {project.pages.map((p) => {
-          const current = p.key === page?.key;
-          const expanded = current && pageOpen;
+    <>
+      <nav className="pd-pages" aria-label={t.pages}>
+        <h4>{t.pages}</h4>
+        <ul className="pd-pages__list">
+          {project.pages.map((p) => {
+            const current = p.key === page?.key;
 
-          return (
-            <li key={p.key} className={`pd-tree__page${current ? ' is-current' : ''}`}>
-              <div className="pd-tree__line">
-                <Chevron
-                  open={expanded}
-                  label={expanded ? t.collapse : t.expand}
-                  onClick={() => (current ? setPageOpen((v) => !v) : go(canvasHash(base, p.key)))}
-                />
-                <a className="pd-tree__row" href={canvasHash(base, p.key)}>
+            return (
+              <li key={p.key}>
+                <a className={`pd-pages__page${current ? ' is-on' : ''}`} href={canvasHash(base, p.key)} aria-current={current ? 'page' : undefined}>
                   <span className="pd-tree__name">{p.name}</span>
                   <small className="pd-tree__code">{p.flows.length}</small>
                 </a>
-              </div>
-              {expanded && (
-                <ul className="pd-tree__level pd-tree__level--nested">
-                  {p.flows.map((f) => {
-                    const isOpen = open.has(f.key);
-                    const st = statusOf(statuses, flowStatusId(p.key, f.key)).status;
-                    const on = current && flowKey === f.key;
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+      {page && (
+        <nav className="pd-tree" aria-label={t.features}>
+          <h4>{t.features}</h4>
+          <ul className="pd-tree__level">
+            {page.flows.map((f) => {
+              const isOpen = open.has(f.key);
+              const st = statusOf(statuses, flowStatusId(page.key, f.key)).status;
+              const on = flowKey === f.key;
 
-                    return (
-                      <li key={f.key}>
-                        <div className="pd-tree__line">
-                          <Chevron open={isOpen} label={isOpen ? t.collapse : t.expand} onClick={() => toggle(f.key)} />
-                          <a
-                            className={`pd-tree__row pd-tree__flow${on ? ' is-on' : ''}`}
-                            href={on ? canvasHash(base, p.key) : canvasHash(base, p.key, f.key)}
-                            title={`${f.name} · ${t.pathKinds[f.path ?? 'happy']}${on ? ` · ${t.backToPage}` : ''}`}
-                          >
-                            <i className={`pd-pathmark pd-path--${f.path ?? 'happy'}`} />
-                            <span className="pd-tree__name">{f.name}</span>
-                            <small className="pd-tree__code">{f.key}</small>
-                            <i className={`pd-dot pd-status--${st}`} title={t.statusLabels[st]} />
-                          </a>
-                        </div>
-                        {isOpen && (
-                          <ul className="pd-tree__level pd-tree__level--nested">
-                            {f.screens.map((id, i) => row(id, `${f.key}${i}`))}
-                            {(f.versions ?? []).map((v) => (
-                              <li key={v.key} className="pd-tree__version">
-                                <div className="pd-tree__row pd-tree__vlabel">
-                                  <BranchIcon />
-                                  <span className="pd-tree__name">{v.name}</span>
-                                  <small className="pd-tree__state">{v.state}</small>
-                                </div>
-                                <ul className="pd-tree__level pd-tree__level--nested">{v.screens.map((vs) => row(vs.id, `${f.key}/${v.key}`))}</ul>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+              return (
+                <li key={f.key}>
+                  <div className="pd-tree__line">
+                    <Chevron open={isOpen} label={isOpen ? t.collapse : t.expand} onClick={() => toggle(f.key)} />
+                    <a
+                      className={`pd-tree__row pd-tree__flow${on ? ' is-on' : ''}`}
+                      href={on ? canvasHash(base, page.key) : canvasHash(base, page.key, f.key)}
+                      title={`${f.name} · ${t.pathKinds[f.path ?? 'happy']}${on ? ` · ${t.backToPage}` : ''}`}
+                    >
+                      <i className={`pd-pathmark pd-path--${f.path ?? 'happy'}`} />
+                      <span className="pd-tree__name">{f.name}</span>
+                      <small className="pd-tree__code">{f.key}</small>
+                      <i className={`pd-dot pd-status--${st}`} title={t.statusLabels[st]} />
+                    </a>
+                  </div>
+                  {isOpen && (
+                    <ul className="pd-tree__level pd-tree__level--nested">
+                      {f.screens.map((id, i) => row(id, `${f.key}${i}`))}
+                      {(f.versions ?? []).map((v) => (
+                        <li key={v.key} className="pd-tree__version">
+                          <div className="pd-tree__row pd-tree__vlabel">
+                            <BranchIcon />
+                            <span className="pd-tree__name">{v.name}</span>
+                            <small className="pd-tree__state">{v.state}</small>
+                          </div>
+                          <ul className="pd-tree__level pd-tree__level--nested">{v.screens.map((vs) => row(vs.id, `${f.key}/${v.key}`))}</ul>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+      )}
+    </>
   );
 };
 

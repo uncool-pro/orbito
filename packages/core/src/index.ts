@@ -3,6 +3,7 @@ export * from './load.ts';
 export * from './links.ts';
 export * from './features.ts';
 export * from './requirements.ts';
+export * from './comments.ts';
 export * from './status.ts';
 export * from './layout.ts';
 export * from './ds.ts';
