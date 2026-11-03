@@ -173,7 +173,7 @@ const DsTree = ({ section }: { section?: string }) => {
       <a className={`pd-tree__item${section === 'health' ? ' is-on' : ''}`} href={dsHash('health')}>
         {t.health} {report.counts.error + report.counts.warning > 0 ? <span className="pd-count is-error">{report.counts.error + report.counts.warning}</span> : <span className="pd-count is-ok">✓</span>}
       </a>
-      <h4>{t.tokens}</h4>
+      <h4>{t.foundations}</h4>
       {Object.keys(report.tokens).map((g) => (
         <a key={g} className={`pd-tree__item${section === `tokens/${g}` ? ' is-on' : ''}`} href={dsHash(`tokens/${g}`)}>
           {t.groups[g] ?? g} <small>{report.tokens[g]?.length}</small>
