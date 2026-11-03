@@ -12,7 +12,13 @@ const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const VERSION = (JSON.parse(readFileSync(join(REPO, 'package.json'), 'utf8')) as { version: string }).version;
 const BOARD = 'http://localhost:5190';
 
-const docker = (cwd: string, ...args: string[]) => execFileSync('docker', args, { cwd, encoding: 'utf8', stdio: 'pipe', timeout: 180_000 });
+// on Linux the container must run as you, as DOCKER.md tells people; Docker Desktop on Windows and Mac maps it by itself
+const LINUX = process.platform === 'linux';
+const ME = LINUX ? `${process.getuid!()}:${process.getgid!()}` : '';
+const AS_ME = LINUX ? ['--user', ME] : [];
+const ENV = LINUX ? { ...process.env, ORBITO_UID: String(process.getuid!()), ORBITO_GID: String(process.getgid!()) } : process.env;
+
+const docker = (cwd: string, ...args: string[]) => execFileSync('docker', args, { cwd, env: ENV, encoding: 'utf8', stdio: 'pipe', timeout: 180_000 });
 const refuses = (cwd: string, ...args: string[]) => expect(() => docker(cwd, ...args)).toThrow();
 
 test.describe.serial('Orbito in a container', () => {
@@ -26,12 +32,13 @@ test.describe.serial('Orbito in a container', () => {
     project = join(dir, 'moj-produkt');
     // the project's compose.yaml names the published image: the one under test stands in for it
     docker(dir, 'tag', IMAGE!, `ghcr.io/uncool-pro/orbito:${VERSION}`);
-    docker(dir, 'run', '--rm', '--network', 'none', '-v', `${dir}:/work`, '-w', '/work', IMAGE!, 'create', 'moj-produkt', '--title', 'Mój produkt', '--platform', 'web', '--locale', 'pl');
+    docker(dir, 'run', '--rm', ...AS_ME, '--network', 'none', '-v', `${dir}:/work`,'-w', '/work', IMAGE!, 'create', 'moj-produkt', '--title', 'Mój produkt', '--platform', 'web', '--locale', 'pl');
   });
 
   test.afterAll(() => {
     try {
-      docker(project, 'compose', 'down', '--timeout', '2');
+      // when creating failed there is no project to stop
+      if (existsSync(project)) docker(project, 'compose', 'down', '--timeout', '2');
       // a stand-in left under the published name would hide the real image later
       docker(dir, 'rmi', `ghcr.io/uncool-pro/orbito:${VERSION}`);
     } finally {
@@ -127,7 +134,7 @@ test.describe.serial('Orbito in a container', () => {
   test('updates the project from the image without touching the work or making copies', () => {
     const screens = readdirSync(join(project, 'screens'), { recursive: true, encoding: 'utf8' }).length;
 
-    docker(project, 'run', '--rm', '--network', 'none', '-v', `${project}:/project`, IMAGE!, 'update');
+    docker(project, 'run', '--rm', ...AS_ME, '--network', 'none', '-v', `${project}:/project`, IMAGE!, 'update');
     expect(readdirSync(join(project, 'screens'), { recursive: true, encoding: 'utf8' }).length).toBe(screens);
     expect(existsSync(join(project, '.orbito/backup'))).toBe(false);
     expect(readFileSync(join(project, 'raw/poufne.md'), 'utf8')).toBe('tajne');
