@@ -62,7 +62,9 @@ test.describe.serial('Orbito in a container', () => {
 
   test('opens the board, only for this computer', async ({ page, request }) => {
     const errors: string[] = [];
+    const failed: string[] = [];
 
+    page.on('requestfailed', (r) => failed.push(`${r.url()} ${r.failure()?.errorText ?? ''}`));
     page.on('pageerror', (e) => errors.push(String(e)));
     page.on('console', (m) => {
       if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) errors.push(m.text());
@@ -82,9 +84,10 @@ test.describe.serial('Orbito in a container', () => {
     } catch (e) {
       // say why: what the page reported and what the renderer printed
       const logs = docker(project, 'compose', 'logs', '--no-color', '--tail', '60', 'renderer');
-      const shown = (await page.locator('body').innerText()).slice(0, 600);
+      const screen = await request.get(`${BOARD}/screens/start/start.screen.tsx`);
+      const answer = `${screen.status()} ${(await screen.text()).slice(0, 400)}`;
 
-      throw new Error(`${String(e)}\n--- page errors:\n${errors.join('\n')}\n--- page text:\n${shown}\n--- renderer:\n${logs}`);
+      throw new Error(`${String(e)}\n--- page errors:\n${errors.join('\n')}\n--- failed requests:\n${failed.join('\n')}\n--- start screen asked again:\n${answer}\n--- renderer:\n${logs}`);
     }
     await expect(page.locator('.pd-crumbs')).toContainText('Mój produkt');
     expect(errors).toEqual([]);
