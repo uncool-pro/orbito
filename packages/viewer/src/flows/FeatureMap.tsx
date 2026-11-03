@@ -7,6 +7,7 @@ import { useViewer } from '../app/context';
 import { canvasHash } from '../app/routes';
 import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
 import { useT } from '../i18n';
+import { recall, remember } from '../remembered';
 import { useStatuses } from '../status';
 import { FlowsView } from './FlowsView';
 
@@ -188,13 +189,7 @@ export const FeatureMap = ({ page }: { page: Page }) => {
   );
 };
 
-const readMode = () => {
-  try {
-    return localStorage.getItem(MODE_KEY) === 'features' ? 'features' : 'screens';
-  } catch {
-    return 'screens';
-  }
-};
+const readMode = () => (recall(MODE_KEY) === 'features' ? 'features' : 'screens');
 
 /** The flows view of a page: every screen (the diagram) or every feature (the map), with a switch; one feature is always screens. */
 export const FlowsPage = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
@@ -202,11 +197,7 @@ export const FlowsPage = ({ page, flowKey }: { page: Page; flowKey?: string }) =
   const [mode, setMode] = useState(readMode);
   const pick = (m: 'screens' | 'features') => {
     setMode(m);
-    try {
-      localStorage.setItem(MODE_KEY, m);
-    } catch {
-      /* storage unavailable */
-    }
+    remember(MODE_KEY, m);
   };
 
   if (flowKey) return <FlowsView page={page} flowKey={flowKey} />;

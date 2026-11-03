@@ -6,6 +6,7 @@ import { FrameContext } from '@uncool-pro/orbito-runtime';
 
 import { pathOnComputer, useDevEnv, vscodeLink } from '../dev';
 import { useT } from '../i18n';
+import { recall, remember } from '../remembered';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Measure } from './Measure';
 import { useViewer } from './context';
@@ -30,14 +31,6 @@ const useWindowWidth = () => {
   }, []);
 
   return w;
-};
-
-const read = (key: string) => {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
 };
 
 const Frame = ({ screen, vp, zoom }: { screen: Screen<ComponentType>; vp: Viewport; zoom: number }) => {
@@ -113,21 +106,17 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
   const t = useT();
   const width = useWindowWidth();
   const { sizes, store } = sizesOf(screen, project.viewports, t.phoneLabel);
-  const [chosen, setChosen] = useState(() => read(store));
+  const [chosen, setChosen] = useState(() => recall(store));
   const size = sizes.find((s) => s.key === chosen) ?? sizes.find((s) => s.key === 'standard') ?? sizes[0]!;
   const vp = size.vp;
   const stage = useRef<HTMLDivElement>(null);
 
   useEffect(() => select(screen.id), [screen.id, select]);
-  useEffect(() => setChosen(read(store)), [store]);
+  useEffect(() => setChosen(recall(store)), [store]);
 
   const pick = (key: string) => {
     setChosen(key);
-    try {
-      localStorage.setItem(store, key);
-    } catch {
-      /* private mode: the choice lasts until reload */
-    }
+    remember(store, key);
   };
 
   // a screen wider than the stage is shown scaled down (CSS zoom keeps scrolling and hit-testing right); a phone keeps room for its bezel

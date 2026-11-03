@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 
 import type { Status } from '@uncool-pro/orbito-core';
 
+import { recall, remember } from '../../remembered';
+
 /**
  * State shared by the whole app shell, so it survives switching between board, flows and prototype:
  * the selected screen, view options, the active canvas (zoom controls of the island) and panel visibility.
@@ -42,40 +44,16 @@ export const useShell = (): Shell => {
   return s;
 };
 
-const readWheel = () => {
-  try {
-    return localStorage.getItem('pd.wheelZooms') === '1';
-  } catch {
-    return false;
-  }
-};
-
-const readDev = () => {
-  try {
-    return localStorage.getItem('pd.devMode') === '1';
-  } catch {
-    return false;
-  }
-};
-
-const readCodeWidth = () => {
-  try {
-    return Number(localStorage.getItem('pd.codeWidth')) || 420;
-  } catch {
-    return 420;
-  }
-};
-
 const narrow = () => typeof window !== 'undefined' && window.innerWidth < 900;
 
 export const ShellProvider = ({ children }: { children: ReactNode }) => {
   const [selected, setSelected] = useState<string | null>(null);
   const [focusTick, setFocusTick] = useState(0);
-  const [options, setOpts] = useState<ViewOptions>(() => ({ statusFilter: '', showClosed: false, showOther: false, wheelZooms: readWheel() }));
+  const [options, setOpts] = useState<ViewOptions>(() => ({ statusFilter: '', showClosed: false, showOther: false, wheelZooms: recall('pd.wheelZooms') === '1' }));
   const [drawerOpen, setDrawer] = useState(() => !narrow());
   const [inspectorOpen, setInspector] = useState(() => !narrow());
-  const [devMode, setDev] = useState(readDev);
-  const [codeWidth, setWidth] = useState(readCodeWidth);
+  const [devMode, setDev] = useState(() => recall('pd.devMode') === '1');
+  const [codeWidth, setWidth] = useState(() => Number(recall('pd.codeWidth')) || 420);
   const canvas = useRef<CanvasApi | null>(null);
 
   const select = useCallback((id: string | null, opts?: { focus?: boolean }) => {
@@ -86,11 +64,7 @@ export const ShellProvider = ({ children }: { children: ReactNode }) => {
     setOpts((o) => {
       const next = { ...o, ...patch };
 
-      try {
-        localStorage.setItem('pd.wheelZooms', next.wheelZooms ? '1' : '0');
-      } catch {
-        /* storage unavailable */
-      }
+      remember('pd.wheelZooms', next.wheelZooms ? '1' : '0');
 
       return next;
     });
@@ -98,11 +72,7 @@ export const ShellProvider = ({ children }: { children: ReactNode }) => {
   const toggleDev = useCallback(
     () =>
       setDev((v) => {
-        try {
-          localStorage.setItem('pd.devMode', v ? '0' : '1');
-        } catch {
-          /* storage unavailable */
-        }
+        remember('pd.devMode', v ? '0' : '1');
 
         return !v;
       }),
@@ -110,11 +80,7 @@ export const ShellProvider = ({ children }: { children: ReactNode }) => {
   );
   const setCodeWidth = useCallback((w: number) => {
     setWidth(w);
-    try {
-      localStorage.setItem('pd.codeWidth', String(w));
-    } catch {
-      /* storage unavailable */
-    }
+    remember('pd.codeWidth', String(w));
   }, []);
   const togglePanel = useCallback((which: 'drawer' | 'inspector') => (which === 'drawer' ? setDrawer((v) => !v) : setInspector((v) => !v)), []);
 

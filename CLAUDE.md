@@ -70,5 +70,6 @@ After a change: typecheck, tests, and look at the board in the browser.
 - Styles, one file per view: `viewer/src/styles/`. A rule belongs to the view it serves; change a selector where it is, do not add an override at the end.
 - The plugin: `vite-plugin/index.mjs` (the virtual module and hot updates, the requirements), `endpoints.mjs` (dev endpoints and their protection against other sites), `team.mjs`, `status.mjs`, `comments.mjs`.
 - How connections are sorted for people (this feature, other features, the shared menu) and the links between features: `core/src/features.ts`. Stories from `requirements/*.md`: `core/src/requirements.ts`.
-- The right panel by mode: product mode in `viewer/src/app/shell/Shell.tsx` (`ScreenInspector`), dev mode the code (`app/CodePanel.tsx`); measuring on the prototype: `app/Measure.tsx`; the page as features: `flows/FeatureMap.tsx`.
+- The shell, one file per panel in `viewer/src/app/shell/`: `Shell.tsx` (the frame), `TopBar.tsx`, `Drawer.tsx` (the trees), `Inspector.tsx` (the right panel: product mode the screen, its requirements and comments; dev mode its code from `app/CodePanel.tsx`), `Island.tsx`; shared bits in `common.tsx`, shared state in `state.tsx`. Choices remembered on the computer go through `viewer/src/remembered.ts`.
+- Measuring on the prototype (dev mode): `app/Measure.tsx`. The page as features: `flows/FeatureMap.tsx`.
 - What Orbito installs into a project, for `create` and `update` alike: `cli/src/install.ts`.

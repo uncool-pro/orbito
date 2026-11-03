@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
+import { recall, remember } from './remembered';
+
 /** One comment on a screen, as `.orbito/comments.json` keeps it. */
 export type ScreenComment = { id: string; text: string; author?: string; createdAt: string };
 export type CommentsFile = Record<string, ScreenComment[]>;
@@ -40,13 +42,7 @@ export const useComments = (screen: string) =>
 export const canComment = () => editable;
 
 /** The name shown with your comments, remembered on this computer only. */
-export const readAuthor = () => {
-  try {
-    return localStorage.getItem(AUTHOR_KEY) ?? '';
-  } catch {
-    return '';
-  }
-};
+export const readAuthor = () => recall(AUTHOR_KEY) ?? '';
 
 const send = async (body: Record<string, string>) => {
   const r = await fetch('/__orbito/comments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
@@ -58,11 +54,7 @@ const send = async (body: Record<string, string>) => {
 };
 
 export const addComment = (screen: string, text: string, author: string) => {
-  try {
-    localStorage.setItem(AUTHOR_KEY, author);
-  } catch {
-    /* storage unavailable: the name lasts until reload */
-  }
+  remember(AUTHOR_KEY, author);
 
   return send({ action: 'add', screen, text, author });
 };
