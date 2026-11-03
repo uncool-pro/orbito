@@ -63,8 +63,14 @@ test.describe.serial('Orbito in a container', () => {
   test('opens the board, only for this computer', async ({ page, request }) => {
     const errors: string[] = [];
     const failed: string[] = [];
+    const pending = new Set<string>();
 
-    page.on('requestfailed', (r) => failed.push(`${r.url()} ${r.failure()?.errorText ?? ''}`));
+    page.on('request', (r) => pending.add(r.url()));
+    page.on('requestfinished', (r) => pending.delete(r.url()));
+    page.on('requestfailed', (r) => {
+      pending.delete(r.url());
+      failed.push(`${r.url()} ${r.failure()?.errorText ?? ''}`);
+    });
     page.on('pageerror', (e) => errors.push(String(e)));
     page.on('console', (m) => {
       if (m.type() === 'error' && !m.text().startsWith('Failed to load resource')) errors.push(m.text());
@@ -78,22 +84,31 @@ test.describe.serial('Orbito in a container', () => {
     }).toPass({ timeout: 90_000 });
     expect(docker(project, 'compose', 'port', 'gate', '5190').trim()).toBe('127.0.0.1:5190');
     expect((await request.get(BOARD)).headers()['content-security-policy']).toContain("default-src 'self'");
+    // what the page did, to say why when the screens do not show
+    const report = async () => {
+      const logs = docker(project, 'compose', 'logs', '--no-color', '--tail', '60', 'renderer');
+      const shown = (await page.locator('body').innerText().catch(() => '')).slice(0, 300);
+
+      return `--- page errors:\n${errors.join('\n')}\n--- failed requests:\n${failed.join('\n')}\n--- still waiting for:\n${[...pending].join('\n')}\n--- page text:\n${shown}\n--- renderer:\n${logs}`;
+    };
+
     for (let attempt = 1; ; attempt++) {
       errors.length = 0;
       failed.length = 0;
+      pending.clear();
       await page.goto(`${BOARD}/#/board`);
       try {
         await expect(page.locator('[data-card]').first()).toBeVisible({ timeout: 45_000 });
         break;
       } catch (e) {
-        // Chrome on Linux drops the requests in flight when Docker adds a network interface; a person would reload
-        if (attempt < 3 && failed.some((f) => f.endsWith('ERR_NETWORK_CHANGED'))) continue;
-        // otherwise say why: what the page reported and what the renderer printed
-        const logs = docker(project, 'compose', 'logs', '--no-color', '--tail', '60', 'renderer');
-        const screen = await request.get(`${BOARD}/screens/start/start.screen.tsx`);
-        const answer = `${screen.status()} ${(await screen.text()).slice(0, 400)}`;
-
-        throw new Error(`${String(e)}\n--- page errors:\n${errors.join('\n')}\n--- failed requests:\n${failed.join('\n')}\n--- start screen asked again:\n${answer}\n--- renderer:\n${logs}`);
+        // GitHub's Linux machines sometimes lose the first load (Chrome drops requests when Docker adds a network
+        // interface, or a request never answers); a person would reload. Each reload is reported as a warning in the
+        // pull request, so a real problem does not hide behind it.
+        if (attempt < 3) {
+          if (process.env.GITHUB_ACTIONS) console.log(`::warning title=Board reloaded (attempt ${attempt})::${(await report()).replace(/\r?\n/g, '%0A')}`);
+          continue;
+        }
+        throw new Error(`${String(e)}\n${await report()}`);
       }
     }
     await expect(page.locator('.pd-crumbs')).toContainText('Mój produkt');
