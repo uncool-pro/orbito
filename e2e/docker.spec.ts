@@ -96,7 +96,9 @@ test.describe.serial('Orbito in a container', () => {
       errors.length = 0;
       failed.length = 0;
       pending.clear();
-      await page.goto(`${BOARD}/#/board`);
+      // the same address again is the same page to the browser: only a reload loads it anew
+      if (attempt === 1) await page.goto(`${BOARD}/#/board`);
+      else await page.reload();
       try {
         await expect(page.locator('[data-card]').first()).toBeVisible({ timeout: 45_000 });
         break;
