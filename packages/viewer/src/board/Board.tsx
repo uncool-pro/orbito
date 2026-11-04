@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { computeLayout, flowStatusId, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
+import { computeLayout, flowStatusId, groupTargets, sharedTargets, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
 import type { Card, Page, Status } from '@uncool-pro/orbito-core';
 
 import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
@@ -37,7 +37,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   const t = useT();
   const statuses = useStatuses();
   const flows = useMemo(() => (flowKey ? page.flows.filter((f) => f.key === flowKey) : page.flows), [page, flowKey]);
-  const { options, selected, select, focusTick, canvas, inspectorOpen, togglePanel, devMode } = useShell();
+  const { options, selected, select, focusTick, canvas, inspectorOpen, togglePanel, devMode, commentsOn, openComments } = useShell();
   const showClosed = options.showClosed;
   const byId = useMemo(() => new Map(project.screens.map((s) => [s.id, s])), [project]);
   const layout = useMemo(
@@ -188,6 +188,11 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     return () => window.removeEventListener('keydown', onKey);
   }, [fitAll, select]);
 
+  // the active (scrollable) card is the clicked one while its screen stays selected; another selection ends it
+  useEffect(() => {
+    setActive((a) => (a && selected && layoutRef.current.cards.find((c) => c.key === a)?.screenId === selected ? a : null));
+  }, [selected]);
+
   // a screen picked in the left panel or the search: bring its first card into view
   useEffect(() => {
     const c = selected ? layoutRef.current.cards.find((x) => x.screenId === selected) : undefined;
@@ -201,19 +206,38 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   // selection; never after a drag
   /** The screen under the pointer, not the event target: whatever the browser picks as a click's target (a captured
    * pointer, an overlay), the screen the person clicked is the one under the pointer. */
-  const screenAt = (e: React.MouseEvent) => {
+  const cardAt = (e: React.MouseEvent) => {
     const target = (document.elementFromPoint(e.clientX, e.clientY) ?? e.target) as Element;
 
-    return target.closest('[data-pd-ui]') ? undefined : (target.closest<HTMLElement>('[data-card]')?.dataset.screen ?? null);
+    return target.closest('[data-pd-ui]') ? undefined : (target.closest<HTMLElement>('[data-card]') ?? null);
+  };
+  const screenAt = (e: React.MouseEvent) => {
+    const card = cardAt(e);
+
+    return card === undefined ? undefined : (card?.dataset.screen ?? null);
+  };
+  const showDetails = (screen: string) => {
+    select(screen);
+    if (!inspectorOpen) togglePanel('inspector');
   };
   const onClick = (e: React.MouseEvent) => {
-    if (ctrl.current?.consumeDrag()) return;
-    const screen = screenAt(e);
+    // the comment button above a card: the bubble with the screen's comments, next to it (a second click closes it)
+    const comment = (e.target as Element).closest<HTMLElement>('[data-pd-comment]')?.dataset.pdComment;
 
-    if (screen === undefined) return;
-    if (screen) {
-      select(screen);
-      if (!inspectorOpen) togglePanel('inspector');
+    if (comment) {
+      select(comment);
+      openComments(commentsOn === comment ? null : comment);
+
+      return;
+    }
+    if (ctrl.current?.consumeDrag()) return;
+    const card = cardAt(e);
+
+    if (card === undefined) return;
+    if (card?.dataset.screen) {
+      // the clicked screen becomes the active one: the wheel scrolls it until Esc or a click on the empty board
+      setActive(card.dataset.card ?? null);
+      showDetails(card.dataset.screen);
 
       return;
     }
@@ -247,25 +271,32 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   const flowStatus = (flowKey: string) => statusOf(statuses, flowStatusId(page.key, flowKey));
   // people read names, not codes: the functional name of a screen, and the feature a way out leads to
   const nameOf = (id: string) => byId.get(id)?.title.split(' / ').pop() ?? id;
-  // a screen of the same feature is named by the screen; any other way out by the feature it opens ("arrow to a section")
-  const exitsOf = (targets: string[], flowKey?: string) =>
-    [
-      ...new Set(
-        targets.map((id) => {
-          if (page.flows.find((f) => f.key === flowKey)?.screens.includes(id)) return nameOf(id);
-          const inPage = page.flows.find((f) => f.screens.includes(id));
-          if (inPage) return inPage.name;
-          const elsewhere = project.pages.flatMap((p) => p.flows.map((f) => ({ p, f }))).find(({ f }) => f.screens.includes(id));
+  // the ways out under a card, sorted as in the screen details: a screen of the same feature by its name, another feature
+  // by the feature it opens ("arrow to a section"), and the navigation most screens repeat (a tab bar, a menu) as one line
+  const shared = useMemo(() => (links ? sharedTargets(links) : new Set<string>()), [links]);
+  const exits = useMemo(() => {
+    const onOtherPage = (id: string) => {
+      const hit = project.pages.flatMap((p) => p.flows.map((f) => ({ p, f }))).find(({ f }) => f.screens.includes(id));
 
-          return elsewhere ? `${elsewhere.p.name} · ${elsewhere.f.name}` : nameOf(id);
-        }),
-      ),
-    ];
-  const flowOfCard = (key: string) => {
-    const card = layout.cards.find((c) => c.key === key);
+      return hit ? `${hit.p.name} · ${hit.f.name}` : nameOf(id);
+    };
 
-    return card && flowOfLane.get(card.laneKey);
-  };
+    return new Map(
+      layout.stubs.map((s) => {
+        const card = layout.cards.find((c) => c.key === s.cardKey);
+        const feature = page.flows.find((f) => f.key === (card && flowOfLane.get(card.laneKey)));
+        const g = groupTargets(s.targets, { page, feature, shared });
+        const labels = [
+          ...g.here.map(nameOf),
+          ...g.elsewhere.flatMap((e) => (e.feature ? [e.feature.name] : e.ids.map(onOtherPage))),
+          ...(g.shared.length ? [t.sharedNav] : []),
+        ];
+
+        return [s.cardKey, [...new Set(labels)]];
+      }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout, page, project, shared, flowOfLane, t]);
   const cardState = (c: Card): 'idle' | 'hl' | 'dim' => {
     if (statusFilter && flowStatus(flowOfLane.get(c.laneKey) ?? c.laneKey).status !== statusFilter) return 'dim';
     if (related) return related.has(c.screenId) ? 'hl' : 'dim';
@@ -402,17 +433,17 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
             // quiet by default (an arrow and how many ways out); the names show on hover — a way into another
             // feature is named by that feature, not by a screen code
             return (
-              <g key={s.cardKey} className={`pd-stub${on ? ' is-on' : ''}`}>
+              <g key={s.cardKey} className={`pd-stub${on ? ' is-on' : ''}`} data-stub={s.cardKey}>
                 <path d={`M${s.x} ${s.y + 2} L${s.x} ${s.y + 22}`} markerEnd="url(#pd-arrow-tie)" />
                 {on ? (
-                  exitsOf(s.targets, flowOfCard(s.cardKey)).map((label, i) => (
+                  exits.get(s.cardKey)?.map((label, i) => (
                     <text key={label} x={s.x} y={s.y + 40 + i * 18} textAnchor="middle">
                       → {label}
                     </text>
                   ))
                 ) : (
                   <text x={s.x} y={s.y + 38} textAnchor="middle" className="pd-stub__count">
-                    {s.targets.length}
+                    {exits.get(s.cardKey)?.length ?? s.targets.length}
                   </text>
                 )}
               </g>

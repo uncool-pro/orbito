@@ -59,7 +59,8 @@ describe('orbito update', () => {
     expect(r.added).toEqual(['done by the new version']);
     expect(r.tool.to).toContain('0.9.5');
     expect(r.tool.commits).toEqual(['second']);
-  });
+    // real git and a new Node process: a slow Windows runner can take longer than vitest's default 5 s
+  }, 30_000);
 
   it('installs Orbito items and lists them in the manifest', () => {
     const r = run();

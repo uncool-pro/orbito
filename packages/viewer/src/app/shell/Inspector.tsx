@@ -6,14 +6,14 @@ import type { Flow, Page, Screen } from '@uncool-pro/orbito-core';
 
 import { LiveScreen } from '../../board/BoardCard';
 import { CodePanel } from '../CodePanel';
-import { Comments } from '../Comments';
+import { CommentsLine } from '../Comments';
 import { openInEditor, pathOnComputer, revealFile, useDevEnv, vscodeLink } from '../../dev';
 import { useT } from '../../i18n';
 import { useViewer } from '../context';
 import { canvasHash, canvasOf, dsHash, pickScreen, screenHash } from '../routes';
 import type { Mode } from '../routes';
 import { useInspectorExtra, useShell } from './state';
-import { Glyph, PANEL_RIGHT } from './common';
+import { Icon } from '../icons';
 
 /** The right panel answers by mode: product mode, what the screen is and what was agreed on it; dev mode, its code. */
 export const Inspector = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: string }) => {
@@ -70,7 +70,7 @@ const ScreenInspector = ({ screen: s, mode, page, flowKey }: { screen: Screen<Co
         <b>{s.title.split(' / ').pop()}</b>
         {/* hides the panel (the same as the button in the top bar); the selection stays, so the details come back */}
         <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => togglePanel('inspector')} aria-label={t.hidePanel} title={t.hidePanel}>
-          <Glyph d={PANEL_RIGHT} />
+          <Icon name="panel-right" size={18} />
         </button>
       </div>
       <p className="pd-insp__title">
@@ -97,7 +97,7 @@ const ScreenInspector = ({ screen: s, mode, page, flowKey }: { screen: Screen<Co
           ))}
         </section>
       )}
-      <Comments screen={s} />
+      <CommentsLine screen={s} />
       <Connections title={t.leadsTo} ids={out} mode={mode} page={page} feature={feature} onPick={(id) => pickScreen(mode, id, select)} />
       <Connections title={t.comesFrom} ids={into} mode={mode} page={page} feature={feature} onPick={(id) => pickScreen(mode, id, select)} />
       <Requirements ids={s.requirements?.length ? s.requirements : (feature?.requirements ?? [])} ofFeature={!s.requirements?.length} />
@@ -252,7 +252,7 @@ const DevInspector = ({ screen: s }: { screen: Screen<ComponentType> }) => {
             {s.title.split(' / ').pop()} <small className="pd-insp__key">{s.code}</small>
           </b>
           <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => togglePanel('inspector')} aria-label={t.hidePanel} title={t.hidePanel}>
-            <Glyph d={PANEL_RIGHT} />
+            <Icon name="panel-right" size={18} />
           </button>
         </div>
         <DevSection screen={s} />
@@ -279,7 +279,7 @@ const DevSection = ({ screen: s }: { screen: Screen<ComponentType> }) => {
       <div className="pd-insp__path">
         <code title={full ?? s.file}>{s.file}</code>
         <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => copy('path', full ?? s.file)} aria-label={t.copyPath} title={t.copyPath}>
-          {copied === 'path' ? '✓' : '⧉'}
+          <Icon name={copied === 'path' ? 'check' : 'copy'} size={14} />
         </button>
       </div>
       <div className="pd-insp__devbtns">

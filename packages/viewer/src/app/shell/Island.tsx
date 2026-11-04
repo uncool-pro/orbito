@@ -5,6 +5,7 @@ import { useT } from '../../i18n';
 import { canvasHash, screenHash } from '../routes';
 import type { Mode } from '../routes';
 import { useShell, useZoom } from './state';
+import { Icon } from '../icons';
 
 /** View options of the canvas (filter, versions, other links, wheel), in a small menu on the island. */
 const ViewMenu = ({ mode }: { mode: Mode }) => {
@@ -85,11 +86,11 @@ export const Island = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowK
       {canZoom && (
         <div className="pd-island__zoom">
           <button type="button" onClick={() => canvas.current?.zoomBy(0.8)} aria-label={t.zoomOut}>
-            −
+            <Icon name="minus" size={14} />
           </button>
           <span>{Math.round(zoom * 100)}%</span>
           <button type="button" onClick={() => canvas.current?.zoomBy(1.25)} aria-label={t.zoomIn}>
-            +
+            <Icon name="plus" size={14} />
           </button>
           <button type="button" onClick={() => canvas.current?.fit()}>
             {t.fit}

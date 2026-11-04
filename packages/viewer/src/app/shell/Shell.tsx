@@ -13,6 +13,8 @@ import { Drawer } from './Drawer';
 import { Inspector } from './Inspector';
 import { Island } from './Island';
 import { Welcome } from '../Welcome';
+import { CommentBubble } from '../Comments';
+import { Icon } from '../icons';
 
 type ShellProps = { mode: Mode; page?: Page; flowKey?: string; dsSection?: string; children: ReactNode };
 
@@ -30,6 +32,7 @@ export const Shell = ({ mode, page, flowKey, dsSection, children }: ShellProps) 
     <div className={`pd-shell${drawerOpen ? '' : ' no-drawer'}${inspectorOpen && !isPage(mode) ? '' : ' no-inspector'}`} style={width}>
       <TopBar mode={mode} page={page} flowKey={flowKey} />
       <Welcome />
+      <CommentBubble />
       {drawerOpen && <Drawer mode={mode} page={page} flowKey={flowKey} dsSection={dsSection} />}
       <main className="pd-main">
         {isPage(mode) && <BackBar />}
@@ -63,9 +66,7 @@ const BackBar = () => {
   return (
     <div className="pd-backbar" data-pd-ui>
       <a href={back} className="pd-backbar__link">
-        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-          <path d="M10 3.5 5.5 8l4.5 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <Icon name="chevron-left" size={16} />
         {parseRoute(back).view === 'flows' ? t.backToFlows : t.backToBoard}
       </a>
     </div>

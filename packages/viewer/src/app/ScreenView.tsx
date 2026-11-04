@@ -8,7 +8,7 @@ import { pathOnComputer, useDevEnv, vscodeLink } from '../dev';
 import { useT } from '../i18n';
 import { recall, remember } from '../remembered';
 import { useOpenCount } from '../comments';
-import { Comments } from './Comments';
+import { Icon } from './icons';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Measure } from './Measure';
 import { useViewer } from './context';
@@ -18,7 +18,6 @@ import { useShell } from './shell/state';
 const CHROME = 640;
 const SIZE_KEY = 'pd.viewport';
 const PHONE_KEY = 'pd.phone';
-const COMMENTS_KEY = 'pd.prototypeComments';
 // a phone screen is also shown on the smallest and the largest phone, around the size it was designed for
 const PHONES = { small: 'mobile-small', large: 'mobile-large' } as const;
 
@@ -40,7 +39,7 @@ const Frame = ({ screen, vp, zoom }: { screen: Screen<ComponentType>; vp: Viewpo
   const S = screen.component;
 
   return (
-    <div className="pd-stage__frame" style={{ zoom }}>
+    <div className="pd-stage__frame" data-comment-anchor={screen.id} style={{ zoom }}>
       <FrameContext.Provider value={{ mode: 'screen', viewport: vp }}>
         <ErrorBoundary name={screen.code ?? screen.id}>
           <S />
@@ -51,26 +50,7 @@ const Frame = ({ screen, vp, zoom }: { screen: Screen<ComponentType>; vp: Viewpo
 };
 
 // a monitor, a tablet or a phone, by the size's width
-const SizeIcon = ({ width }: { width: number }) => (
-  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" aria-hidden="true">
-    {width >= 1024 ? (
-      <>
-        <rect x="1.5" y="2.5" width="13" height="8.5" rx="1" />
-        <path d="M6 14h4M8 11v3" />
-      </>
-    ) : width >= 600 ? (
-      <>
-        <rect x="2.5" y="1.5" width="11" height="13" rx="1.5" />
-        <path d="M7 12.5h2" />
-      </>
-    ) : (
-      <>
-        <rect x="4.5" y="1.5" width="7" height="13" rx="1.5" />
-        <path d="M7.25 12.5h1.5" />
-      </>
-    )}
-  </svg>
-);
+const SizeIcon = ({ width }: { width: number }) => <Icon name={width >= 1024 ? 'monitor' : width >= 600 ? 'tablet' : 'smartphone'} size={15} />;
 
 type Size = { vp: Viewport; label: string; key: string };
 
@@ -105,7 +85,7 @@ const sizesOf = (screen: Screen<ComponentType>, viewports: Record<string, Viewpo
  */
 export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
   const { project } = useViewer();
-  const { select, devMode, codeWidth, inspectorOpen } = useShell();
+  const { select, devMode, codeWidth, inspectorOpen, commentsOn, openComments } = useShell();
   const t = useT();
   const width = useWindowWidth();
   const { sizes, store } = sizesOf(screen, project.viewports, t.phoneLabel);
@@ -113,9 +93,13 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
   const size = sizes.find((s) => s.key === chosen) ?? sizes.find((s) => s.key === 'standard') ?? sizes[0]!;
   const vp = size.vp;
   const stage = useRef<HTMLDivElement>(null);
-  const [commentsOpen, setCommentsOpen] = useState(() => recall(COMMENTS_KEY) === '1');
+  const commentsOpen = !!commentsOn;
 
-  useEffect(() => remember(COMMENTS_KEY, commentsOpen ? '1' : '0'), [commentsOpen]);
+  // the bubble stays open while you click through the prototype: it moves on to the screen you reach
+  useEffect(() => {
+    if (commentsOn && commentsOn !== screen.id) openComments(screen.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen.id]);
 
   useEffect(() => select(screen.id), [screen.id, select]);
   useEffect(() => setChosen(recall(store)), [store]);
@@ -134,7 +118,7 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
       <div className="pd-sizebar">
         {devMode && <DevPath file={screen.file} />}
         <div className="pd-sizebar__end">
-          <CommentsToggle open={commentsOpen} onClick={() => setCommentsOpen((v) => !v)} screen={screen.id} />
+          <CommentsToggle open={commentsOpen} onClick={() => openComments(commentsOpen ? null : screen.id)} screen={screen.id} />
           {sizes.length > 1 && (
             <div className="pd-sizes" role="group" aria-label={t.responsive}>
               {sizes.map((s) => (
@@ -147,11 +131,6 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
           )}
         </div>
       </div>
-      {commentsOpen && (
-        <div className="pd-commentpanel" data-pd-ui>
-          <Comments screen={screen} />
-        </div>
-      )}
       <div ref={stage} className={`pd-stage pd-stage--${vp.kind}`}>
         <Frame key={vp.key} screen={screen} vp={vp} zoom={zoom} />
         {devMode && <Measure key={`${screen.id}/${vp.key}`} host={stage} on="prototype" />}
@@ -167,10 +146,8 @@ const CommentsToggle = ({ open, onClick, screen }: { open: boolean; onClick: () 
   const waiting = useOpenCount(screen);
 
   return (
-    <button type="button" className="pd-commentstoggle" aria-pressed={open} onClick={onClick}>
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" aria-hidden="true">
-        <path d="M2.5 3.5h11v7h-6l-3 2.5v-2.5h-2z" />
-      </svg>
+    <button type="button" className="pd-commentstoggle" aria-pressed={open} onClick={onClick} data-comments-opener>
+      <Icon name="message-circle" size={15} />
       {t.comments}
       {waiting > 0 && <span className="pd-count">{waiting}</span>}
     </button>
@@ -199,7 +176,7 @@ const DevPath = ({ file }: { file: string }) => {
           })
         }
       >
-        {copied ? '✓' : '⧉'}
+        <Icon name={copied ? 'check' : 'copy'} size={14} />
       </button>
       {full && (
         <a className="pd-devpath__link" href={vscodeLink(full)}>

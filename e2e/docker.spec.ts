@@ -6,6 +6,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 const IMAGE = process.env.ORBITO_IMAGE;
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -20,6 +21,24 @@ const ENV = LINUX ? { ...process.env, ORBITO_UID: String(process.getuid!()), ORB
 
 const docker = (cwd: string, ...args: string[]) => execFileSync('docker', args, { cwd, env: ENV, encoding: 'utf8', stdio: 'pipe', timeout: 180_000 });
 const refuses = (cwd: string, ...args: string[]) => expect(() => docker(cwd, ...args)).toThrow();
+
+// GitHub's Linux machines sometimes lose a load of the board (see "opens the board, only for this computer"): a person
+// would reload, so the later tests do too, up to three times. Each reload is a warning in the pull request, so a real
+// problem does not hide behind it.
+const openBoard = async (page: Page) => {
+  for (let attempt = 1; ; attempt++) {
+    if (attempt === 1) await page.goto(`${BOARD}/#/board`);
+    else await page.reload();
+    try {
+      await expect(page.locator('[data-card]').first()).toBeVisible({ timeout: 45_000 });
+
+      return;
+    } catch (e) {
+      if (attempt >= 3) throw e;
+      if (process.env.GITHUB_ACTIONS) console.log(`::warning title=Board reloaded (attempt ${attempt})::${String(e).split('\n')[0]}`);
+    }
+  }
+};
 
 test.describe.serial('Orbito in a container', () => {
   test.skip(!IMAGE, 'set ORBITO_IMAGE to a built image');
@@ -118,10 +137,7 @@ test.describe.serial('Orbito in a container', () => {
   });
 
   test('shows a change made from outside the container by itself', async ({ page }) => {
-    await page.goto(`${BOARD}/#/board`);
-    const card = page.locator('[data-card]').first();
-
-    await expect(card).toBeVisible({ timeout: 60_000 });
+    await openBoard(page);
     const screens = readdirSync(join(project, 'screens'), { recursive: true, encoding: 'utf8' }).filter((f) => f.endsWith('.screen.tsx'));
     const file = join(project, 'screens', screens[0]!);
     const before = readFileSync(file, 'utf8');
@@ -134,7 +150,7 @@ test.describe.serial('Orbito in a container', () => {
   });
 
   test('saves a status from the board into the project', async ({ page }) => {
-    await page.goto(`${BOARD}/#/board`);
+    await openBoard(page);
     await page.locator('.pd-insp__features select').first().selectOption('review');
     await expect(async () => {
       expect(readFileSync(join(project, '.orbito/status.json'), 'utf8')).toContain('"review"');

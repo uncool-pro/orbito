@@ -32,6 +32,9 @@ type Shell = {
   /** Width of the right panel while it shows code (dev mode), dragged at its edge. */
   codeWidth: number;
   setCodeWidth: (w: number) => void;
+  /** The screen whose comments show in the bubble next to it (board or prototype), or null. */
+  commentsOn: string | null;
+  openComments: (id: string | null) => void;
 };
 
 const ShellContext = createContext<Shell | null>(null);
@@ -54,6 +57,7 @@ export const ShellProvider = ({ children }: { children: ReactNode }) => {
   const [inspectorOpen, setInspector] = useState(() => !narrow());
   const [devMode, setDev] = useState(() => recall('pd.devMode') === '1');
   const [codeWidth, setWidth] = useState(() => Number(recall('pd.codeWidth')) || 420);
+  const [commentsOn, openComments] = useState<string | null>(null);
   const canvas = useRef<CanvasApi | null>(null);
 
   const select = useCallback((id: string | null, opts?: { focus?: boolean }) => {
@@ -85,8 +89,8 @@ export const ShellProvider = ({ children }: { children: ReactNode }) => {
   const togglePanel = useCallback((which: 'drawer' | 'inspector') => (which === 'drawer' ? setDrawer((v) => !v) : setInspector((v) => !v)), []);
 
   const value = useMemo(
-    () => ({ selected, select, focusTick, options, setOptions, canvas, drawerOpen, inspectorOpen, togglePanel, devMode, toggleDev, codeWidth, setCodeWidth }),
-    [selected, select, focusTick, options, setOptions, drawerOpen, inspectorOpen, togglePanel, devMode, toggleDev, codeWidth, setCodeWidth],
+    () => ({ selected, select, focusTick, options, setOptions, canvas, drawerOpen, inspectorOpen, togglePanel, devMode, toggleDev, codeWidth, setCodeWidth, commentsOn, openComments }),
+    [selected, select, focusTick, options, setOptions, drawerOpen, inspectorOpen, togglePanel, devMode, toggleDev, codeWidth, setCodeWidth, commentsOn],
   );
 
   return <ShellContext.Provider value={value}>{children}</ShellContext.Provider>;

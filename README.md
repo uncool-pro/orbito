@@ -77,4 +77,4 @@ A skill becomes stable only after it is tested on an example project.
 Orbito keeps anonymous notes about the tool in your project's `feedback.md` (what worked, what did not); add your own. They are what the next versions are built from.
 
 ## Licence
-MIT
+The code is MIT (see `LICENSE`). The Orbito name and logo are not covered by the MIT licence: you may say your work uses or builds on Orbito, but a fork or another product needs a name and logo of its own.

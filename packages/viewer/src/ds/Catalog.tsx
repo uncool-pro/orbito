@@ -54,16 +54,19 @@ const Live = ({ c, v }: { c: string; v: ComponentDocs<ReactNode>['variants'][num
 };
 
 const Overview = () => {
-  const { ds } = useViewer();
+  const { ds, project } = useViewer();
   const t = useT();
   const { report } = ds;
   const groups = Object.keys(report.tokens).filter((g) => report.tokens[g]?.length);
 
   return (
     <>
-      <h1>{t.designSystem}</h1>
-      <p className="pd-lead">{t.dsIntro}</p>
-      <HealthLine />
+      <header className="pd-ds__hero">
+        <p className="pd-eyebrow">{project.config.title}</p>
+        <h1>{t.designSystem}</h1>
+        <p className="pd-lead">{t.dsIntro}</p>
+        <HealthLine />
+      </header>
       <h2>{t.foundations}</h2>
       <div className="pd-foundations">
         {groups.map((g) => (
