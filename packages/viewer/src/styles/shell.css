@@ -193,7 +193,8 @@
 /* left panel, as in Figma: the pages in a small list of their own on top, the features of the page under it */
 .pd-pages { margin: 0 -8px 6px; padding: 0 8px 8px; border-bottom: 1px solid var(--pd-panel-line); }
 .pd-pages h4 { margin: 8px 8px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--pd-muted); }
-.pd-pages__list { list-style: none; margin: 0; padding: 0; max-height: 172px; overflow-y: auto; display: flex; flex-direction: column; gap: 1px; font-size: 13px; }
+/* five and a half pages in view, as in Figma: the cut row says the list scrolls (30px rows, 1px apart) */
+.pd-pages__list { list-style: none; margin: 0; padding: 0; max-height: calc(5.5 * 30px + 5 * 1px); overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 1px; font-size: 13px; }
 .pd-pages__page { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px; border-radius: 6px; color: var(--pd-ink); text-decoration: none; }
 .pd-pages__page:hover { background: var(--pd-bg); }
 .pd-pages__page.is-on { background: var(--pd-accent-soft); }

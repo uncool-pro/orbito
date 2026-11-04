@@ -256,3 +256,17 @@ test.describe('the first time', () => {
     await expect(page.locator('.pd-insp').getByPlaceholder('Your name')).toHaveValue('Ola');
   });
 });
+
+test('the pages list shows five and a half pages, as in Figma, and scrolls for more', async ({ page }) => {
+  await openBoard(page);
+  const list = page.locator('.pd-pages__list');
+
+  // the demo has three pages: add copies of a row to stand for a project with many
+  await list.evaluate((ul) => {
+    for (let i = 0; i < 6; i++) ul.appendChild(ul.firstElementChild!.cloneNode(true));
+  });
+  const { shown, full, row } = await list.evaluate((ul) => ({ shown: ul.clientHeight, full: ul.scrollHeight, row: (ul.firstElementChild as HTMLElement).offsetHeight }));
+
+  expect(shown).toBe(5.5 * row + 5);
+  expect(full).toBeGreaterThan(shown);
+});
