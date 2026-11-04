@@ -2,7 +2,7 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
-## 0.9.61 — not released yet (MVP to test with people)
+## 0.9.62 — not released yet (MVP to test with people)
 What the board shows next to a screen, a mode for whoever builds it, and phones of every size. A version to try with users before 1.0.
 - **Comments on screens, as changes with a status.** Write what should change on a screen, in its details or next to it in the prototype (the board shows how many wait above each screen). Each comment is `open`, `doing` or `done`; Claude moves it along as it makes the change and notes what it did, and `/orbito-comments` has it go through all open ones. Each comment is its own file in `comments/<screen-id>/`, with the time it was written, so they travel through git with the mockups and two people commenting at once never touch the same file. Works in Docker as well: `comments/` is the one folder the board may write.
 - **Changed: Orbito's interface is in English only.** `locale` in `orbito.config.ts` is now the language of the product: what the mockups are written in (any language, e.g. `pl` or `de`) and the `lang` of an exported page. **What to do:** nothing; a project with `locale: 'pl'` keeps Polish mockups and gets the interface in English.
@@ -17,8 +17,8 @@ What the board shows next to a screen, a mode for whoever builds it, and phones 
 - **Dev mode on the board:** hovering a screen measures it too, in the design's own pixels.
 - **Docker:** compose passes the project folder on your computer to the board (`ORBITO_HOST_ROOT`), so dev mode copies real paths there too. **What to do:** update as DOCKER.md says ("Update"); the update writes the new `compose.yaml` and adds `comments/` and `requirements/` to the project.
 
-## 0.9.6 — not released yet
-Fixes from the first independent review of the code, and tests that click through the board, a new project and the container.
+### Also in 0.9.62: fixes from the first independent review
+Prepared as 0.9.6 and never released on its own: fixes from the first independent review of the code, and tests that click through the board, a new project and the container.
 - **Fix: names with spaces or Polish letters.** A page or flow named that way could send the board into a redirect loop, and a malformed address broke the page. Neither happens now.
 - **Fix: an update applies on the first run.** After `orbito update --pull`, the version just downloaded finishes the update, so its changes no longer wait for a second run.
 - **Docker:** `docker compose run --rm export <screen-id>` takes the screen directly, and every folder `compose.yaml` mounts now exists in the project.
