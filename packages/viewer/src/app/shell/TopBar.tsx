@@ -70,9 +70,10 @@ export const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowK
         {issues ? `${issues} ${t.issuesShort}` : `✓ ${t.health}`}
       </a>
       {!isPage(mode) && (
-        <button type="button" className={`pd-devtoggle${devMode ? ' is-on' : ''}`} aria-pressed={devMode} onClick={toggleDev} title={t.devModeTip}>
-          <Icon name="code" size={16} />
+        // Dev mode is on or off: a switch, its state readable from its position
+        <button type="button" role="switch" className={`pd-devtoggle${devMode ? ' is-on' : ''}`} aria-checked={devMode} onClick={toggleDev} title={t.devModeTip}>
           {t.devMode}
+          <span className="pd-devtoggle__track" aria-hidden="true" />
         </button>
       )}
       {!isPage(mode) && (

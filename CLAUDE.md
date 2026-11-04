@@ -67,7 +67,7 @@ After a change: typecheck, tests, and look at the board in the browser.
 
 ## Where things live in the viewer and the plugin
 - Addresses, the way back and the select-or-open rule: `viewer/src/app/routes.ts`. No view builds an address by hand.
-- Styles, one file per view: `viewer/src/styles/`. A rule belongs to the view it serves; change a selector where it is, do not add an override at the end.
+- Styles, one file per view: `viewer/src/styles/`. A rule belongs to the view it serves; change a selector where it is, do not add an override at the end. Every colour, radius and shadow of the interface is a `--pd-*` token in `styles/base.css` (no raw colours in the other files); the type scale is 11 / 12 / 13 / 15 / 18 / 30 px. Glass (`backdrop-filter`) only on what floats over the board and is small (island, menus), never on screen cards.
 - The plugin: `vite-plugin/index.mjs` (the virtual module and hot updates, the requirements), `endpoints.mjs` (dev endpoints and their protection against other sites), `team.mjs`, `status.mjs`, `comments.mjs`.
 - How connections are sorted for people (this feature, other features, the shared menu) and the links between features: `core/src/features.ts`. Stories from `requirements/*.md`: `core/src/requirements.ts`.
 - The shell, one file per panel in `viewer/src/app/shell/`: `Shell.tsx` (the frame), `TopBar.tsx`, `Drawer.tsx` (the trees), `Inspector.tsx` (the right panel: product mode the screen, its requirements and a line with its comments; dev mode its code from `app/CodePanel.tsx`), `Island.tsx`; shared bits in `common.tsx`, shared state in `state.tsx`. Choices remembered on the computer go through `viewer/src/remembered.ts`.

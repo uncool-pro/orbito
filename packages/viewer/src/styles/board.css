@@ -2,22 +2,22 @@
 .pd-board { position: absolute; inset: 0; overflow: hidden; touch-action: none; user-select: none; cursor: default; background-color: var(--pd-bg); background-image: radial-gradient(circle, var(--pd-dot) 1.1px, transparent 1.3px); }
 .pd-board.is-space, .pd-board.is-dragging { cursor: grabbing; }
 .pd-world { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
-.pd-lane { position: absolute; left: 0; border-radius: 24px; background: rgba(255, 255, 255, 0.55); border: 1px solid rgba(150, 158, 175, 0.35); }
-.pd-lane--version { background: rgba(107, 63, 160, 0.06); border-color: rgba(107, 63, 160, 0.25); border-style: dashed; }
+.pd-lane { position: absolute; left: 0; border-radius: 24px; background: rgba(255, 255, 255, 0.72); border: 1px solid var(--pd-panel-line); }
+.pd-lane--version { background: rgba(108, 58, 245, 0.06); border-color: rgba(108, 58, 245, 0.32); border-style: dashed; }
 .pd-lane__label { position: absolute; left: 32px; top: 132px; width: 210px; display: flex; flex-direction: column; gap: 6px; }
-.pd-lane__label b { align-self: flex-start; font-size: 15px; letter-spacing: 0.03em; background: var(--pd-ink); color: #fff; padding: 4px 10px; border-radius: 7px; }
+.pd-lane__label b { align-self: flex-start; font-size: 15px; letter-spacing: 0.03em; background: var(--pd-accent); color: #fff; padding: 4px 10px; border-radius: var(--pd-r-sm); }
 .pd-lane--version .pd-lane__label { top: 110px; }
-.pd-lane--version .pd-lane__label b { background: var(--pd-accent); }
-.pd-lane__label span { font-size: 24px; font-weight: 650; line-height: 1.2; }
+.pd-lane--version .pd-lane__label b { background: var(--pd-accent-strong); }
+.pd-lane__label span { font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
 .pd-lane__label small { font-size: 13px; color: var(--pd-muted); }
 .pd-card--hl { border-color: var(--pd-accent); box-shadow: 0 0 0 3px var(--pd-accent-soft), 0 8px 20px rgba(16, 24, 40, 0.1); }
 .pd-card--dim { opacity: 0.35; }
 .pd-card--active { border-color: var(--pd-accent); box-shadow: 0 0 0 4px var(--pd-accent), 0 10px 28px rgba(16, 24, 40, 0.18); }
 .pd-card__viewport { position: relative; overflow: hidden; }
 .pd-card__inner { transform-origin: 0 0; overflow-x: hidden; scrollbar-width: none; }
-.pd-card__placeholder { background: repeating-linear-gradient(135deg, #f4f5f7 0 10px, #eceef2 10px 20px); }
+.pd-card__placeholder { background: repeating-linear-gradient(135deg, var(--pd-surface-2) 0 10px, var(--pd-bg) 10px 20px); }
 .pd-badge { font-style: normal; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 999px; background: var(--pd-accent); color: #fff; }
-.pd-badge--new { background: #1f7a4d; }
+.pd-badge--new { background: var(--pd-ok); }
 .pd-svg { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
 .pd-edge__hit { fill: none; stroke: transparent; stroke-width: 16; pointer-events: stroke; cursor: help; }
 .pd-edge__line { fill: none; stroke: var(--pd-edge); stroke-width: 1.6; }
@@ -30,12 +30,12 @@
 .pd-tie { fill: none; stroke: var(--pd-tie); stroke-width: 1.4; stroke-dasharray: 3 4; }
 .pd-stub path { fill: none; stroke: var(--pd-tie); stroke-width: 1.4; stroke-dasharray: 4 3; }
 .pd-stub.is-on text { fill: var(--pd-accent); }
-.pd-edge-label text { font: 600 13px var(--pd-font); fill: var(--pd-ink); paint-order: stroke; stroke: #fff; stroke-width: 5px; stroke-linejoin: round; }
+.pd-edge-label text { font: 600 13px var(--pd-font); fill: var(--pd-ink); paint-order: stroke; stroke: var(--pd-surface); stroke-width: 5px; stroke-linejoin: round; }
 .pd-card { position: absolute; box-sizing: border-box; transition: opacity 0.12s, box-shadow 0.12s, border-color 0.12s; background: transparent; border: 0; box-shadow: none; border-radius: 0; }
 .pd-card--hl, .pd-card--active { box-shadow: none; }
-.pd-card__frame { position: absolute; border-radius: 10px; overflow: hidden; background: #fff; outline: 1px solid rgba(0, 0, 0, 0.06); box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08), 0 8px 22px rgba(16, 24, 40, 0.08); transition: box-shadow 0.12s; }
-.pd-card--hl .pd-card__frame { box-shadow: 0 0 0 3px var(--pd-accent-soft), 0 0 0 1px var(--pd-accent), 0 8px 22px rgba(16, 24, 40, 0.12); }
-.pd-card--active .pd-card__frame { box-shadow: 0 0 0 3px var(--pd-accent), 0 10px 28px rgba(16, 24, 40, 0.18); }
+.pd-card__frame { position: absolute; border-radius: var(--pd-r-md); overflow: hidden; background: var(--pd-surface); outline: 1px solid var(--pd-panel-line); box-shadow: var(--pd-shadow-card); transition: box-shadow 0.12s; }
+.pd-card--hl .pd-card__frame { box-shadow: 0 0 0 1px var(--pd-accent), 0 0 0 4px var(--pd-accent-soft), var(--pd-shadow-card); }
+.pd-card--active .pd-card__frame { box-shadow: 0 0 0 3px var(--pd-accent), 0 0 0 8px var(--pd-accent-ring), 0 12px 32px rgba(15, 18, 34, 0.16); }
 .pd-card--dim .pd-card__name { color: var(--pd-muted); }
 .pd-lane__label .pd-status { align-self: flex-start; font-size: 13px; padding: 5px 10px; }
 /* ways out under a screen: quiet count, names on hover */
@@ -51,8 +51,8 @@
 .pd-card__head .pd-card__code { order: 0; }
 /* above a screen, on the right: a comment on it, and ▶ that starts the prototype from it (a click on the card itself
    selects the screen) */
-.pd-card__head { padding-right: 70px; }
-.pd-card__play, .pd-card__comment { position: absolute; right: 0; bottom: 2px; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 26px; height: 26px; padding: 0 5px; box-sizing: border-box; border: 0; border-radius: 8px; color: var(--pd-accent); background: transparent; text-decoration: none; cursor: pointer; font: 700 11px var(--pd-font); }
+.pd-card__head { padding-right: 72px; }
+.pd-card__play, .pd-card__comment { position: absolute; right: 0; bottom: 2px; display: inline-flex; align-items: center; justify-content: center; gap: 3px; min-width: 28px; height: 28px; padding: 0 5px; box-sizing: border-box; border: 0; border-radius: var(--pd-r-sm); color: var(--pd-accent); background: transparent; text-decoration: none; cursor: pointer; font: 700 11px var(--pd-font); }
 /* both always in the accent colour, the same in every state of the card; hover adds only a soft background */
-.pd-card__comment { right: 28px; }
+.pd-card__comment { right: 32px; }
 .pd-card__play:hover, .pd-card__comment:hover { background: var(--pd-accent-soft); }

@@ -2,6 +2,15 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
+## 0.9.64 — not released yet
+A new look, designed in Orbito itself: an Orbito project whose screens are Orbito, an audit of the interface, three directions side by side, one chosen. Nothing changes in how the board, the flows or the prototype behave.
+- **Changed: the look.** A violet accent, a light canvas tinted towards it, and the left and right panels floating on it as rounded cards, so the board is the biggest thing on screen. The top bar sits on the canvas without a background. The island with the views is light glass, with colour only on the active view. **What to do:** nothing; your mockups and design system keep their own look, only Orbito around them changes.
+- **Dev mode is a switch.** It is either on or off, and the switch shows which by its position (before: a button that stayed pressed).
+- **Status chips carry their colour:** in progress, in review, changes, approved and on hold are tinted pills, on the board, in the left panel and on comments.
+- **The design-system catalog has some warmth:** the overview opens on a tinted header with the project name and its health, and the foundations sit on soft tinted tiles.
+- **From the interface audit:** one type scale (11, 12, 13, 15, 18 and 30 px; nothing smaller than 11 px in the interface), five radii, bigger hit areas (rows of the left panel 32 px, icon buttons 28–32 px, more room between the comment button and ▶ above a screen), and one focus ring in the accent colour on everything you reach with the keyboard. Every colour of the interface now comes from one list in `packages/viewer/src/styles/base.css`.
+- **Comments:** the bubble has a tinted header, a round send button, and status chips in the same colours as everywhere else.
+
 ## 0.9.63 — not released yet
 Comments next to the screen, as in Figma, and fixes from the first test of 0.9.62 on a large project.
 - **Changed: comments open in a bubble next to the screen.** Above each screen on the board, next to ▶, a comment button shows how many comments wait; a click opens them in a bubble beside the screen, with the field ready to type (Enter sends, Shift+Enter starts a new line). The bubble follows the screen while you move the board, and Esc or a click elsewhere closes it. In the prototype the Comments button opens the same bubble beside the phone, and it moves on with you from screen to screen. The screen details keep one line with the count, which opens the bubble. **What to do:** nothing; the comment files stay as they were.
