@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -54,6 +54,82 @@ test.describe('board', () => {
     await expect(page.locator('.pd-code__text')).toContainText('defineScreen');
   });
 
+  test('the wheel scrolls a clicked screen, and moves the board again after Esc', async ({ page }) => {
+    await openBoard(page);
+    const card = cardOf(page, 'plant-list');
+    const scroller = card.locator('[data-pd-scroll]').first();
+    const { x, y } = await centre(page, 'plant-list');
+
+    await page.mouse.click(x, y);
+    await expect(card).toHaveClass(/pd-card--active/);
+    await page.mouse.wheel(0, 200);
+    await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    // the board stayed where it was
+    expect(Math.round((await centre(page, 'plant-list')).y)).toBe(Math.round(y));
+    await page.keyboard.press('Escape');
+    await expect(card).not.toHaveClass(/pd-card--active/);
+    await page.mouse.wheel(0, 120);
+    await expect.poll(async () => Math.round((await centre(page, 'plant-list')).y)).toBeLessThan(Math.round(y));
+  });
+
+  test('the ways out under a card name the menu once instead of every tab', async ({ page }) => {
+    await openBoard(page);
+    // a screen with ways out to other features: the arrow under it names them on hover
+    const key = await page.locator('[data-stub]').first().getAttribute('data-stub');
+    const box = (await page.locator(`[data-card="${key}"]`).boundingBox())!;
+
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    const labels = await page.locator('.pd-stub.is-on text').allTextContents();
+
+    expect(labels.length).toBeGreaterThan(0);
+    expect(new Set(labels).size).toBe(labels.length);
+  });
+
+  test('the comment button above a card opens the comments in a bubble next to it; Esc closes only the bubble', async ({ page }) => {
+    await openBoard(page);
+    await cardOf(page, 'plant-detail').locator('.pd-card__comment').click();
+    const bubble = page.getByRole('dialog', { name: 'Comments on Detail' });
+
+    await expect(bubble).toBeVisible();
+    await expect(bubble.locator('textarea')).toBeFocused();
+    // next to the screen, not over it
+    const card = (await cardOf(page, 'plant-detail').locator('.pd-card__frame').boundingBox())!;
+    const box = (await bubble.boundingBox())!;
+
+    expect(box.x >= card.x + card.width || box.x + box.width <= card.x).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(bubble).toHaveCount(0);
+    await expect(page.locator('.pd-insp__head')).toContainText('Detail');
+  });
+
+  test('a comment Claude writes into comments/ shows on the board, also after a reload', async ({ page }) => {
+    const folder = join(DEMO, 'comments/watered');
+    const bubble = page.getByRole('dialog', { name: /^Comments on/ });
+
+    expect(existsSync(folder)).toBe(false);
+    await openBoard(page);
+    try {
+      mkdirSync(folder);
+      writeFileSync(join(folder, 'e2e-claude.md'), '---\nstatus: doing\nauthor: Claude\ncreated: 2026-11-04T10:00:00Z\n---\nThe name field comes first\n');
+      const button = cardOf(page, 'watered').locator('.pd-card__comment');
+
+      await expect(button).toHaveText('1');
+      await page.reload();
+      await button.click();
+      await expect(bubble).toContainText('The name field comes first');
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  });
+
+  test('the Design system tab opens the catalog, and Project leads back to the board', async ({ page }) => {
+    await openBoard(page);
+    await page.getByRole('tab', { name: 'Design system' }).click();
+    await expect(page).toHaveURL(/#\/ds$/);
+    await page.getByRole('tab', { name: 'Project' }).click();
+    await expect(page).toHaveURL(/#\/board\/plants$/);
+  });
+
   test('dragging over a card moves the board and opens nothing', async ({ page }) => {
     await openBoard(page);
     const before = await centre(page, 'plant-list');
@@ -93,6 +169,31 @@ test.describe('board', () => {
     await expect(page).toHaveURL(/#\/board\/plants$/);
   });
 
+  test('the left panel highlights one thing at a time: the open feature, or the screen selected in it', async ({ page }) => {
+    await openBoard(page, '#/board/plants/P1');
+    const feature = page.locator('.pd-tree__flow', { hasText: 'Water a plant' });
+
+    await expect(feature).toHaveClass(/is-on/);
+    const { x, y } = await centre(page, 'plant-list');
+
+    await page.mouse.click(x, y);
+    await expect(page.locator('.pd-tree__screen.is-on')).toHaveCount(1);
+    await expect(feature).not.toHaveClass(/is-on/);
+    await page.keyboard.press('Escape');
+    await expect(feature).toHaveClass(/is-on/);
+  });
+
+  test('the comment and play buttons above a card keep one colour, selected or not', async ({ page }) => {
+    await openBoard(page);
+    const colour = (sel: string) => cardOf(page, 'plant-list').locator(sel).evaluate((el) => getComputedStyle(el).color);
+    const before = [await colour('.pd-card__comment'), await colour('.pd-card__play')];
+    const { x, y } = await centre(page, 'plant-list');
+
+    expect(before[0]).toBe(before[1]);
+    await page.mouse.click(x, y);
+    expect([await colour('.pd-card__comment'), await colour('.pd-card__play')]).toEqual(before);
+  });
+
   test('search selects a screen on its own page, without opening the prototype', async ({ page }) => {
     await openBoard(page);
     const search = page.locator('.pd-search__input');
@@ -128,23 +229,25 @@ test.describe('prototype', () => {
 
 test.describe('screen details', () => {
   test('a comment is an open change in a file of its own, moved along and removed', async ({ page }) => {
-    const folder = join(DEMO, 'comments/plant-list');
-    const comment = page.locator('.pd-insp .pd-comment', { hasText: 'Too many plants at once' });
+    const folder = join(DEMO, 'comments/watered');
+    const bubble = page.getByRole('dialog', { name: /^Comments on/ });
+    const comment = bubble.locator('.pd-comment', { hasText: 'Say how much water' });
     const only = () => join(folder, readdirSync(folder)[0]!);
 
     expect(existsSync(folder)).toBe(false);
-    await page.goto('/#/s/plant-list');
-    await page.locator('.pd-insp').getByPlaceholder('What should change on this screen?').fill('Too many plants at once');
-    await page.locator('.pd-insp').getByPlaceholder('Your name').fill('Test');
-    await page.locator('.pd-insp').getByRole('button', { name: 'Add', exact: true }).click();
+    await page.goto('/#/s/watered');
+    await page.locator('.pd-commentstoggle').click();
+    await bubble.getByPlaceholder('Your name').fill('Test');
+    await bubble.getByPlaceholder('What should change on this screen?').fill('Say how much water');
+    await bubble.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(comment).toBeVisible();
     expect(readdirSync(folder)).toHaveLength(1);
-    expect(readFileSync(only(), 'utf8')).toMatch(/^---\nstatus: open\nauthor: Test\ncreated: \d{4}-\d{2}-\d{2}T[\d:]+Z\n---\nToo many plants at once\n$/);
+    expect(readFileSync(only(), 'utf8')).toMatch(/^---\nstatus: open\nauthor: Test\ncreated: \d{4}-\d{2}-\d{2}T[\d:]+Z\n---\nSay how much water\n$/);
     // the screen in the prototype shows it waits
     await expect(page.locator('.pd-commentstoggle .pd-count')).toHaveText('1');
     await comment.locator('select').selectOption('done');
     await expect.poll(() => readFileSync(only(), 'utf8')).toContain('status: done');
-    await page.locator('.pd-insp .pd-insp__more', { hasText: '1 done' }).click();
+    await bubble.locator('.pd-bubble__more', { hasText: '1 done' }).click();
     await comment.getByRole('button', { name: 'Remove this comment' }).click();
     await expect(comment).toHaveCount(0);
     expect(existsSync(folder)).toBe(false);
@@ -253,7 +356,8 @@ test.describe('the first time', () => {
     await expect(page.locator('.pd-top')).toBeVisible();
     await expect(welcome).toHaveCount(0);
     await page.goto('/#/s/plant-list');
-    await expect(page.locator('.pd-insp').getByPlaceholder('Your name')).toHaveValue('Ola');
+    await page.locator('.pd-commentstoggle').click();
+    await expect(page.getByRole('dialog', { name: /^Comments on/ })).toContainText('Signed as Ola');
   });
 });
 

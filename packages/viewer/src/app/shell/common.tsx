@@ -12,10 +12,3 @@ export const isPage = (mode: Mode) => mode === 'ds' || mode === 'skills';
 export const pageOfScreen = (project: Project<ComponentType>, id: string): Page | undefined =>
   project.pages.find((p) => p.flows.some((f) => f.screens.includes(id) || (f.versions ?? []).some((v) => v.screens.some((s) => s.id === id))));
 
-export const Glyph = ({ d }: { d: string }) => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d={d} />
-  </svg>
-);
-export const PANEL_LEFT = 'M4 5h16v14H4zM9 5v14';
-export const PANEL_RIGHT = 'M4 5h16v14H4zM15 5v14';

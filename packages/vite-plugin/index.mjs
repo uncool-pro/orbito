@@ -135,7 +135,12 @@ export default function orbito(options = {}) {
       // a comments file added or removed (the first comment on a screen, the last one gone, or Claude): push them all
       const commentsDir = resolve(root, COMMENTS_DIR);
       const pushComments = (file) => {
-        if (inside(commentsDir, resolve(file))) server.ws.send({ type: 'custom', event: 'orbito:comments', data: readComments(commentsDir) });
+        if (!inside(commentsDir, resolve(file))) return;
+        // the project module carries the comments too: forget it, or a reload would show the old ones
+        const mod = server.moduleGraph.getModuleById(RESOLVED);
+
+        if (mod) server.moduleGraph.invalidateModule(mod);
+        server.ws.send({ type: 'custom', event: 'orbito:comments', data: readComments(commentsDir) });
       };
 
       server.watcher.add(commentsDir);
@@ -150,12 +155,18 @@ export default function orbito(options = {}) {
       // a status write must not reload the page: the viewer already shows the new value
       // a status change, from the board or from Claude editing the file: send the file to the browser, no reload
       if (file === resolve(root, STATUS_FILE)) {
+        const mod = ctx.server.moduleGraph.getModuleById(RESOLVED);
+
+        if (mod) ctx.server.moduleGraph.invalidateModule(mod);
         ctx.server.ws.send({ type: 'custom', event: 'orbito:status', data: readJson(file, {}) });
 
         return [];
       }
       // comments, the same way: added on the board or written by Claude
       if (rel.startsWith(`${COMMENTS_DIR}/`)) {
+        const mod = ctx.server.moduleGraph.getModuleById(RESOLVED);
+
+        if (mod) ctx.server.moduleGraph.invalidateModule(mod);
         ctx.server.ws.send({ type: 'custom', event: 'orbito:comments', data: readComments(resolve(root, COMMENTS_DIR)) });
 
         return [];

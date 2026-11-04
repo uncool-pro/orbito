@@ -9,7 +9,8 @@ import { useViewer } from '../context';
 import { canvasHash, canvasOf, dsHash, go, lastCanvasHash, openScreen, parseRoute, SKILLS_HASH } from '../routes';
 import type { Mode } from '../routes';
 import { useShell } from './state';
-import { isPage, pageOfScreen, Glyph, PANEL_LEFT, PANEL_RIGHT } from './common';
+import { isPage, pageOfScreen } from './common';
+import { Icon } from '../icons';
 
 export const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: string }) => {
   const { project, problems, ds } = useViewer();
@@ -22,7 +23,7 @@ export const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowK
   return (
     <header className="pd-top" data-pd-ui>
       <button type="button" className="pd-iconbtn" onClick={() => togglePanel('drawer')} aria-label={t.toggleDrawer} title={t.toggleDrawer}>
-        <Glyph d={PANEL_LEFT} />
+        <Icon name="panel-left" size={18} />
       </button>
       {/* the tool's logo, always the whole wordmark */}
       <a className="pd-brand" href={canvasHash('board')} title="Orbito">
@@ -70,13 +71,13 @@ export const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowK
       </a>
       {!isPage(mode) && (
         <button type="button" className={`pd-devtoggle${devMode ? ' is-on' : ''}`} aria-pressed={devMode} onClick={toggleDev} title={t.devModeTip}>
-          <Glyph d="M8 7l-5 5 5 5M16 7l5 5-5 5" />
+          <Icon name="code" size={16} />
           {t.devMode}
         </button>
       )}
       {!isPage(mode) && (
         <button type="button" className="pd-iconbtn" onClick={() => togglePanel('inspector')} aria-label={t.toggleInspector} title={t.toggleInspector}>
-          <Glyph d={PANEL_RIGHT} />
+          <Icon name="panel-right" size={18} />
         </button>
       )}
     </header>

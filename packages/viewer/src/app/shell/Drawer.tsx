@@ -6,15 +6,20 @@ import type { Page } from '@uncool-pro/orbito-core';
 import { useT } from '../../i18n';
 import { useStatuses } from '../../status';
 import { useViewer } from '../context';
-import { canvasHash, canvasOf, dsHash, openScreen, pickScreen } from '../routes';
+import { canvasHash, canvasOf, dsHash, go, lastCanvasHash, openScreen, pickScreen } from '../routes';
 import type { Mode } from '../routes';
 import { useShell } from './state';
+import { Icon } from '../icons';
 
+/** The two tabs are the two places of the tool: the project (board, flows, prototype) and the design-system catalog. A tab
+ * opens its place, not only its tree: Design system opens the catalog, Project leads back to the board or flows you left. */
 export const Drawer = ({ mode, page, flowKey, dsSection }: { mode: Mode; page?: Page; flowKey?: string; dsSection?: string }) => {
   const t = useT();
-  const [tab, setTab] = useState<'project' | 'ds'>(mode === 'ds' ? 'ds' : 'project');
-
-  useEffect(() => setTab(mode === 'ds' ? 'ds' : 'project'), [mode]);
+  const tab = mode === 'ds' ? 'ds' : 'project';
+  const setTab = (to: 'project' | 'ds') => {
+    if (to === tab) return;
+    go(to === 'ds' ? dsHash() : lastCanvasHash());
+  };
 
   return (
     <aside className="pd-drawer" data-pd-ui>
@@ -34,20 +39,11 @@ export const Drawer = ({ mode, page, flowKey, dsSection }: { mode: Mode; page?: 
 /** One disclosure icon for every level of the tree: a chevron that turns down when the level is open. */
 const Chevron = ({ open, label, onClick }: { open: boolean; label: string; onClick: () => void }) => (
   <button type="button" className={`pd-tree__chevron${open ? ' is-open' : ''}`} aria-expanded={open} aria-label={label} onClick={onClick}>
-    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-      <path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <Icon name="chevron-right" size={15} />
   </button>
 );
 
-const BranchIcon = () => (
-  <svg className="pd-tree__icon" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-    <path d="M5 3v10M5 10c0-3 6-2 6-6" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    <circle cx="5" cy="3" r="1.6" fill="currentColor" />
-    <circle cx="11" cy="4" r="1.6" fill="currentColor" />
-    <circle cx="5" cy="13" r="1.6" fill="currentColor" />
-  </svg>
-);
+const BranchIcon = () => <Icon name="git-branch" size={14} className="pd-tree__icon" />;
 
 /**
  * The project, as in Figma: a small list of the pages on top (it scrolls on its own when there are many), and under it
@@ -69,6 +65,10 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
   useEffect(() => {
     if (flowKey) setOpen((o) => new Set([...o, flowKey]));
   }, [flowKey]);
+
+  // one highlight at a time: a selected screen that shows in the tree is the highlight, not its feature as well
+  const selectedShown =
+    !!selected && !!page?.flows.some((f) => open.has(f.key) && (f.screens.includes(selected) || (f.versions ?? []).some((v) => v.screens.some((vs) => vs.id === selected))));
 
   const row = (id: string, extra?: string) => {
     const s = byId.get(id);
@@ -124,7 +124,7 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
                   <div className="pd-tree__line">
                     <Chevron open={isOpen} label={isOpen ? t.collapse : t.expand} onClick={() => toggle(f.key)} />
                     <a
-                      className={`pd-tree__row pd-tree__flow${on ? ' is-on' : ''}`}
+                      className={`pd-tree__row pd-tree__flow${on && !selectedShown ? ' is-on' : ''}`}
                       href={on ? canvasHash(base, page.key) : canvasHash(base, page.key, f.key)}
                       title={`${f.name} · ${t.pathKinds[f.path ?? 'happy']}${on ? ` · ${t.backToPage}` : ''}`}
                     >
