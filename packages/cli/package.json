@@ -4,7 +4,7 @@
   "type": "module",
   "bin": { "orbito": "./src/bin.ts" },
   "exports": { "./analyze": "./src/analyze.ts" },
-  "dependencies": { "@uncool-pro/orbito-core": "*", "typescript": "~6.0.2" },
+  "dependencies": { "@uncool-pro/orbito-core": "*", "typescript": "~7.0.2" },
   "engines": { "node": ">=22.18" },
   "license": "MIT"
 }
