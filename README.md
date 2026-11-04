@@ -12,7 +12,10 @@ Orbito turns Claude Code into a product designer's agent. Its skills are a produ
 > **Beta 0.9** — free and open source (MIT). It works, it still has rough edges, and it grows week by week: see [CHANGELOG.md](CHANGELOG.md).
 
 ## Get started
-You need [Claude Code](https://claude.com/claude-code) (a paid Claude plan), [Node.js](https://nodejs.org) 22.18 or newer and git. Everything runs on your computer.
+You need [Claude Code](https://claude.com/claude-code) (a paid Claude plan). Everything runs on your computer. Orbito runs in one of two ways, with the same project files:
+
+- **In Docker, for client and company work:** the engine and its packages stay sealed in a container with no internet, and see only the project's design folders. Follow [DOCKER.md](DOCKER.md).
+- **From the code, for trying it out or changing Orbito:** you need [Node.js](https://nodejs.org) 22.18 or newer and git; the packages run on your computer with your permissions. Follow the steps below.
 
 **The easy way:** open Claude Code in the folder where you keep your projects and write:
 
@@ -26,6 +29,8 @@ Claude follows the steps below and asks you only for the project's name, platfor
 
 Later, `npm run update` in the project brings the newest Orbito (or ask Claude to "update Orbito").
 
+Not sure about the technical words? You do not need them. Tell Claude you are not a programmer, and it will explain each step and tell you what to click.
+
 ### The steps (for you, or for Claude installing Orbito for someone)
 1. Clone Orbito into a folder that stays where it is — projects link to it, and updates come from it:
    ```sh
@@ -37,10 +42,12 @@ Later, `npm run update` in the project brings the newest Orbito (or ask Claude t
    node orbito/packages/create/src/index.ts my-product --title "My product" --platform web --locale en
    ```
    It copies the project template, installs it, and checks it. Never move or rename the `orbito` folder afterwards.
+
+   No git? Download [the ZIP](https://github.com/uncool-pro/orbito/archive/refs/heads/main.zip), unpack it, rename the folder to `orbito` and carry on from `npm install`. You still need Node.js. Such a folder cannot fetch updates by itself: `npm run update` then tells you how to replace it.
 3. Tell the person to put their material into `my-product/raw/`, open Claude Code in `my-product/` and type `/orbito-init`.
 
 ## What you see
-- **Board** (`#/board`) — every feature as a lane of live screens, arrows drawn from the element that triggers them, statuses per feature, review versions under their flow. Drag to move · pinch or Ctrl + scroll to zoom · click a screen to open the prototype from there · Shift+1 to fit.
+- **Board** (`#/board`) — every feature as a lane of live screens, arrows drawn from the element that triggers them, statuses per feature, review versions under their flow. Drag to move · pinch or Ctrl + scroll to zoom · click a screen for its details · ▶ above it or a double click opens the prototype from there · Shift+1 to fit.
 - **Flows** (`#/flows`) — the flows as a diagram (happy, alternative and error paths), drawn from the screens themselves, with dead ends and unreachable screens found for you.
 - **Prototype** (`#/s/<screen>`) — click through the screens like the real product; a responsive web page has a switch in the top right corner to see it at desktop, tablet or phone size.
 - **Design system** (`#/ds`) — tokens with usage notes and contrast, components by atomic level with variants and where each is used, and the rule check (`npm run check:ds`).

@@ -1,7 +1,7 @@
 import { Component } from 'react';
 import type { ReactNode } from 'react';
 
-/** Keeps one broken screen from taking the board down: the card shows the error, the rest keeps working. */
+/** Keeps one broken part from taking everything down: it shows the error where the part would be, the rest keeps working. */
 export class ErrorBoundary extends Component<{ name: string; children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
 
@@ -10,7 +10,7 @@ export class ErrorBoundary extends Component<{ name: string; children: ReactNode
   }
 
   componentDidCatch(error: Error) {
-    console.error(`[orbito] screen "${this.props.name}" crashed`, error);
+    console.error(`[orbito] "${this.props.name}" crashed`, error);
   }
 
   render() {

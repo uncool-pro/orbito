@@ -54,10 +54,12 @@ export const setStatus = async (id: string, status: Status, note?: string) => {
   try {
     const r = await fetch('/__orbito/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status, note }) });
 
-    if (!r.ok) throw new Error(await r.text());
+    if (!r.ok) throw new Error(((await r.json()) as { error?: string }).error ?? `HTTP ${r.status}`);
   } catch (err) {
     console.error('[orbito] could not save the status', err);
     state = prev;
     emit();
+    // the status on the board jumps back, so say why
+    window.alert(err instanceof Error ? err.message : String(err));
   }
 };

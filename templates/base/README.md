@@ -3,6 +3,7 @@
 Mockups as code, made with Orbito.
 
 ```sh
+# in Docker (.orbito/runtime says docker): docker compose up -d
 npm install
 npm run dev        # board: #/board · design system: #/ds
 ```

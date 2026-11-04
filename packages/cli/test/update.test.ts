@@ -1,6 +1,8 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -30,6 +32,35 @@ beforeEach(() => {
 afterEach(() => rmSync(base, { recursive: true, force: true }));
 
 describe('orbito update', () => {
+  it('lets the version it just pulled finish the update, so new migrations work on the first run', () => {
+    const remote = join(base, 'remote');
+    const g = (cwd: string, ...args: string[]) => execFileSync('git', ['-C', cwd, ...args], { stdio: 'pipe', encoding: 'utf8' });
+
+    put(join(remote, 'package.json'), '{ "version": "0.9.4" }');
+    put(join(remote, 'skills/wireframes/SKILL.md'), 'wireframes');
+    put(join(remote, 'agents/models.json'), '{}');
+    mkdirSync(join(base, 'empty'));
+    g(remote, 'init', '-q', '-b', 'main');
+    g(remote, 'config', 'user.email', 'test@example.com');
+    g(remote, 'config', 'user.name', 'Test');
+    g(remote, 'add', '-A');
+    g(remote, 'commit', '-q', '-m', 'first');
+    const clone = join(base, 'clone');
+
+    g(base, 'clone', '-q', remote, clone);
+    // the next version knows something the running code does not
+    put(join(remote, 'package.json'), '{ "version": "0.9.5" }');
+    put(join(remote, 'packages/cli/src/bin.ts'), "process.stdout.write(JSON.stringify({ added: ['done by the new version'], updated: [], removed: [], conflicts: [], backedUp: [] }));");
+    g(remote, 'add', '-A');
+    g(remote, 'commit', '-q', '-m', 'second');
+
+    const r = updateProject({ root, tool: clone, pull: true, install: false });
+
+    expect(r.added).toEqual(['done by the new version']);
+    expect(r.tool.to).toContain('0.9.5');
+    expect(r.tool.commits).toEqual(['second']);
+  });
+
   it('installs Orbito items and lists them in the manifest', () => {
     const r = run();
 
@@ -86,5 +117,55 @@ describe('orbito update', () => {
     expect(r.removed).toEqual(['skill ux-design']);
     expect(existsSync(join(root, '.claude/skills/my-checklist'))).toBe(true);
     expect(existsSync(join(root, '.claude/skills/sales-copy'))).toBe(true);
+  });
+
+  it('saves a copy of a skill with a retired name in a project without a manifest', () => {
+    put(join(root, '.claude/skills/landing-page/SKILL.md'), 'mine');
+    const r = run();
+
+    expect(r.backedUp).toEqual(['.orbito/backup/2026-10-26/.claude/skills/landing-page']);
+    expect(read(join(root, '.orbito/backup/2026-10-26/.claude/skills/landing-page/SKILL.md'))).toBe('mine');
+  });
+
+  it('adds compose.yaml only to a project that runs in a container', () => {
+    put(join(tool, 'templates/base/compose.yaml'), 'image: orbito:{{version}}');
+    run();
+    expect(existsSync(join(root, 'compose.yaml'))).toBe(false);
+
+    put(join(root, '.orbito/runtime'), 'docker\n');
+    run();
+    expect(read(join(root, 'compose.yaml'))).toBe('image: orbito:0.9.4');
+  });
+});
+
+describe('a project made by create', () => {
+  const create = fileURLToPath(new URL('../../create/src/index.ts', import.meta.url));
+  const make = () => {
+    const target = join(base, 'made');
+
+    execFileSync(process.execPath, [create, target, '--title', 'T', '--platform', 'web', '--locale', 'en', '--no-install'], { stdio: 'ignore' });
+
+    return target;
+  };
+
+  it("has a manifest from the start, so the first update leaves the person's skill alone", () => {
+    const target = make();
+
+    expect(Object.keys(JSON.parse(read(join(target, MANIFEST))).items)).toContain('.claude/skills/wireframes');
+    put(join(target, '.claude/skills/landing-page/SKILL.md'), 'mine');
+    const r = updateProject({ root: target, install: false });
+
+    expect(r.removed).toEqual([]);
+    expect(read(join(target, '.claude/skills/landing-page/SKILL.md'))).toBe('mine');
+  });
+
+  it('has no compose.yaml when it runs without a container', () => {
+    expect(existsSync(join(make(), 'compose.yaml'))).toBe(false);
+  });
+
+  it('the first update changes nothing and saves no copies', () => {
+    const r = updateProject({ root: make(), install: false });
+
+    expect([r.added, r.updated, r.removed, r.conflicts, r.backedUp]).toEqual([[], [], [], [], []]);
   });
 });

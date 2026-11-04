@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { computeFlowGraph } from '@uncool-pro/orbito-core';
 import type { FlowEdgeKind, FlowNode, Page } from '@uncool-pro/orbito-core';
-import { screenHash } from '@uncool-pro/orbito-runtime';
+import { openScreen } from '../app/routes';
 
 import { useViewer } from '../app/context';
 import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
@@ -224,7 +224,7 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
                 className={`pd-fbox pd-fbox--${n.path}${nodeState(n)}${selected === n.id ? ' is-selected' : ''}${warn ? ' is-warn' : ''}`}
                 style={{ left: n.x, top: n.y, width: n.w, height: n.h }}
                 onPointerEnter={() => setHover(n.id)}
-                onDoubleClick={() => (window.location.hash = screenHash(n.id))}
+                onDoubleClick={() => openScreen(n.id)}
               >
                 <span>{s.title.split(' / ').pop()}</span>
                 <b>{code(n.id)}</b>

@@ -1,0 +1,85 @@
+# Orbito in Docker: the engine runs sealed in a container, Claude keeps working on these files from outside.
+#   docker compose up -d                        start the board: http://localhost:5190
+#   docker compose down                         stop it
+#   docker compose run --rm tools check ds      design-system check
+#   docker compose run --rm tools typecheck     type check
+#   docker compose run --rm export <screen>     one page as a static site in site/
+#   docker compose run --rm admin models        show or switch the model mode
+# The renderer sees only the folders listed here, read-only: never raw/, .env or .git. `orbito update` manages this file.
+x-sealed: &sealed
+  image: ghcr.io/uncool-pro/orbito:{{version}}
+  user: "${ORBITO_UID:-1000}:${ORBITO_GID:-1000}"
+  read_only: true
+  tmpfs: [/tmp]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+
+services:
+  renderer:
+    <<: *sealed
+    command: serve
+    # the project folder on this computer, so dev mode can show and copy real paths; the container still sees only what is mounted
+    environment:
+      ORBITO_HOST_ROOT: ${PWD}
+    volumes: &project
+      - ./screens:/project/screens:ro
+      - ./flows:/project/flows:ro
+      - ./design-system:/project/design-system:ro
+      - ./public:/project/public:ro
+      - ./src:/project/src:ro
+      - ./content:/project/content:ro
+      - ./reviews:/project/reviews:ro
+      - ./requirements:/project/requirements:ro
+      - ./.claude:/project/.claude:ro
+      - ./.orbito:/project/.orbito:ro
+      - ./index.html:/project/index.html:ro
+      - ./orbito.config.ts:/project/orbito.config.ts:ro
+      - ./tsconfig.json:/project/tsconfig.json:ro
+      # what the board writes, both set by the person: the statuses, and the comments on screens (one file per comment)
+      - ./.orbito/status.json:/project/.orbito/status.json
+      - ./comments:/project/comments
+    networks: [sealed]
+    restart: unless-stopped
+
+  # the only way in from the browser, only from this computer; it has no project files
+  gate:
+    <<: *sealed
+    command: gate
+    networks: [sealed, outside]
+    ports: ["127.0.0.1:5190:5190"]
+    restart: unless-stopped
+
+  tools:
+    <<: *sealed
+    profiles: [tools]
+    network_mode: none
+    volumes: *project
+
+  export:
+    <<: *sealed
+    profiles: [tools]
+    network_mode: none
+    entrypoint: [node, /orbito/docker/entry.mjs, export]
+    volumes:
+      - ./screens:/project/screens:ro
+      - ./flows:/project/flows:ro
+      - ./design-system:/project/design-system:ro
+      - ./public:/project/public:ro
+      - ./content:/project/content:ro
+      - ./.orbito:/project/.orbito:ro
+      - ./orbito.config.ts:/project/orbito.config.ts:ro
+      - ./tsconfig.json:/project/tsconfig.json:ro
+      - ./site:/project/site
+
+  # the whole project, writable, no network: only for what you start by hand
+  admin:
+    <<: *sealed
+    profiles: [tools]
+    network_mode: none
+    volumes:
+      - .:/project
+
+networks:
+  sealed:
+    internal: true
+  outside: {}

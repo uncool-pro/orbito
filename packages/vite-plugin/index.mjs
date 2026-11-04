@@ -10,94 +10,39 @@
 //      design-system/**/*.docs.tsx       component docs and variants for the catalog
 //      .claude/skills, .claude/agents    the team (Orbito → agents → skills) for the skills map; in the tool repo: skills/, agents/
 //    plus the design-system report (`orbito check ds`), recomputed when design-system/ or screens/ change.
-// 2. Dev endpoints (never in a build):
-//      GET  /__orbito/status                 the status file
-//      POST /__orbito/status  {id,status,note?}  writes that one entry, nothing else
-//      GET  /__orbito/file?path=<rel>        a .md / .txt / .json file inside the project (e.g. a review report)
-//      GET  /__orbito/env                    the project folder and the system (for the developer section of screen details)
-//      POST /__orbito/reveal?path=<rel>      shows a project file in Explorer / Finder / the file manager
-import { spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
+// 2. Dev endpoints: endpoints.mjs. The team: team.mjs. The status file: status.mjs.
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { searchForWorkspaceRoot } from 'vite';
 
 import { analyzeProject } from '@uncool-pro/orbito-cli/analyze';
-import { buildTeam, listOf, modelFor, parseFrontmatter, resolveMode, skillModels, tokensToCss } from '@uncool-pro/orbito-core';
+import { parseRequirements, tokensToCss } from '@uncool-pro/orbito-core';
 
-// keep in sync with packages/core/src/status.ts (the tool owns the list)
-const STATUSES = ['todo', 'wip', 'review', 'changes', 'approved', 'onHold', 'dropped'];
+import { readComments } from './comments.mjs';
+import { devEndpoints } from './endpoints.mjs';
+import { inside, readJson } from './files.mjs';
+import { readTeam, teamDirs } from './team.mjs';
+
 const VIRTUAL = 'virtual:orbito/project';
 const RESOLVED = '\0' + VIRTUAL;
 const STATUS_FILE = '.orbito/status.json';
+const COMMENTS_DIR = 'comments';
 const FONTS_FILE = 'design-system/fonts.css';
+/** The stories in `requirements/**\/*.md` (the local mirror of the tracker), for the screen details. */
+const readRequirements = (root) => {
+  const dir = resolve(root, 'requirements');
+
+  if (!existsSync(dir)) return [];
+
+  return readdirSync(dir, { recursive: true, encoding: 'utf8' })
+    .filter((f) => f.endsWith('.md'))
+    .sort()
+    .flatMap((f) => parseRequirements(`requirements/${f.split(sep).join('/')}`, readFileSync(resolve(dir, f), 'utf8')));
+};
 // the tool's packages: linked from outside the project (file: dependencies), the dev server must be allowed to serve them
 const PACKAGES_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-
-/** True when `file` is inside `dir` (works with Windows separators and drive letters). */
-const inside = (dir, file) => {
-  const rel = relative(dir, file);
-
-  return !!rel && !rel.startsWith('..') && !isAbsolute(rel);
-};
-
-/** Where the team lives: the project's .claude/ folder, or (in the tool repository, e.g. the demo) the nearest skills/ + agents/ above. */
-const teamDirs = (root) => {
-  if (existsSync(resolve(root, '.claude/skills'))) return { skills: resolve(root, '.claude/skills'), agents: resolve(root, '.claude/agents') };
-  for (let dir = root, i = 0; i < 4; i++, dir = dirname(dir)) {
-    if (existsSync(resolve(dir, 'skills')) && existsSync(resolve(dir, 'agents'))) return { skills: resolve(dir, 'skills'), agents: resolve(dir, 'agents') };
-  }
-
-  return undefined;
-};
-
-/** Reads skills and agents from their markdown files (front matter + the skills each agent's instructions name). */
-const readTeam = (root) => {
-  const dirs = teamDirs(root);
-
-  if (!dirs) return null;
-  // the project's own items: neither installed by Orbito (`.orbito/managed.json`) nor shipped with it
-  const managed = readJson(resolve(root, '.orbito/managed.json'), { items: {} }).items ?? {};
-  const shipped = resolve(PACKAGES_ROOT, '..');
-  const inProject = dirs.skills === resolve(root, '.claude/skills');
-  const ownSkill = (name) => inProject && !managed[`.claude/skills/${name}`] && !existsSync(resolve(shipped, 'skills', name));
-  const ownAgent = (file) => inProject && !managed[`.claude/agents/${file}`] && !existsSync(resolve(shipped, 'agents', file));
-  const skills = (existsSync(dirs.skills) ? readdirSync(dirs.skills, { withFileTypes: true }) : [])
-    .filter((d) => d.isDirectory() && existsSync(resolve(dirs.skills, d.name, 'SKILL.md')))
-    .map((d) => {
-      const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.skills, d.name, 'SKILL.md'), 'utf8'));
-
-      return { name: data.name || d.name, description: data.description || '', body, own: ownSkill(d.name) };
-    });
-  const agents = (existsSync(dirs.agents) ? readdirSync(dirs.agents) : [])
-    .filter((f) => f.endsWith('.md'))
-    .map((f) => {
-      const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.agents, f), 'utf8'));
-
-      return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, effort: data.effort, skills: listOf(data.skills), body, own: ownAgent(f) };
-    });
-
-  // the model mode of the person running the viewer: environment → personal settings → the team's default
-  const { mode, source } = resolveMode({
-    env: process.env.ORBITO_MODELS,
-    local: readJson(resolve(root, '.orbito/settings.local.json'), {}),
-    team: readJson(resolve(root, '.orbito/settings.json'), {}),
-  });
-  const profiles = readJson(resolve(root, '.orbito/models.json'), null) ?? readJson(resolve(dirs.agents, 'models.json'), null);
-  // each agent as Orbito will call it in this mode (the profile wins over the agent file's own values)
-  const inMode = agents.map((a) => ({ ...a, ...(modelFor(profiles ?? undefined, mode, a.name) ?? {}), skillModels: skillModels(profiles ?? undefined, mode, a.name) }));
-
-  return { ...buildTeam(skills, inMode), models: mode, modelsSource: source };
-};
-
-const readJson = (file, fallback) => {
-  try {
-    return JSON.parse(readFileSync(file, 'utf8'));
-  } catch {
-    return fallback;
-  }
-};
 
 /**
  * @param {{ config?: string }} [options] config: project config file relative to the Vite root (default `orbito.config.ts`)
@@ -133,6 +78,7 @@ export default function orbito(options = {}) {
       const tokensPath = resolve(root, 'design-system/tokens.json');
       const fontsPath = resolve(root, FONTS_FILE);
 
+
       this.addWatchFile(statusPath);
       this.addWatchFile(tokensPath);
       // watching a missing file makes Vite resolve it as an import; a new fonts.css is picked up in configureServer
@@ -149,13 +95,16 @@ export default function orbito(options = {}) {
       return [
         `import config from ${JSON.stringify(configPath)};`,
         `import { loadProject } from '@uncool-pro/orbito-core';`,
-        `const screens = import.meta.glob('/screens/**/*.screen.{tsx,jsx}', { eager: true });`,
-        `const pages = import.meta.glob('/flows/**/*.flow.{ts,tsx,js}', { eager: true });`,
-        `const docs = Object.values(import.meta.glob('/design-system/**/*.docs.{tsx,jsx}', { eager: true })).map((m) => m.default).filter(Boolean);`,
+        // loaded one by one: a file that throws while loading becomes a problem on the board, not an empty page
+        `const settle = async (files) => Object.fromEntries(await Promise.all(Object.entries(files).map(([file, load]) => load().then((m) => [file, m], (e) => [file, { loadError: String(e) }]))));`,
+        `const screens = await settle(import.meta.glob('/screens/**/*.screen.{tsx,jsx}'));`,
+        `const pages = await settle(import.meta.glob('/flows/**/*.flow.{ts,tsx,js}'));`,
+        `const docs = Object.values(await settle(import.meta.glob('/design-system/**/*.docs.{tsx,jsx}'))).map((m) => m.default).filter(Boolean);`,
         `const { project, problems } = loadProject(config, screens, pages);`,
         `const ds = { tokens: ${JSON.stringify(report.tokens)}, css: ${JSON.stringify(tokensToCss(report.tokens))}, report: ${JSON.stringify(report)}, fonts: ${JSON.stringify(existsSync(fontsPath) ? readFileSync(fontsPath, 'utf8') : '')}, docs };`,
         `const team = ${JSON.stringify(readTeam(root))};`,
-        `export default { project, problems, statuses: ${JSON.stringify(readJson(statusPath, {}))}, dev: ${dev}, ds, team };`,
+        `const requirements = ${JSON.stringify(readRequirements(root))};`,
+        `export default { project, problems, statuses: ${JSON.stringify(readJson(statusPath, {}))}, comments: ${JSON.stringify(readComments(resolve(root, COMMENTS_DIR)))}, dev: ${dev}, ds, team, requirements };`,
       ].join('\n');
     },
     configureServer(server) {
@@ -183,72 +132,16 @@ export default function orbito(options = {}) {
         if (mod) server.moduleGraph.invalidateModule(mod);
         server.ws.send({ type: 'full-reload' });
       });
-      server.middlewares.use((req, res, next) => {
-        const url = new URL(req.url ?? '/', 'http://x');
-        const reply = (code, body, type = 'application/json; charset=utf-8') => {
-          res.statusCode = code;
-          res.setHeader('Content-Type', type);
-          res.end(typeof body === 'string' ? body : JSON.stringify(body));
-        };
+      // a comments file added or removed (the first comment on a screen, the last one gone, or Claude): push them all
+      const commentsDir = resolve(root, COMMENTS_DIR);
+      const pushComments = (file) => {
+        if (inside(commentsDir, resolve(file))) server.ws.send({ type: 'custom', event: 'orbito:comments', data: readComments(commentsDir) });
+      };
 
-        // only the board itself may call these: a page from another site open in the same browser must not write the status
-        // file (text Claude reads), open the file manager or read project files (the browser says where a request comes from)
-        if (url.pathname.startsWith('/__orbito/')) {
-          const site = req.headers['sec-fetch-site'];
-          const origin = req.headers.origin;
-
-          if (site === 'cross-site' || site === 'same-site' || (origin && origin !== 'null' && new URL(origin).host !== req.headers.host) || origin === 'null')
-            return reply(403, { error: 'requests from other sites are not allowed' });
-        }
-        if (url.pathname === '/__orbito/file') {
-          const file = resolve(root, url.searchParams.get('path') ?? '');
-
-          if (!inside(root, file) || !/\.(md|txt|json)$/i.test(file) || !existsSync(file)) return reply(404, { error: 'not found' });
-
-          return reply(200, readFileSync(file, 'utf8'), 'text/plain; charset=utf-8');
-        }
-        if (url.pathname === '/__orbito/env') return reply(200, { root: resolve(root), platform: process.platform, sep });
-        if (url.pathname === '/__orbito/reveal') {
-          const file = resolve(root, url.searchParams.get('path') ?? '');
-
-          if (req.method !== 'POST') return reply(405, { error: 'POST' });
-          if (!inside(root, file) || !existsSync(file)) return reply(404, { error: 'not found' });
-          // the file manager of the system, the file selected; arguments, never a shell string
-          const [cmd, args] =
-            process.platform === 'win32' ? ['explorer.exe', [`/select,${file}`]] : process.platform === 'darwin' ? ['open', ['-R', file]] : ['xdg-open', [dirname(file)]];
-
-          spawn(cmd, args, { detached: true, stdio: 'ignore' }).on('error', () => undefined).unref();
-
-          return reply(200, { ok: true });
-        }
-        if (url.pathname !== '/__orbito/status') return next();
-        const statusPath = resolve(root, STATUS_FILE);
-
-        if (req.method === 'GET') return reply(200, readJson(statusPath, {}));
-        if (req.method !== 'POST') return reply(405, { error: 'GET or POST' });
-        let raw = '';
-
-        req.on('data', (c) => (raw += c));
-        req.on('end', () => {
-          try {
-            const { id, status, note } = JSON.parse(raw || '{}');
-
-            if (typeof id !== 'string' || !/^[\w.:/-]+$/.test(id)) return reply(400, { error: 'invalid status id' });
-            if (!STATUSES.includes(status)) return reply(400, { error: `status must be one of: ${STATUSES.join(', ')}` });
-            if (note !== undefined && note !== null && typeof note !== 'string') return reply(400, { error: 'note must be text' });
-            const all = readJson(statusPath, {});
-
-            all[id] = { status, ...(note?.trim() ? { note: note.trim() } : {}), updatedAt: new Date().toISOString().slice(0, 10) };
-            const sorted = Object.fromEntries(Object.entries(all).sort(([a], [b]) => a.localeCompare(b, 'en', { numeric: true })));
-
-            mkdirSync(dirname(statusPath), { recursive: true });
-            writeFileSync(statusPath, JSON.stringify(sorted, null, 2) + '\n');
-            reply(200, { id, ...all[id] });
-          } catch (e) {
-            reply(400, { error: String(e) });
-          }
-        });
-      });
+      server.watcher.add(commentsDir);
+      server.watcher.on('add', pushComments);
+      server.watcher.on('unlink', pushComments);
+      server.middlewares.use(devEndpoints(root, resolve(root, STATUS_FILE), commentsDir));
     },
     handleHotUpdate(ctx) {
       const file = resolve(ctx.file);
@@ -261,8 +154,23 @@ export default function orbito(options = {}) {
 
         return [];
       }
+      // comments, the same way: added on the board or written by Claude
+      if (rel.startsWith(`${COMMENTS_DIR}/`)) {
+        ctx.server.ws.send({ type: 'custom', event: 'orbito:comments', data: readComments(resolve(root, COMMENTS_DIR)) });
+
+        return [];
+      }
       // the model mode shows in the top bar and on the skills map
       if (rel === '.orbito/settings.json' || rel === '.orbito/settings.local.json' || rel === '.orbito/models.json') {
+        const mod = ctx.server.moduleGraph.getModuleById(RESOLVED);
+
+        if (mod) ctx.server.moduleGraph.invalidateModule(mod);
+        ctx.server.ws.send({ type: 'full-reload' });
+
+        return [];
+      }
+      // requirements are only text for the screen details: rebuild the project module and reload
+      if (/^requirements\/.*\.md$/.test(rel)) {
         const mod = ctx.server.moduleGraph.getModuleById(RESOLVED);
 
         if (mod) ctx.server.moduleGraph.invalidateModule(mod);

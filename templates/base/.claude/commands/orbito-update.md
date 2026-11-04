@@ -2,7 +2,7 @@
 description: Update Orbito from GitHub and refresh this project's skills, agents and commands
 ---
 
-Update Orbito for this project:
+Update Orbito for this project. If `.orbito/runtime` says `docker`, step 1 is instead `docker pull ghcr.io/uncool-pro/orbito:latest`, then `docker run --rm --network none -v "${PWD}:/project" ghcr.io/uncool-pro/orbito:latest update`, and step 4 restarts the board with `docker compose up -d`; read the changelog at https://github.com/uncool-pro/orbito/blob/main/CHANGELOG.md.
 
 1. Run `npm run update` — the whole command, never only a part of it (that is `orbito update --pull`; in a project without that script yet, run `npx --no orbito update --pull` — it adds the script): it pulls the newest Orbito from GitHub into the Orbito folder this project links to, installs it, and refreshes the Orbito skills, agents and commands in `.claude/`. My screens, flows, design system, `.orbito/process.md`, `status.json` and `raw/` are not touched; skills or agents I added myself stay. If it reports edits of Orbito's skills saved to `.orbito/backup/` or a conflict with one of my skills' names, tell me in plain words what that means and what to do.
 2. If it says the Orbito folder is not a git clone, show me its steps and ask before moving or cloning anything.

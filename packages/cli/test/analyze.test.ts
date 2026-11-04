@@ -26,6 +26,7 @@ const files: Record<string, string> = {
   'design-system/index.ts': `export { Text } from './atoms/Text';\nexport { Row } from './molecules/Row';\nexport { Card } from './organisms/Card';\nexport { Badge } from './atoms/Badge';`,
   'screens/home.screen.tsx': `import { Card, Text } from '../design-system';\nimport { Row } from '../design-system/molecules/Row';\nimport Other from './other.screen';\nimport { motion } from 'framer-motion';\nexport default function Home() { return <div style={{ background: '#ff0000', gap: '0 auto' }}><Card /><Text>hi</Text><Row /><button onClick={() => 0}>x</button><Other /></div>; }`,
   'screens/other.screen.tsx': `export default function Other() { return <div style={{ margin: '0 auto', padding: 'var(--space-2)' }} />; }`,
+  'screens/spacing.screen.tsx': `export default function Spacing() { return <div style={{ padding: '8px 0', margin: '0 auto', gap: 'var(--space-2)' }} />; }`,
   'screens/promo.screen.tsx': `export default function Promo() {
   return (
     // ds-exception: campaign colour agreed with marketing, until the token exists
@@ -72,6 +73,12 @@ describe('analyzeProject', () => {
     expect(ex).toHaveLength(1);
     expect(ex[0]).toMatchObject({ severity: 'info', file: 'screens/promo.screen.tsx' });
     expect(ex[0]!.message.startsWith('exception (campaign colour agreed with marketing, until the token exists): raw colour')).toBe(true);
+  });
+
+  it('flags a hard-coded spacing written as text, and only that one', () => {
+    const inFile = report.issues.filter((i) => i.rule === 'raw-spacing' && i.file === 'screens/spacing.screen.tsx');
+
+    expect(inFile.map((i) => i.message)).toEqual(['padding: "8px 0" is not a spacing token']);
   });
 
   it('flags hard-coded values', () => {

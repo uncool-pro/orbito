@@ -1,0 +1,33 @@
+/* Tool chrome of the viewer. Everything is prefixed `pd-` so it never collides with a project's design system.
+   Shared here: colours, buttons, status chips and plain documents. */
+/* Tool chrome of the viewer. Everything is prefixed `pd-` so it never collides with a project's design system. */
+:root { --pd-bg: #eef0f3; --pd-dot: #c5cad3; --pd-surface: #ffffff; --pd-ink: #1c2230; --pd-muted: #5d6676; --pd-line: #d5d9e0; --pd-accent: #7e4f84; --pd-accent-soft: rgba(146, 95, 152, 0.16); --pd-mint: #60ebe8; --pd-happy: #1f8a52; --pd-alt: #2f6fd0; --pd-neg: #c2382a; --pd-other: #a4abb8; --pd-panel: #ffffff; --pd-panel-line: #e3e6eb; --pd-edge: #6c7486; --pd-tie: #9a8ab5; --pd-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+.pd-board, .pd-doc, .pd-screen-page { font-family: var(--pd-font); color: var(--pd-ink); }
+.pd-crash { padding: 24px; font: 14px/1.4 var(--pd-font); color: #a3261b; background: #fff4f2; height: 100%; }
+.pd-crash pre { white-space: pre-wrap; }
+.pd-select { font: inherit; font-size: 13px; padding: 6px 9px; border: 1px solid var(--pd-line); border-radius: 8px; background: #fff; color: var(--pd-ink); }
+.pd-toggle { display: flex; gap: 4px; align-items: center; color: var(--pd-muted); white-space: nowrap; }
+.pd-btn { font: inherit; font-size: 13px; padding: 5px 10px; border: 1px solid var(--pd-line); background: #fff; border-radius: 8px; cursor: pointer; color: var(--pd-ink); }
+.pd-btn--primary { background: var(--pd-accent); border-color: var(--pd-accent); color: #fff; }
+.pd-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--pd-muted); font-family: var(--pd-font); }
+.pd-status:disabled { cursor: default; }
+.pd-status i, .pd-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--st, #8a93a5); display: inline-block; }
+.pd-status--todo { --st: #8a93a5; }
+.pd-status--wip { --st: #d08a1c; }
+.pd-status--review { --st: #2f6fd0; }
+.pd-status--changes { --st: #d0452f; }
+.pd-status--approved { --st: #1f8a52; }
+.pd-status--onHold { --st: #7a5bb0; }
+.pd-status--dropped { --st: #3a3f4b; }
+.pd-doc { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
+.pd-doc h1 { font-size: 32px; margin: 0 0 24px; }
+.pd-doc h2 { font-size: 18px; margin: 32px 0 12px; }
+.pd-muted { color: var(--pd-muted); }
+.pd-warn { color: #8a5a00; }
+/* status of a feature: a native dropdown that looks like a chip */
+.pd-status { display: inline-flex; align-items: center; gap: 5px; font: 600 10px var(--pd-font); border-radius: 999px; border: 1px solid var(--pd-line); background: #fff; color: var(--pd-ink); cursor: pointer; white-space: nowrap; position: relative; padding: 3px 8px; font-size: 11px; }
+.pd-status select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; font: inherit; color: inherit; padding: 0 12px 0 0; cursor: pointer; }
+.pd-status select:disabled { cursor: default; }
+.pd-status::after { content: '▾'; position: absolute; right: 7px; font-size: 9px; color: var(--pd-muted); pointer-events: none; }
+.pd-status:focus-within { outline: 2px solid var(--pd-accent); outline-offset: 1px; }
+.pd-btn--sm { font-size: 12px; padding: 4px 9px; }
