@@ -11,15 +11,16 @@
 //      .claude/skills, .claude/agents    the team (Orbito → agents → skills) for the skills map; in the tool repo: skills/, agents/
 //    plus the design-system report (`orbito check ds`), recomputed when design-system/ or screens/ change.
 // 2. Dev endpoints: endpoints.mjs. The team: team.mjs. The status file: status.mjs.
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { searchForWorkspaceRoot } from 'vite';
 
 import { analyzeProject } from '@uncool-pro/orbito-cli/analyze';
-import { tokensToCss } from '@uncool-pro/orbito-core';
+import { parseRequirements, tokensToCss } from '@uncool-pro/orbito-core';
 
+import { readComments } from './comments.mjs';
 import { devEndpoints } from './endpoints.mjs';
 import { inside, readJson } from './files.mjs';
 import { readTeam, teamDirs } from './team.mjs';
@@ -27,7 +28,19 @@ import { readTeam, teamDirs } from './team.mjs';
 const VIRTUAL = 'virtual:orbito/project';
 const RESOLVED = '\0' + VIRTUAL;
 const STATUS_FILE = '.orbito/status.json';
+const COMMENTS_DIR = 'comments';
 const FONTS_FILE = 'design-system/fonts.css';
+/** The stories in `requirements/**\/*.md` (the local mirror of the tracker), for the screen details. */
+const readRequirements = (root) => {
+  const dir = resolve(root, 'requirements');
+
+  if (!existsSync(dir)) return [];
+
+  return readdirSync(dir, { recursive: true, encoding: 'utf8' })
+    .filter((f) => f.endsWith('.md'))
+    .sort()
+    .flatMap((f) => parseRequirements(`requirements/${f.split(sep).join('/')}`, readFileSync(resolve(dir, f), 'utf8')));
+};
 // the tool's packages: linked from outside the project (file: dependencies), the dev server must be allowed to serve them
 const PACKAGES_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -65,6 +78,7 @@ export default function orbito(options = {}) {
       const tokensPath = resolve(root, 'design-system/tokens.json');
       const fontsPath = resolve(root, FONTS_FILE);
 
+
       this.addWatchFile(statusPath);
       this.addWatchFile(tokensPath);
       // watching a missing file makes Vite resolve it as an import; a new fonts.css is picked up in configureServer
@@ -89,7 +103,8 @@ export default function orbito(options = {}) {
         `const { project, problems } = loadProject(config, screens, pages);`,
         `const ds = { tokens: ${JSON.stringify(report.tokens)}, css: ${JSON.stringify(tokensToCss(report.tokens))}, report: ${JSON.stringify(report)}, fonts: ${JSON.stringify(existsSync(fontsPath) ? readFileSync(fontsPath, 'utf8') : '')}, docs };`,
         `const team = ${JSON.stringify(readTeam(root))};`,
-        `export default { project, problems, statuses: ${JSON.stringify(readJson(statusPath, {}))}, dev: ${dev}, ds, team };`,
+        `const requirements = ${JSON.stringify(readRequirements(root))};`,
+        `export default { project, problems, statuses: ${JSON.stringify(readJson(statusPath, {}))}, comments: ${JSON.stringify(readComments(resolve(root, COMMENTS_DIR)))}, dev: ${dev}, ds, team, requirements };`,
       ].join('\n');
     },
     configureServer(server) {
@@ -117,7 +132,16 @@ export default function orbito(options = {}) {
         if (mod) server.moduleGraph.invalidateModule(mod);
         server.ws.send({ type: 'full-reload' });
       });
-      server.middlewares.use(devEndpoints(root, resolve(root, STATUS_FILE)));
+      // a comments file added or removed (the first comment on a screen, the last one gone, or Claude): push them all
+      const commentsDir = resolve(root, COMMENTS_DIR);
+      const pushComments = (file) => {
+        if (inside(commentsDir, resolve(file))) server.ws.send({ type: 'custom', event: 'orbito:comments', data: readComments(commentsDir) });
+      };
+
+      server.watcher.add(commentsDir);
+      server.watcher.on('add', pushComments);
+      server.watcher.on('unlink', pushComments);
+      server.middlewares.use(devEndpoints(root, resolve(root, STATUS_FILE), commentsDir));
     },
     handleHotUpdate(ctx) {
       const file = resolve(ctx.file);
@@ -130,8 +154,23 @@ export default function orbito(options = {}) {
 
         return [];
       }
+      // comments, the same way: added on the board or written by Claude
+      if (rel.startsWith(`${COMMENTS_DIR}/`)) {
+        ctx.server.ws.send({ type: 'custom', event: 'orbito:comments', data: readComments(resolve(root, COMMENTS_DIR)) });
+
+        return [];
+      }
       // the model mode shows in the top bar and on the skills map
       if (rel === '.orbito/settings.json' || rel === '.orbito/settings.local.json' || rel === '.orbito/models.json') {
+        const mod = ctx.server.moduleGraph.getModuleById(RESOLVED);
+
+        if (mod) ctx.server.moduleGraph.invalidateModule(mod);
+        ctx.server.ws.send({ type: 'full-reload' });
+
+        return [];
+      }
+      // requirements are only text for the screen details: rebuild the project module and reload
+      if (/^requirements\/.*\.md$/.test(rel)) {
         const mod = ctx.server.moduleGraph.getModuleById(RESOLVED);
 
         if (mod) ctx.server.moduleGraph.invalidateModule(mod);

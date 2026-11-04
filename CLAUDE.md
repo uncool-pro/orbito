@@ -35,7 +35,7 @@ Links are declared once, where they are drawn: an element with `data-pd-to` (via
 - The analyzer lives in `packages/cli/src/analyze.ts` (TypeScript AST, no browser). Add a rule there with a test in `packages/cli/test/analyze.test.ts`.
 
 ## Board input rules (keep them this simple)
-Drag anywhere pans; two-finger scroll / wheel pans; pinch or Ctrl/⌘ + wheel zooms at the cursor; click a card to start the prototype from that screen (no hover overlays on cards: hovering only highlights related screens and arrows); Esc leaves; Shift+1 fit. Camera math is pure (`canvas/camera.ts`, unit-tested); input handling is `canvas/controller.ts` (pointer capture, no React re-render while moving).
+Drag anywhere pans; two-finger scroll / wheel pans; pinch or Ctrl/⌘ + wheel zooms at the cursor; click a card to select it and see its details on the right (its code in dev mode); ▶ above a card or a double click starts the prototype from that screen (no hover overlays on cards: hovering only highlights related screens and arrows; in dev mode it measures); Esc leaves; Shift+1 fit. Camera math is pure (`canvas/camera.ts`, unit-tested); input handling is `canvas/controller.ts` (pointer capture, no React re-render while moving).
 
 ## Stable core (towards 1.0)
 People's projects depend on how the board, the flows diagram and the prototype behave. These parts are the stable core: **fix them, do not redesign them**, and build new things around them (new views, panels, skills), not into them.
@@ -68,5 +68,8 @@ After a change: typecheck, tests, and look at the board in the browser.
 ## Where things live in the viewer and the plugin
 - Addresses, the way back and the select-or-open rule: `viewer/src/app/routes.ts`. No view builds an address by hand.
 - Styles, one file per view: `viewer/src/styles/`. A rule belongs to the view it serves; change a selector where it is, do not add an override at the end.
-- The plugin: `vite-plugin/index.mjs` (the virtual module and hot updates), `endpoints.mjs` (dev endpoints and their protection against other sites), `team.mjs`, `status.mjs`.
+- The plugin: `vite-plugin/index.mjs` (the virtual module and hot updates, the requirements), `endpoints.mjs` (dev endpoints and their protection against other sites), `team.mjs`, `status.mjs`, `comments.mjs`.
+- How connections are sorted for people (this feature, other features, the shared menu) and the links between features: `core/src/features.ts`. Stories from `requirements/*.md`: `core/src/requirements.ts`.
+- The shell, one file per panel in `viewer/src/app/shell/`: `Shell.tsx` (the frame), `TopBar.tsx`, `Drawer.tsx` (the trees), `Inspector.tsx` (the right panel: product mode the screen, its requirements and comments; dev mode its code from `app/CodePanel.tsx`), `Island.tsx`; shared bits in `common.tsx`, shared state in `state.tsx`. Choices remembered on the computer go through `viewer/src/remembered.ts`.
+- Measuring on the prototype (dev mode): `app/Measure.tsx`. The page as features: `flows/FeatureMap.tsx`.
 - What Orbito installs into a project, for `create` and `update` alike: `cli/src/install.ts`.

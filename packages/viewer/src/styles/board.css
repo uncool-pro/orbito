@@ -49,3 +49,9 @@
 .pd-card__meta { display: flex; align-items: center; gap: 4px; min-width: 0; }
 .pd-card__meta .pd-badge { font-size: 9px; padding: 1px 5px; }
 .pd-card__head .pd-card__code { order: 0; }
+/* ▶ above a screen: starts the prototype from it (a click on the card itself selects the screen) */
+.pd-card__head { padding-right: 30px; }
+.pd-card__play { position: absolute; right: 0; bottom: 2px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; color: var(--pd-muted); background: transparent; text-decoration: none; }
+.pd-card__play:hover { background: var(--pd-accent-soft); color: var(--pd-accent); }
+.pd-card--hl .pd-card__play, .pd-card--active .pd-card__play { color: var(--pd-accent); }
+.pd-badge--comments { background: var(--pd-accent-soft); color: var(--pd-accent); font-style: normal; }

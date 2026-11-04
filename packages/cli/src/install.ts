@@ -142,12 +142,14 @@ export const installTeam = ({ root, tool, today = new Date().toISOString().slice
     copy(filled, join(root, 'compose.yaml'), 'compose.yaml');
     rmSync(dir, { recursive: true, force: true });
     // every folder compose.yaml mounts must exist: a missing one would be created by Docker, owned by root on Linux
-    for (const folder of ['public', 'src', 'content', 'reviews']) {
+    for (const folder of ['public', 'src', 'content', 'reviews', 'requirements', 'comments']) {
       if (existsSync(join(root, folder))) continue;
       mkdirSync(join(root, folder));
       writeFileSync(join(root, folder, '.gitkeep'), '');
     }
     mkdirSync(join(root, 'site'), { recursive: true });
+    // the status file is mounted on its own: it must exist, or Docker makes a folder in its place
+    if (!existsSync(join(root, '.orbito/status.json'))) writeFileSync(join(root, '.orbito/status.json'), '{}\n');
   }
   for (const name of RETIRED_SKILLS) retire(join(claude, 'skills', name), `skill ${name}`);
   for (const name of RETIRED_AGENTS) retire(join(claude, 'agents', `${name}.md`), `agent ${name}`);

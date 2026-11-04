@@ -13,6 +13,7 @@ import type { Camera } from '../canvas/camera';
 import { CanvasController } from '../canvas/controller';
 import { sharpWhenStill } from '../canvas/sharp';
 import type { Scroller } from '../canvas/controller';
+import { Measure } from '../app/Measure';
 import { StatusChip } from '../app/StatusChip';
 import { canvasHash, openScreen } from '../app/routes';
 import { BoardCard } from './BoardCard';
@@ -36,7 +37,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   const t = useT();
   const statuses = useStatuses();
   const flows = useMemo(() => (flowKey ? page.flows.filter((f) => f.key === flowKey) : page.flows), [page, flowKey]);
-  const { options, selected, select, focusTick, canvas } = useShell();
+  const { options, selected, select, focusTick, canvas, inspectorOpen, togglePanel, devMode } = useShell();
   const showClosed = options.showClosed;
   const byId = useMemo(() => new Map(project.screens.map((s) => [s.id, s])), [project]);
   const layout = useMemo(
@@ -195,25 +196,34 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusTick]);
 
-  // ---- clicks: a click on a screen starts the prototype from that screen (the fastest way to follow its interactions);
-  // a click on the empty board clears the selection; never after a drag
-  const onClick = (e: React.MouseEvent) => {
-    if (ctrl.current?.consumeDrag()) return;
-    // the element under the cursor, not the event target: whatever the browser picks as the click's target (a captured
-    // pointer, an overlay), the screen the person clicked is the one under the pointer
+  // ---- clicks: a click on a screen selects it and shows its details on the right (in dev mode, its code), the same in
+  // every mode; the prototype starts from ▶ above the screen or a double click; a click on the empty board clears the
+  // selection; never after a drag
+  /** The screen under the pointer, not the event target: whatever the browser picks as a click's target (a captured
+   * pointer, an overlay), the screen the person clicked is the one under the pointer. */
+  const screenAt = (e: React.MouseEvent) => {
     const target = (document.elementFromPoint(e.clientX, e.clientY) ?? e.target) as Element;
 
-    if (target.closest('[data-pd-ui]')) return;
-    const card = target.closest<HTMLElement>('[data-card]');
+    return target.closest('[data-pd-ui]') ? undefined : (target.closest<HTMLElement>('[data-card]')?.dataset.screen ?? null);
+  };
+  const onClick = (e: React.MouseEvent) => {
+    if (ctrl.current?.consumeDrag()) return;
+    const screen = screenAt(e);
 
-    if (card?.dataset.screen) {
-      select(card.dataset.screen);
-      openScreen(card.dataset.screen);
+    if (screen === undefined) return;
+    if (screen) {
+      select(screen);
+      if (!inspectorOpen) togglePanel('inspector');
 
       return;
     }
     setActive(null);
     select(null);
+  };
+  const onDoubleClick = (e: React.MouseEvent) => {
+    const screen = screenAt(e);
+
+    if (screen) openScreen(screen);
   };
 
   // ---- highlight
@@ -313,6 +323,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
       ref={root}
       className="pd-board"
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
       onPointerOver={(e) => {
         const card = (e.target as Element).closest<HTMLElement>('[data-card]')?.dataset.card;
 
@@ -321,6 +332,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
       onPointerLeave={() => setHover({})}
     >
       {flows.length === 0 && <div className="pd-empty">{t.noFlows}</div>}
+      {devMode && <Measure host={root} on="board" />}
 
       <div ref={world} className="pd-world" style={{ width: layout.w, height: layout.h }}>
         {layout.lanes.map((l) => (

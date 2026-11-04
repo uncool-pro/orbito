@@ -4,7 +4,7 @@ import { findScreen } from '@uncool-pro/orbito-core';
 
 import { Board } from '../board/Board';
 import { Catalog } from '../ds/Catalog';
-import { FlowsView } from '../flows/FlowsView';
+import { FlowsPage } from '../flows/FeatureMap';
 import { SkillsMap } from '../skills/SkillsMap';
 import { useT } from '../i18n';
 import { useViewer } from './context';
@@ -64,7 +64,7 @@ export const App = () => {
 
     return (
       <Shell mode="flows" page={page} flowKey={flow?.key}>
-        <FlowsView key={`${page.key}/${flow?.key ?? ''}`} page={page} flowKey={flow?.key} />
+        <FlowsPage key={`${page.key}/${flow?.key ?? ''}`} page={page} flowKey={flow?.key} />
       </Shell>
     );
   }

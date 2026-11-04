@@ -10,7 +10,7 @@ description: UX audit of Orbito mockups by the design auditor, with fresh eyes �
 The audit is critical on purpose. It finds; it does not redesign and does not decide. Small, frequent audits after every stage are more accurate than one big one at the end. In a rapid prototype the loop "audit → fixes → audit" is the main quality gate: it repeats until a round finds nothing that matters.
 
 ## What to look for, in order
-1. **Does the path make sense** for the persona? Walk it in the browser (`#/s/<code>`, or click a screen on the board) and stop where you would hesitate: a step that does not follow, a choice without enough information, a button that does not say what happens.
+1. **Does the path make sense** for the persona? Walk it in the browser (`#/s/<code>`, or ▶ above a screen on the board) and stop where you would hesitate: a step that does not follow, a choice without enough information, a button that does not say what happens.
 2. **Gaps:** missing states (empty, loading, error, long values), missing negative paths, dead ends, screens nobody reaches (`#/flows` lists them).
 3. **Stories vs. screens:** every story covered (`requirements/coverage.md`); anything designed that no story asks for is a question, not a silent addition.
 4. **Structure:** is each function where people will look for it first (`requirements/information-architecture.md`)?
