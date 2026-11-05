@@ -56,7 +56,7 @@
 .pd-insp p { margin: 0; line-height: 1.5; }
 .pd-insp__head { display: flex; align-items: center; justify-content: space-between; font-size: 18px; }
 .pd-insp p.pd-insp__title { color: var(--pd-muted); margin-top: -6px; }
-.pd-insp__preview { align-self: center; border-radius: var(--pd-r-md); overflow: hidden; box-shadow: 0 0 0 1px var(--pd-panel-line), var(--pd-shadow-card); }
+.pd-insp__preview { isolation: isolate; align-self: center; border-radius: var(--pd-r-md); overflow: hidden; box-shadow: 0 0 0 1px var(--pd-panel-line), var(--pd-shadow-card); }
 .pd-insp__chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .pd-mini-chip { display: inline-flex; gap: 4px; align-items: center; max-width: 100%; font: 12px var(--pd-font); padding: 4px 8px; border-radius: var(--pd-r-xs); border: 1px solid var(--pd-panel-line); background: var(--pd-surface); color: var(--pd-ink); text-decoration: none; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pd-mini-chip:hover { border-color: var(--pd-accent); }

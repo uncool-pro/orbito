@@ -219,6 +219,24 @@ test.describe('prototype', () => {
     await expect(page).toHaveURL(/#\/s\/plant-list$/);
   });
 
+  test('a mockup with a high z-index stays under the size switch and the island, which keep working', async ({ page }) => {
+    await page.goto('/#/s/plant-list');
+    const frame = page.locator('.pd-stage__frame');
+
+    await expect(frame).toBeVisible();
+    // a layer inside the mockup over the whole window, above everything it knows (a fixed header or tab bar does this)
+    await frame.evaluate((el) => {
+      const bar = document.createElement('div');
+
+      bar.style.cssText = 'position:fixed;inset:0;z-index:9999';
+      el.appendChild(bar);
+    });
+    await page.locator('.pd-sizes button').first().click();
+    await expect(page.locator('.pd-sizes button').first()).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('.pd-island__modes a').first().click();
+    await expect(page).toHaveURL(/#\/board/);
+  });
+
   test('an unknown screen shows a way back instead of an empty page', async ({ page }) => {
     await page.goto('/#/s/nope');
     await expect(page.getByText('nope')).toBeVisible();
