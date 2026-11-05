@@ -241,33 +241,69 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
   // screen lines, for deliberate exceptions (`// ds-exception: <reason>` on the line above or at the end of the line)
   const screenLines = new Map<string, string[]>();
 
+  // A screen file may render parts that live next to it in screens/ (e.g. screens/<area>/views/: one view, several
+  // states as thin screen files). Those parts are screen code: the same rules apply to them, each file is checked once,
+  // and the design-system components they draw count as used by every screen that reaches them.
+  const screenCode = new Map<string, { used: Set<string>; parts: string[] }>();
+  const isScreenFile = (f: string) => /\.screen\.[jt]sx$/.test(f);
+  const checkScreenCode = (file: string, id: string) => {
+    const known = screenCode.get(file);
+
+    if (known) return known;
+    const entry = { used: new Set<string>(), parts: [] as string[] };
+
+    screenCode.set(file, entry);
+    const { f } = scan(file, 'screen');
+    const fromDs = new Set<string>();
+
+    screenLines.set(rel(file), readFileSync(file, 'utf8').split(/\r?\n/));
+    f.imports.forEach((imp) => {
+      const at = { file: rel(file), line: imp.line, screen: id };
+
+      if (!imp.spec.startsWith('.')) {
+        if (!ALLOWED_PACKAGES.test(imp.spec))
+          add({ rule: 'import-boundary', severity: 'warning', ...at, message: `screen imports the package "${imp.spec}"`, hint: 'Screens are built from the design system; wrap what you need in a design-system component.' });
+
+        return;
+      }
+      if (!imp.resolved) return add({ rule: 'import-boundary', severity: 'error', ...at, message: `cannot resolve "${imp.spec}"` });
+      if (imp.resolved.startsWith(dsDir + sep) || imp.resolved === join(dsDir, 'index.ts')) {
+        if (!/^index\.tsx?$/.test(posix(relative(dsDir, imp.resolved))))
+          add({ rule: 'deep-import', severity: 'warning', ...at, message: `imports design-system internals (${imp.spec})`, hint: 'Import from the design system entry point (design-system/index.ts).' });
+        imp.names.forEach((n) => fromDs.add(n));
+      } else if (isScreenFile(imp.resolved)) add({ rule: 'import-boundary', severity: 'error', ...at, message: `screen imports another screen (${imp.spec})`, hint: 'Shared parts belong in the design system (organisms or templates).' });
+      else if (!imp.resolved.startsWith(screensDir + sep)) add({ rule: 'import-boundary', severity: 'warning', ...at, message: `screen imports from outside screens/ and design-system/ (${imp.spec})` });
+      else if (/\.[jt]sx?$/.test(imp.resolved)) entry.parts.push(imp.resolved);
+    });
+    f.jsxTags.forEach((t) => fromDs.has(t.name) && byName.has(t.name) && entry.used.add(t.name));
+
+    return entry;
+  };
+  // everything a screen draws: its own file and the parts it reaches, followed once each (cycles are fine)
+  const usedByScreen = (file: string, id: string) => {
+    const used = new Set<string>();
+    const seen = new Set<string>();
+    const visit = (f: string) => {
+      if (seen.has(f)) return;
+      seen.add(f);
+      const e = checkScreenCode(f, id);
+
+      e.used.forEach((n) => used.add(n));
+      e.parts.forEach(visit);
+    };
+
+    visit(file);
+
+    return used;
+  };
+
   walk(screensDir)
-    .filter((f) => /\.screen\.[jt]sx$/.test(f))
+    .filter(isScreenFile)
+    .sort()
     .forEach((file) => {
       const id = /([^/\\]+)\.screen\.[jt]sx$/.exec(file)![1]!;
-      const { f } = scan(file, 'screen');
-      const fromDs = new Set<string>();
 
-      screenLines.set(rel(file), readFileSync(file, 'utf8').split(/\r?\n/));
-
-      f.imports.forEach((imp) => {
-        const at = { file: rel(file), line: imp.line, screen: id };
-
-        if (!imp.spec.startsWith('.')) {
-          if (!ALLOWED_PACKAGES.test(imp.spec))
-            add({ rule: 'import-boundary', severity: 'warning', ...at, message: `screen imports the package "${imp.spec}"`, hint: 'Screens are built from the design system; wrap what you need in a design-system component.' });
-
-          return;
-        }
-        if (!imp.resolved) return add({ rule: 'import-boundary', severity: 'error', ...at, message: `cannot resolve "${imp.spec}"` });
-        if (imp.resolved.startsWith(dsDir + sep) || imp.resolved === join(dsDir, 'index.ts')) {
-          if (!/^index\.tsx?$/.test(posix(relative(dsDir, imp.resolved))))
-            add({ rule: 'deep-import', severity: 'warning', ...at, message: `imports design-system internals (${imp.spec})`, hint: 'Import from the design system entry point (design-system/index.ts).' });
-          imp.names.forEach((n) => fromDs.add(n));
-        } else if (/\.screen\.[jt]sx$/.test(imp.resolved)) add({ rule: 'import-boundary', severity: 'error', ...at, message: `screen imports another screen (${imp.spec})`, hint: 'Shared parts belong in the design system (organisms or templates).' });
-        else if (!imp.resolved.startsWith(screensDir)) add({ rule: 'import-boundary', severity: 'warning', ...at, message: `screen imports from outside screens/ and design-system/ (${imp.spec})` });
-      });
-      screens[id] = [...new Set(f.jsxTags.map((t) => t.name).filter((n) => fromDs.has(n) && byName.has(n)))].sort();
+      screens[id] = [...usedByScreen(file, id)].sort();
       screens[id]!.forEach((n) => byName.get(n)!.screens.push(id));
     });
 
