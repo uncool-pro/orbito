@@ -392,3 +392,31 @@ test('the pages list shows five and a half pages, as in Figma, and scrolls for m
   expect(shown).toBe(5.5 * row + 5);
   expect(full).toBeGreaterThan(shown);
 });
+
+test('the pages list grows and shrinks by its bottom edge, and keeps its height', async ({ page }) => {
+  await openBoard(page);
+  const list = page.locator('.pd-pages__list');
+  const grip = page.locator('.pd-pages__grip');
+  const height = () => list.evaluate((ul) => Math.round(ul.getBoundingClientRect().height));
+  const before = await height();
+
+  // the demo has three pages: drag the edge up to two rows
+  await page.locator('.pd-pages').hover();
+  const box = (await grip.boundingBox())!;
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y - 60, { steps: 5 });
+  await page.mouse.up();
+  const two = await height();
+
+  expect(two).toBeLessThan(before);
+  expect(two).toBe(65);
+  await page.reload();
+  await expect.poll(height).toBe(65);
+  // the keyboard does the same, one row at a time, up to all the pages
+  await grip.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect.poll(height).toBe(await list.evaluate((ul) => ul.scrollHeight));
+  await page.evaluate(() => localStorage.removeItem('pd.pagesHeight'));
+});

@@ -194,7 +194,13 @@
 .pd-code__text { flex: 1; min-height: 0; margin: 8px 0 0; padding: 0 12px 24px; overflow: auto; font: 12px/1.55 var(--pd-mono); tab-size: 2; white-space: pre; }
 .pd-code__text i { display: inline-block; width: 32px; margin-right: 12px; text-align: right; font-style: normal; color: var(--pd-night-muted); opacity: 0.6; user-select: none; }
 /* left panel, as in Figma: the pages in a small list of their own on top, the features of the page under it */
-.pd-pages { margin: 0 -8px 6px; padding: 0 8px 8px; border-bottom: 1px solid var(--pd-panel-line); }
+.pd-pages { position: relative; margin: 0 -8px 6px; padding: 0 8px 8px; border-bottom: 1px solid var(--pd-panel-line); }
+/* the bottom edge of the pages list: drag it (or arrows on it) to show more or fewer pages; the handle shows on hover */
+.pd-pages__grip { position: absolute; left: 0; right: 0; bottom: -5px; height: 10px; z-index: 2; cursor: row-resize; touch-action: none; }
+.pd-pages__grip::after { content: ''; position: absolute; left: 50%; top: 3px; width: 36px; height: 4px; margin-left: -18px; border-radius: 999px; background: var(--pd-line); opacity: 0; transition: opacity 0.15s, background 0.15s; }
+.pd-pages:hover .pd-pages__grip::after, .pd-pages__grip:focus-visible::after { opacity: 1; }
+.pd-pages__grip:hover::after, .pd-pages__grip:active::after { background: var(--pd-accent); opacity: 1; }
+.pd-shell .pd-pages__grip:focus-visible { outline: none; }
 .pd-pages h4 { margin: 8px 8px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--pd-muted); }
 /* five and a half pages in view, as in Figma: the cut row says the list scrolls (32px rows, 1px apart) */
 .pd-pages__list { list-style: none; margin: 0; padding: 0; max-height: calc(5.5 * 32px + 5 * 1px); overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 1px; font-size: 13px; }

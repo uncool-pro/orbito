@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { DS_LEVELS, flowStatusId, statusOf } from '@uncool-pro/orbito-core';
 import type { Page } from '@uncool-pro/orbito-core';
 
 import { useT } from '../../i18n';
+import { recall, remember } from '../../remembered';
 import { useStatuses } from '../../status';
 import { useViewer } from '../context';
 import { canvasHash, canvasOf, dsHash, go, lastCanvasHash, openScreen, pickScreen } from '../routes';
@@ -52,12 +53,41 @@ const BranchIcon = () => <Icon name="git-branch" size={14} className="pd-tree__i
  * its status as the only dot. A page's name shows the whole page; a feature shows only that feature, and a second click
  * on it the whole page again.
  */
+/** One page row (32 px) and the 1 px between rows. */
+const PAGE_ROW = 33;
+const PAGES_HEIGHT = 'pd.pagesHeight';
+
+/**
+ * The height of the pages list: five and a half rows by default (the cut row says it scrolls), dragged by its bottom
+ * edge or set with the arrow keys on it, from two rows to all of them. Remembered on this computer.
+ */
+const usePagesHeight = (count: number) => {
+  const [height, setHeight] = useState<number | null>(() => {
+    const saved = Number(recall(PAGES_HEIGHT));
+
+    return saved > 0 ? saved : null;
+  });
+  const set = (h: number) => {
+    // n rows are n × 32 px and n − 1 gaps
+    const next = Math.round(Math.min(Math.max(count, 2) * PAGE_ROW - 1, Math.max(2 * PAGE_ROW - 1, h)));
+
+    setHeight(next);
+    remember(PAGES_HEIGHT, String(next));
+  };
+
+  return [height, set] as const;
+};
+
 const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: string }) => {
   const { project } = useViewer();
   const { selected, select } = useShell();
   const statuses = useStatuses();
   const t = useT();
   const base = canvasOf(mode);
+  const [pagesHeight, setPagesHeight] = usePagesHeight(project.pages.length);
+  const pagesList = useRef<HTMLUListElement>(null);
+  const drag = useRef<{ y: number; h: number } | null>(null);
+  const listHeight = () => pagesList.current?.getBoundingClientRect().height ?? 0;
   const byId = new Map(project.screens.map((s) => [s.id, s]));
   const [open, setOpen] = useState<Set<string>>(() => new Set(flowKey ? [flowKey] : page?.flows.slice(0, 2).map((f) => f.key)));
   const toggle = (key: string) => setOpen((o) => (o.has(key) ? new Set([...o].filter((k) => k !== key)) : new Set([...o, key])));
@@ -95,7 +125,7 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
     <>
       <nav className="pd-pages" aria-label={t.pages}>
         <h4>{t.pages}</h4>
-        <ul className="pd-pages__list">
+        <ul className="pd-pages__list" ref={pagesList} style={pagesHeight ? { maxHeight: pagesHeight } : undefined}>
           {project.pages.map((p) => {
             const current = p.key === page?.key;
 
@@ -109,6 +139,31 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
             );
           })}
         </ul>
+        {project.pages.length > 2 && (
+          <div
+            className="pd-pages__grip"
+            role="separator"
+            aria-orientation="horizontal"
+            aria-label={t.resizePages}
+            title={t.resizePages}
+            tabIndex={0}
+            onPointerDown={(e) => {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              drag.current = { y: e.clientY, h: listHeight() };
+            }}
+            onPointerMove={(e) => {
+              if (drag.current) setPagesHeight(drag.current.h + e.clientY - drag.current.y);
+            }}
+            onPointerUp={() => {
+              drag.current = null;
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+              e.preventDefault();
+              setPagesHeight(listHeight() + (e.key === 'ArrowDown' ? PAGE_ROW : -PAGE_ROW));
+            }}
+          />
+        )}
       </nav>
       {page && (
         <nav className="pd-tree" aria-label={t.features}>

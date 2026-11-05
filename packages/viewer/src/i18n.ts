@@ -19,7 +19,7 @@ const en = {
   backToBoard: 'Back to board',
   backToFlows: 'Back to flows',
   closeSkills: 'Close the skills map',
-  hidePanel: 'Hide the panel',
+  resizePages: 'Drag to show more or fewer pages (or use the arrow keys)',
   notFound: 'No such screen',
   problems: 'Problems in the project',
   note: 'Note',

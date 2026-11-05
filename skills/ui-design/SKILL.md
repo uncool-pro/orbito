@@ -17,7 +17,7 @@ The UX designer decides structure and behaviour; the UI designer makes each scre
 5. Mark the screen as migrated in `.orbito/process.md`; a screen someone already approved changes in a version of its flow.
 
 ## Designing a new screen in hi-fi
-Start from the UX spec (`wireframes`), then build it directly on the design system with the same steps 2–4.
+Start from the UX spec (`wireframes`), then build it directly on the design system with the same steps 2–4. Keep the `data-name` of every block the screen lays out itself (see `wireframes`), and name new ones the same way, so people and developers can keep pointing at them.
 
 ## Every visual change lands in the design system
 When a screen needs something the design system does not have, or wants it to look different (a new style, a new state, other spacing), never solve it only in the screen — that is how a design system quietly stops being true. Stop and ask the person, in plain words, with a recommendation:
