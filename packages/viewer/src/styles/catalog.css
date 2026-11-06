@@ -37,7 +37,7 @@
 .pd-fp-motion { display: block; width: 18px; height: 18px; border-radius: 50%; background: var(--pd-accent); box-shadow: -14px 0 0 -3px rgba(108, 58, 245, 0.4), -26px 0 0 -6px rgba(108, 58, 245, 0.2); }
 .pd-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 24px 20px; }
 .pd-gallery__item { display: flex; flex-direction: column; gap: 2px; color: var(--pd-ink); text-decoration: none; font-size: 13px; min-width: 0; }
-.pd-gallery__stage { position: relative; height: 140px; margin-bottom: 8px; display: grid; place-items: center; border-radius: var(--pd-r-lg); overflow: hidden; outline: 1px solid var(--pd-panel-line); transition: outline-color 0.15s; }
+.pd-gallery__stage { isolation: isolate; position: relative; height: 140px; margin-bottom: 8px; display: grid; place-items: center; border-radius: var(--pd-r-lg); overflow: hidden; outline: 1px solid var(--pd-panel-line); transition: outline-color 0.15s; }
 .pd-gallery__item:hover .pd-gallery__stage { outline: 2px solid var(--pd-accent); }
 .pd-gallery__live { display: block; max-width: 100%; padding: 12px; box-sizing: border-box; pointer-events: none; }
 .pd-gallery__stage--organisms .pd-gallery__live, .pd-gallery__stage--templates .pd-gallery__live { zoom: 0.62; }
@@ -46,13 +46,13 @@
 .pd-ds-tabs { display: flex; gap: 24px; margin: 8px 0 24px; border-bottom: 1px solid var(--pd-panel-line); }
 .pd-ds-tabs a { padding: 10px 0; margin-bottom: -1px; font-size: 13px; font-weight: 600; color: var(--pd-muted); text-decoration: none; border-bottom: 2px solid transparent; }
 .pd-ds-tabs a:hover { color: var(--pd-ink); border-bottom-color: var(--pd-line); }
-.pd-hero { margin: 0; min-height: 220px; padding: 56px 32px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; border-radius: var(--pd-r-lg); overflow-x: auto; background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px) !important; background-size: 16px 16px !important; }
+.pd-hero { isolation: isolate; margin: 0; min-height: 220px; padding: 56px 32px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; border-radius: var(--pd-r-lg); overflow-x: auto; background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px) !important; background-size: 16px 16px !important; }
 .pd-hero figcaption { font-size: 12px; color: var(--pd-muted); }
 .pd-variants { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 28px 20px; }
 .pd-variant { margin: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .pd-variant figcaption { display: flex; flex-direction: column; gap: 1px; font-size: 13px; }
 .pd-variant figcaption small { color: var(--pd-muted); font-size: 12px; }
-.pd-variant__stage { display: flex; align-items: center; justify-content: center; padding: 28px 16px; border-radius: var(--pd-r-md); overflow-x: auto; outline: 1px solid var(--pd-panel-line); }
+.pd-variant__stage { isolation: isolate; display: flex; align-items: center; justify-content: center; padding: 28px 16px; border-radius: var(--pd-r-md); overflow-x: auto; outline: 1px solid var(--pd-panel-line); }
 .pd-guides { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 32px; }
 .pd-guides section { padding-top: 12px; border-top: 3px solid; }
 .pd-guides .is-do { border-color: var(--pd-dot-ok); }

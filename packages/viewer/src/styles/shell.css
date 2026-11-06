@@ -37,7 +37,11 @@
 .pd-drawer__tabs button { flex: 1; font: 600 13px var(--pd-font); height: 28px; padding: 0 8px; border: 0; border-radius: var(--pd-r-xs); background: transparent; color: var(--pd-muted); cursor: pointer; }
 .pd-drawer__tabs button:hover { color: var(--pd-ink); }
 .pd-drawer__tabs button.is-on { color: var(--pd-ink); background: var(--pd-surface); box-shadow: var(--pd-shadow-card); }
-.pd-drawer__body { flex: 1; overflow-y: auto; padding: 8px 8px 24px; }
+.pd-drawer__body { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 8px 24px; }
+/* the project tab: the pages stay on top with their own scroll, the features under them scroll on their own */
+.pd-drawer__body--project { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+.pd-drawer__body--project > .pd-pages { flex: none; }
+.pd-drawer__body--project > .pd-tree { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -8px; padding: 0 8px 24px; }
 .pd-tree { display: flex; flex-direction: column; gap: 1px; font-size: 13px; }
 .pd-tree h4 { margin: 16px 8px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--pd-muted); }
 .pd-tree ul { list-style: none; margin: 0; padding: 0; }
@@ -56,7 +60,7 @@
 .pd-insp p { margin: 0; line-height: 1.5; }
 .pd-insp__head { display: flex; align-items: center; justify-content: space-between; font-size: 18px; }
 .pd-insp p.pd-insp__title { color: var(--pd-muted); margin-top: -6px; }
-.pd-insp__preview { align-self: center; border-radius: var(--pd-r-md); overflow: hidden; box-shadow: 0 0 0 1px var(--pd-panel-line), var(--pd-shadow-card); }
+.pd-insp__preview { isolation: isolate; align-self: center; border-radius: var(--pd-r-md); overflow: hidden; box-shadow: 0 0 0 1px var(--pd-panel-line), var(--pd-shadow-card); }
 .pd-insp__chips { display: flex; flex-wrap: wrap; gap: 4px; }
 .pd-mini-chip { display: inline-flex; gap: 4px; align-items: center; max-width: 100%; font: 12px var(--pd-font); padding: 4px 8px; border-radius: var(--pd-r-xs); border: 1px solid var(--pd-panel-line); background: var(--pd-surface); color: var(--pd-ink); text-decoration: none; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .pd-mini-chip:hover { border-color: var(--pd-accent); }
@@ -194,7 +198,13 @@
 .pd-code__text { flex: 1; min-height: 0; margin: 8px 0 0; padding: 0 12px 24px; overflow: auto; font: 12px/1.55 var(--pd-mono); tab-size: 2; white-space: pre; }
 .pd-code__text i { display: inline-block; width: 32px; margin-right: 12px; text-align: right; font-style: normal; color: var(--pd-night-muted); opacity: 0.6; user-select: none; }
 /* left panel, as in Figma: the pages in a small list of their own on top, the features of the page under it */
-.pd-pages { margin: 0 -8px 6px; padding: 0 8px 8px; border-bottom: 1px solid var(--pd-panel-line); }
+.pd-pages { position: relative; margin: 0 -8px 6px; padding: 0 8px 8px; border-bottom: 1px solid var(--pd-panel-line); }
+/* the bottom edge of the pages list: drag it (or arrows on it) to show more or fewer pages; the handle shows on hover */
+.pd-pages__grip { position: absolute; left: 0; right: 0; bottom: -5px; height: 10px; z-index: 2; cursor: row-resize; touch-action: none; }
+.pd-pages__grip::after { content: ''; position: absolute; left: 50%; top: 3px; width: 36px; height: 4px; margin-left: -18px; border-radius: 999px; background: var(--pd-line); opacity: 0; transition: opacity 0.15s, background 0.15s; }
+.pd-pages:hover .pd-pages__grip::after, .pd-pages__grip:focus-visible::after { opacity: 1; }
+.pd-pages__grip:hover::after, .pd-pages__grip:active::after { background: var(--pd-accent); opacity: 1; }
+.pd-shell .pd-pages__grip:focus-visible { outline: none; }
 .pd-pages h4 { margin: 8px 8px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--pd-muted); }
 /* five and a half pages in view, as in Figma: the cut row says the list scrolls (32px rows, 1px apart) */
 .pd-pages__list { list-style: none; margin: 0; padding: 0; max-height: calc(5.5 * 32px + 5 * 1px); overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 1px; font-size: 13px; }

@@ -19,7 +19,8 @@
 .pd-sizes button { white-space: nowrap; }
 .pd-stage { position: relative; }
 /* the screen keeps its own width; a narrow stage scales it down instead of cutting it */
-.pd-stage__frame { flex: none; }
+/* a mockup lives in its own layer: whatever z-index it uses stays under Orbito (size switch, island, bubble) */
+.pd-stage__frame { flex: none; isolation: isolate; }
 .pd-devpath { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; min-width: 0; padding: 3px 4px 3px 10px; border-radius: var(--pd-r-md); background: var(--pd-panel); border: 1px solid var(--pd-panel-line); box-shadow: var(--pd-shadow-card); }
 .pd-devpath code { font: 12px var(--pd-mono); color: var(--pd-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pd-devpath__link { font: 600 12px var(--pd-font); color: var(--pd-accent); text-decoration: none; padding: 4px 8px; border-radius: var(--pd-r-xs); white-space: nowrap; }

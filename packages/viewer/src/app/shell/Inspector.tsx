@@ -51,7 +51,7 @@ export const Inspector = ({ mode, page, flowKey }: { mode: Mode; page?: Page; fl
  */
 const ScreenInspector = ({ screen: s, mode, page, flowKey }: { screen: Screen<ComponentType>; mode: Mode; page?: Page; flowKey?: string }) => {
   const { project, links, ds } = useViewer();
-  const { select, togglePanel } = useShell();
+  const { select } = useShell();
   const t = useT();
   const vp = project.viewports[s.viewport ?? project.config.defaultViewport]!;
   const scale = Math.min(236 / vp.width, 300 / vp.height);
@@ -66,12 +66,9 @@ const ScreenInspector = ({ screen: s, mode, page, flowKey }: { screen: Screen<Co
 
   return (
     <div className="pd-insp">
+      {/* the panel is shown and hidden from the top bar only: one button for one thing */}
       <div className="pd-insp__head">
         <b>{s.title.split(' / ').pop()}</b>
-        {/* hides the panel (the same as the button in the top bar); the selection stays, so the details come back */}
-        <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => togglePanel('inspector')} aria-label={t.hidePanel} title={t.hidePanel}>
-          <Icon name="panel-right" size={18} />
-        </button>
       </div>
       <p className="pd-insp__title">
         {s.title} <small>{s.code}</small>
@@ -241,9 +238,6 @@ const ClaudeRef = ({ screen: s }: { screen: Screen<ComponentType> }) => {
 
 /** Dev mode with a screen selected: where it lives, then its code and the code of its components, filling the panel. */
 const DevInspector = ({ screen: s }: { screen: Screen<ComponentType> }) => {
-  const { togglePanel } = useShell();
-  const t = useT();
-
   return (
     <>
       <div className="pd-insp pd-insp--devhead">
@@ -251,9 +245,6 @@ const DevInspector = ({ screen: s }: { screen: Screen<ComponentType> }) => {
           <b>
             {s.title.split(' / ').pop()} <small className="pd-insp__key">{s.code}</small>
           </b>
-          <button type="button" className="pd-iconbtn pd-iconbtn--sm" onClick={() => togglePanel('inspector')} aria-label={t.hidePanel} title={t.hidePanel}>
-            <Icon name="panel-right" size={18} />
-          </button>
         </div>
         <DevSection screen={s} />
       </div>

@@ -219,6 +219,24 @@ test.describe('prototype', () => {
     await expect(page).toHaveURL(/#\/s\/plant-list$/);
   });
 
+  test('a mockup with a high z-index stays under the size switch and the island, which keep working', async ({ page }) => {
+    await page.goto('/#/s/plant-list');
+    const frame = page.locator('.pd-stage__frame');
+
+    await expect(frame).toBeVisible();
+    // a layer inside the mockup over the whole window, above everything it knows (a fixed header or tab bar does this)
+    await frame.evaluate((el) => {
+      const bar = document.createElement('div');
+
+      bar.style.cssText = 'position:fixed;inset:0;z-index:9999';
+      el.appendChild(bar);
+    });
+    await page.locator('.pd-sizes button').first().click();
+    await expect(page.locator('.pd-sizes button').first()).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('.pd-island__modes a').first().click();
+    await expect(page).toHaveURL(/#\/board/);
+  });
+
   test('an unknown screen shows a way back instead of an empty page', async ({ page }) => {
     await page.goto('/#/s/nope');
     await expect(page.getByText('nope')).toBeVisible();
@@ -373,4 +391,50 @@ test('the pages list shows five and a half pages, as in Figma, and scrolls for m
 
   expect(shown).toBe(5.5 * row + 5);
   expect(full).toBeGreaterThan(shown);
+});
+
+test('the pages and the features scroll on their own: scrolling a long feature list keeps the pages in view', async ({ page }) => {
+  await openBoard(page);
+  const tree = page.locator('.pd-drawer__body--project > .pd-tree');
+
+  // the demo has a few features: add copies of its rows to stand for a project with many
+  await tree.evaluate((nav) => {
+    const level = nav.querySelector('ul')!;
+
+    for (let i = 0; i < 40; i++) level.appendChild(level.firstElementChild!.cloneNode(true));
+  });
+  await tree.hover();
+  await page.mouse.wheel(0, 4000);
+  await expect.poll(() => tree.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  // the panel itself did not move: the pages are where they were, in view
+  expect(await page.locator('.pd-drawer__body').evaluate((el) => el.scrollTop)).toBe(0);
+  await expect(page.locator('.pd-pages')).toBeInViewport();
+});
+
+test('the pages list grows and shrinks by its bottom edge, and keeps its height', async ({ page }) => {
+  await openBoard(page);
+  const list = page.locator('.pd-pages__list');
+  const grip = page.locator('.pd-pages__grip');
+  const height = () => list.evaluate((ul) => Math.round(ul.getBoundingClientRect().height));
+  const before = await height();
+
+  // the demo has three pages: drag the edge up to two rows
+  await page.locator('.pd-pages').hover();
+  const box = (await grip.boundingBox())!;
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2, box.y - 60, { steps: 5 });
+  await page.mouse.up();
+  const two = await height();
+
+  expect(two).toBeLessThan(before);
+  expect(two).toBe(65);
+  await page.reload();
+  await expect.poll(height).toBe(65);
+  // the keyboard does the same, one row at a time, up to all the pages
+  await grip.focus();
+  await page.keyboard.press('ArrowDown');
+  await expect.poll(height).toBe(await list.evaluate((ul) => ul.scrollHeight));
+  await page.evaluate(() => localStorage.removeItem('pd.pagesHeight'));
 });
