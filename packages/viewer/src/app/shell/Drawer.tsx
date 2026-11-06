@@ -32,7 +32,7 @@ export const Drawer = ({ mode, page, flowKey, dsSection }: { mode: Mode; page?: 
           {t.designSystem}
         </button>
       </div>
-      <div className="pd-drawer__body">{tab === 'project' ? <ProjectTree mode={mode} page={page} flowKey={flowKey} /> : <DsTree section={dsSection} />}</div>
+      <div className={tab === 'project' ? 'pd-drawer__body pd-drawer__body--project' : 'pd-drawer__body'}>{tab === 'project' ? <ProjectTree mode={mode} page={page} flowKey={flowKey} /> : <DsTree section={dsSection} />}</div>
     </aside>
   );
 };
@@ -125,7 +125,7 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
     <>
       <nav className="pd-pages" aria-label={t.pages}>
         <h4>{t.pages}</h4>
-        <ul className="pd-pages__list" ref={pagesList} style={pagesHeight ? { maxHeight: pagesHeight } : undefined}>
+        <ul className="pd-pages__list" ref={pagesList} style={pagesHeight ? { maxHeight: `min(${pagesHeight}px, 50vh)` } : undefined}>
           {project.pages.map((p) => {
             const current = p.key === page?.key;
 

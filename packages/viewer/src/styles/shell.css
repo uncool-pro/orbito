@@ -37,7 +37,11 @@
 .pd-drawer__tabs button { flex: 1; font: 600 13px var(--pd-font); height: 28px; padding: 0 8px; border: 0; border-radius: var(--pd-r-xs); background: transparent; color: var(--pd-muted); cursor: pointer; }
 .pd-drawer__tabs button:hover { color: var(--pd-ink); }
 .pd-drawer__tabs button.is-on { color: var(--pd-ink); background: var(--pd-surface); box-shadow: var(--pd-shadow-card); }
-.pd-drawer__body { flex: 1; overflow-y: auto; padding: 8px 8px 24px; }
+.pd-drawer__body { flex: 1; min-height: 0; overflow-y: auto; padding: 8px 8px 24px; }
+/* the project tab: the pages stay on top with their own scroll, the features under them scroll on their own */
+.pd-drawer__body--project { display: flex; flex-direction: column; overflow: hidden; padding-bottom: 0; }
+.pd-drawer__body--project > .pd-pages { flex: none; }
+.pd-drawer__body--project > .pd-tree { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; margin: 0 -8px; padding: 0 8px 24px; }
 .pd-tree { display: flex; flex-direction: column; gap: 1px; font-size: 13px; }
 .pd-tree h4 { margin: 16px 8px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--pd-muted); }
 .pd-tree ul { list-style: none; margin: 0; padding: 0; }

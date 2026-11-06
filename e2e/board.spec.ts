@@ -393,6 +393,24 @@ test('the pages list shows five and a half pages, as in Figma, and scrolls for m
   expect(full).toBeGreaterThan(shown);
 });
 
+test('the pages and the features scroll on their own: scrolling a long feature list keeps the pages in view', async ({ page }) => {
+  await openBoard(page);
+  const tree = page.locator('.pd-drawer__body--project > .pd-tree');
+
+  // the demo has a few features: add copies of its rows to stand for a project with many
+  await tree.evaluate((nav) => {
+    const level = nav.querySelector('ul')!;
+
+    for (let i = 0; i < 40; i++) level.appendChild(level.firstElementChild!.cloneNode(true));
+  });
+  await tree.hover();
+  await page.mouse.wheel(0, 4000);
+  await expect.poll(() => tree.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+  // the panel itself did not move: the pages are where they were, in view
+  expect(await page.locator('.pd-drawer__body').evaluate((el) => el.scrollTop)).toBe(0);
+  await expect(page.locator('.pd-pages')).toBeInViewport();
+});
+
 test('the pages list grows and shrinks by its bottom edge, and keeps its height', async ({ page }) => {
   await openBoard(page);
   const list = page.locator('.pd-pages__list');
