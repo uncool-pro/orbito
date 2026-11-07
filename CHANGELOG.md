@@ -3,6 +3,7 @@
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
 ## 0.9.66 — not released yet
+- **Fix: a sharp status bar on phone screens.** Signal, Wi-Fi and battery are drawn as vectors in the text colour, as on a real phone. Before, they were text characters that every system drew in a different font, and the bar looked broken. Nothing to change in your screens.
 - **The demo app Leafy has a fresher look and more to show.** A livelier brand green with a glow at the top of every screen, frosted-glass cards and a floating tab bar, the main action in the brand gradient with a soft green glow, and the plant and success screens in full colour. "Schedule & profile" grows from one flow to four (reminders, rooms, a plant sitter), with three placeholder screens built from a new `Skeleton` component: how a project shows screens that are not designed yet. Every colour still comes from tokens with checked contrast, and the demo passes `check:ds` with 0 issues. Only the example project changes: your projects and the template keep their own look.
 
 ## 0.9.65 — not released yet
