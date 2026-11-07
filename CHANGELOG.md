@@ -2,6 +2,9 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
+## 0.9.66 — not released yet
+- **The demo app Leafy has a fresher look and more to show.** A livelier brand green with a glow at the top of every screen, frosted-glass cards and a floating tab bar, the main action in the brand gradient with a soft green glow, and the plant and success screens in full colour. "Schedule & profile" grows from one flow to four (reminders, rooms, a plant sitter), with three placeholder screens built from a new `Skeleton` component: how a project shows screens that are not designed yet. Every colour still comes from tokens with checked contrast, and the demo passes `check:ds` with 0 issues. Only the example project changes: your projects and the template keep their own look.
+
 ## 0.9.65 — not released yet
 - **The pages list grows and shrinks.** Drag its bottom edge (a handle shows when you hover the list), or use the arrow keys on it, from two pages to all of them (at most half the window, so the features keep room); the height is remembered on this computer. By default it still shows five and a half. The pages and the features scroll on their own: a long list of features scrolls under the pages, which stay in view.
 - **One button for the right panel**, in the top bar. The second one in the panel's own header is gone.

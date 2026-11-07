@@ -7,7 +7,7 @@ import { Text } from '../atoms/Text';
 
 type ListItemProps = LinkTarget & { title: string; subtitle?: string; leading?: ReactNode; trailing?: ReactNode };
 
-/** A row in a list: leading visual, two lines of text, trailing meta. Shows a chevron when it opens another screen. */
+/** A row in a list, on frosted glass: leading visual, two lines of text, trailing meta. Shows a chevron when it opens another screen. */
 export const ListItem = ({ title, subtitle, leading, trailing, ...link }: ListItemProps) => {
   const linkProps = useLinkProps(link);
   const pressable = !!(link.to || link.back);
@@ -22,7 +22,11 @@ export const ListItem = ({ title, subtitle, leading, trailing, ...link }: ListIt
         alignItems: 'center',
         gap: 'var(--space-3)',
         padding: 'var(--space-3) var(--space-4)',
-        background: 'var(--color-surface)',
+        background: 'var(--color-glass)',
+        backdropFilter: 'blur(18px) saturate(1.4)',
+        WebkitBackdropFilter: 'blur(18px) saturate(1.4)',
+        border: '1px solid var(--color-glass-line)',
+        boxShadow: 'var(--shadow-card)',
         borderRadius: 'var(--radius-md)',
         cursor: pressable ? 'pointer' : undefined,
       }}

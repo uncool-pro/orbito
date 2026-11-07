@@ -8,10 +8,10 @@ export const meta = defineScreen({ code: 'PL-04', title: 'Plants / Add plant', b
 export default function AddPlant() {
   return (
     <DeviceScreen
-      background="var(--color-bg)"
+      background="var(--color-bg-glow), var(--color-bg)"
       top={<AppBar title="Add plant" back />}
       bottom={
-        <div style={{ padding: 'var(--space-3) var(--space-4) var(--space-6)', background: 'var(--color-surface)', borderTop: '1px solid var(--color-line)' }}>
+        <div style={{ padding: 'var(--space-3) var(--space-4) var(--space-6)', background: 'var(--color-glass)', backdropFilter: 'blur(18px) saturate(1.4)', borderTop: '1px solid var(--color-glass-line)' }}>
           <Button full to="plant-list">
             Save plant
           </Button>

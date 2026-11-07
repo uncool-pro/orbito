@@ -10,7 +10,7 @@ export default function AdminCatalog() {
   return (
     // the header stays at the top while the long list scrolls under it
     <PageScreen
-      background="var(--color-bg)"
+      background="var(--color-bg-glow), var(--color-bg)"
       top={
         <header style={{ padding: 'var(--space-3) var(--space-6)', background: 'var(--color-surface)', borderBottom: '1px solid var(--color-line)', display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
           <Button variant="ghost" back icon="back">

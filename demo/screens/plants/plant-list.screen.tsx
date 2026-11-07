@@ -9,7 +9,7 @@ export const meta = defineScreen({ code: 'PL-01', title: 'Plants / List', requir
 export default function PlantList() {
   return (
     <DeviceScreen
-      background="var(--color-bg)"
+      background="var(--color-bg-glow), var(--color-bg)"
       top={<AppBar title="My plants" action={<Button variant="ghost" icon="search" label="Search" />} />}
       bottom={<TabBar current="plants" />}
       overlay={

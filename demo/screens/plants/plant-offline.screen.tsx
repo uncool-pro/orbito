@@ -13,7 +13,7 @@ export const meta = defineScreen({
 
 export default function PlantOffline() {
   return (
-    <DeviceScreen background="var(--color-bg)" top={<AppBar title="Monstera" back />}>
+    <DeviceScreen background="var(--color-bg-glow), var(--color-bg)" top={<AppBar title="Monstera" back />}>
       <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-4)', padding: 'var(--space-6)', textAlign: 'center' }}>
         <span style={{ width: 96, height: 96, display: 'grid', placeItems: 'center', borderRadius: '50%', background: 'var(--color-warning-soft)', color: 'var(--color-warning)' }}>
           <Icon name="drop" size={48} />

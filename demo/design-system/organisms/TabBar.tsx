@@ -1,5 +1,6 @@
 import { useLinkProps } from '@uncool-pro/orbito-runtime';
 
+import { Glass } from '../atoms/Glass';
 import { Icon } from '../atoms/Icon';
 import type { IconName } from '../atoms/Icon';
 import { Text } from '../atoms/Text';
@@ -27,6 +28,8 @@ const Tab = ({ tab, current }: { tab: (typeof tabs)[number]; current: boolean })
         alignItems: 'center',
         gap: 'var(--space-half)',
         padding: 'var(--space-2) 0',
+        borderRadius: 'var(--radius-md)',
+        background: current ? 'var(--color-primary-soft)' : 'transparent',
         color: current ? 'var(--color-primary)' : 'var(--color-ink-muted)',
         cursor: 'pointer',
       }}
@@ -40,11 +43,18 @@ const Tab = ({ tab, current }: { tab: (typeof tabs)[number]; current: boolean })
   );
 };
 
-/** App navigation. The current tab is not a link, so the board draws no arrow from a screen to itself. */
+/**
+ * App navigation, floating on glass above the bottom edge. The current tab is highlighted and is not a link, so the board
+ * draws no arrow from a screen to itself.
+ */
 export const TabBar = ({ current }: { current: TabKey }) => (
-  <nav role="tablist" style={{ display: 'flex', borderTop: '1px solid var(--color-line)', background: 'var(--color-surface)', paddingBottom: 'var(--space-5)' }}>
-    {tabs.map((t) => (
-      <Tab key={t.key} tab={t} current={t.key === current} />
-    ))}
-  </nav>
+  <div style={{ padding: '0 var(--space-4) var(--space-5)' }}>
+    <Glass radius="lg" style={{ padding: 'var(--space-1)' }}>
+      <nav role="tablist" style={{ display: 'flex', gap: 'var(--space-1)' }}>
+        {tabs.map((t) => (
+          <Tab key={t.key} tab={t} current={t.key === current} />
+        ))}
+      </nav>
+    </Glass>
+  </div>
 );

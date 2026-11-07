@@ -14,10 +14,10 @@ export const meta = defineScreen({
 export default function PlantDetailV2() {
   return (
     <DeviceScreen
-      background="var(--color-bg)"
+      background="var(--color-bg-glow), var(--color-bg)"
       top={<AppBar title="Monstera" back action={<Button variant="ghost" to="add-plant">Edit</Button>} />}
       bottom={
-        <div style={{ padding: 'var(--space-3) var(--space-4) var(--space-6)', background: 'var(--color-surface)', borderTop: '1px solid var(--color-line)' }}>
+        <div style={{ padding: 'var(--space-3) var(--space-4) var(--space-6)', background: 'var(--color-glass)', backdropFilter: 'blur(18px) saturate(1.4)', borderTop: '1px solid var(--color-glass-line)' }}>
           <Button full icon="drop" to="watered">
             Water now
           </Button>

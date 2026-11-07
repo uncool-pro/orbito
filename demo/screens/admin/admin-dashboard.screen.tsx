@@ -29,7 +29,7 @@ const SideNav = () => (
 
 export default function AdminDashboard() {
   return (
-    <PageScreen background="var(--color-bg)" side={<SideNav />}>
+    <PageScreen background="var(--color-bg-glow), var(--color-bg)" side={<SideNav />}>
       <div>
         <main style={{ padding: 'var(--space-6)', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>

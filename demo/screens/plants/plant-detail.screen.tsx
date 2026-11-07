@@ -6,7 +6,7 @@ import { AppBar, Button, Icon, PlantThumb, Text } from '../../design-system';
 export const meta = defineScreen({ code: 'PL-02', title: 'Plants / Detail', back: 'plant-list', requirements: ['REQ-03'] });
 
 const Fact = ({ label, value }: { label: string; value: string }) => (
-  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-half)', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', background: 'var(--color-surface)' }}>
+  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-half)', padding: 'var(--space-3)', borderRadius: 'var(--radius-md)', background: 'var(--color-glass)', border: '1px solid var(--color-glass-line)', boxShadow: 'var(--shadow-card)' }}>
     <Text variant="caption" tone="muted">
       {label}
     </Text>
@@ -17,10 +17,10 @@ const Fact = ({ label, value }: { label: string; value: string }) => (
 export default function PlantDetail() {
   return (
     <DeviceScreen
-      background="var(--color-bg)"
+      background="var(--color-bg-glow), var(--color-bg)"
       top={<AppBar title="Monstera" back />}
       bottom={
-        <div style={{ display: 'flex', gap: 'var(--space-2)', padding: 'var(--space-3) var(--space-4) var(--space-6)', background: 'var(--color-surface)', borderTop: '1px solid var(--color-line)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', padding: 'var(--space-3) var(--space-4) var(--space-6)', background: 'var(--color-glass)', backdropFilter: 'blur(18px) saturate(1.4)', borderTop: '1px solid var(--color-glass-line)' }}>
           <Button variant="secondary" to="add-plant">
             Edit
           </Button>
@@ -32,8 +32,8 @@ export default function PlantDetail() {
     >
       <Transition to="plant-offline" on="error" label="Watering failed: no connection" />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', padding: 'var(--space-2) var(--space-4) var(--space-5)' }}>
-        <div style={{ display: 'grid', placeItems: 'center', height: 220, borderRadius: 'var(--radius-md)', background: 'var(--color-primary-soft)' }}>
-          <PlantThumb size={120} />
+        <div style={{ display: 'grid', placeItems: 'center', height: 240, borderRadius: 'var(--radius-lg)', background: 'var(--color-hero)', boxShadow: 'var(--shadow-raised)' }}>
+          <PlantThumb size={120} tone="hero" />
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
           <Fact label="Room" value="Living room" />

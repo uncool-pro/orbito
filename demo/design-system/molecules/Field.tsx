@@ -12,9 +12,10 @@ export const Field = ({ label, value, placeholder, hint }: { label: string; valu
         display: 'flex',
         alignItems: 'center',
         padding: '0 var(--space-4)',
-        border: '1px solid var(--color-line)',
+        border: '1px solid var(--color-glass-line)',
         borderRadius: 'var(--radius-sm)',
-        background: 'var(--color-surface)',
+        background: 'var(--color-glass)',
+        boxShadow: 'var(--shadow-card)',
         font: 'var(--text-body)',
         color: value ? 'var(--color-ink)' : 'var(--color-ink-muted)',
       }}

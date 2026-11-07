@@ -10,5 +10,6 @@ export default defineDocs({
     { name: 'Default 52', render: () => <PlantThumb /> },
     { name: 'Needs attention', render: () => <PlantThumb tone="warning" /> },
     { name: 'Large 120', render: () => <PlantThumb size={120} /> },
+    { name: 'Hero', render: () => <PlantThumb size={120} tone="hero" /> },
   ],
 });
