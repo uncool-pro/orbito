@@ -20,6 +20,7 @@ const CSP = [
   "base-uri 'none'",
 ].join('; ');
 
+/** @type {import('vite').Plugin} */
 const sealedPage = {
   name: 'orbito-sealed-page',
   configureServer(server) {

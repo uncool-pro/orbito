@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { computeFlowGraph } from '@uncool-pro/orbito-core';
+import { computeFlowGraph, screenName } from '@uncool-pro/orbito-core';
 import type { FlowEdgeKind, FlowNode, Page } from '@uncool-pro/orbito-core';
 import { openScreen } from '../app/routes';
 
@@ -19,9 +19,8 @@ const KINDS: FlowEdgeKind[] = ['happy', 'alternative', 'negative', 'other'];
  * and it lists what to look at first: dead ends, unreachable screens, flow steps with no link.
  */
 export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
-  const { project, links } = useViewer();
+  const { project, links, screens: byId, nameOf: name } = useViewer();
   const t = useT();
-  const byId = useMemo(() => new Map(project.screens.map((s) => [s.id, s])), [project]);
   const flow = page.flows.find((f) => f.key === flowKey);
   const scope = useMemo(() => [...new Set((flow ? [flow] : page.flows).flatMap((f) => f.screens))], [page, flow]);
   const graph = useMemo(
@@ -39,7 +38,6 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
   const world = useRef<HTMLDivElement>(null);
   const ctrl = useRef<CanvasController | null>(null);
   const code = (id: string) => byId.get(id)?.code ?? id;
-  const name = (id: string) => byId.get(id)?.title.split(' / ').pop() ?? id;
 
   useLayoutEffect(() => {
     const el = root.current;
@@ -226,9 +224,9 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
                 onPointerEnter={() => setHover(n.id)}
                 onDoubleClick={() => openScreen(n.id)}
               >
-                <span>{s.title.split(' / ').pop()}</span>
+                <span>{screenName(s)}</span>
                 <b>{code(n.id)}</b>
-                {exits.length > 0 && <small className="pd-fbox__exits" title={exits.map((id) => byId.get(id)?.title ?? id).join('\n')}>→ {exits.length === 1 ? (byId.get(exits[0]!)?.title.split(' / ').pop() ?? exits[0]) : t.exitsCount(exits.length)}</small>}
+                {exits.length > 0 && <small className="pd-fbox__exits" title={exits.map((id) => byId.get(id)?.title ?? id).join('\n')}>→ {exits.length === 1 ? name(exits[0]!) : t.exitsCount(exits.length)}</small>}
               </div>
             );
           })}

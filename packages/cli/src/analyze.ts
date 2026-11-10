@@ -4,27 +4,37 @@
  * without starting a browser. The rules are the house rules of the tool: values come from tokens, screens are built
  * only from design-system components, levels build only on lower levels, every component is documented.
  */
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 
 import ts from 'typescript';
 
-import { contrastRatio, DS_LEVELS } from '../../core/src/ds.ts';
-import type { DsComponent, DsIssue, DsLevel, DsReport, TokenFile } from '../../core/src/ds.ts';
+import { contrastRatio, DS_LEVELS } from '@uncool-pro/orbito-core';
+import type { DsComponent, DsIssue, DsLevel, DsReport, TokenFile } from '@uncool-pro/orbito-core';
+
+import { insideForReal } from './files.ts';
 
 const posix = (p: string) => p.split(sep).join('/');
 /** `// ds-exception: <reason>` (or inside a JSX comment) marks a deliberate departure from the design system. */
 const EXCEPTION = /ds-exception:\s*(.*?\S)\s*(?:\*\/\s*\}?)?\s*$/;
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.orbito', '.git']);
 
-const walk = (dir: string, out: string[] = []): string[] => {
+/**
+ * Every file under `dir`. A link that leads out of the project (or nowhere) is not project code and is left out; a
+ * folder reached twice (a link back to a parent) is read once.
+ */
+const walk = (root: string, dir: string, out: string[] = [], seen = new Set<string>()): string[] => {
   if (!existsSync(dir)) return out;
   for (const name of readdirSync(dir)) {
     if (SKIP_DIRS.has(name)) continue;
     const p = join(dir, name);
 
-    if (statSync(p).isDirectory()) walk(p, out);
-    else out.push(p);
+    if (!insideForReal(root, p)) continue;
+    if (!statSync(p).isDirectory()) out.push(p);
+    else if (!seen.has(realpathSync(p))) {
+      seen.add(realpathSync(p));
+      walk(root, p, out, seen);
+    }
   }
 
   return out;
@@ -165,7 +175,7 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
     visit(sf);
     facts.set(file, f);
 
-    return { sf, f };
+    return { sf, f, text };
   };
 
   // ---- components (exported PascalCase names in level folders)
@@ -174,7 +184,7 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
 
     return (DS_LEVELS as readonly string[]).includes(top ?? '') ? (top as DsLevel) : null;
   };
-  const dsFiles = walk(dsDir).filter((f) => /\.tsx?$/.test(f) && !/\.docs\.tsx?$/.test(f) && levelOf(f));
+  const dsFiles = walk(root, dsDir).filter((f) => /\.tsx?$/.test(f) && !/\.docs\.tsx?$/.test(f) && levelOf(f));
   const components: DsComponent[] = [];
   const fileOfName = new Map<string, string>();
 
@@ -208,13 +218,13 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
     const level = levelOf(file)!;
 
     f.imports.forEach((imp) => {
-      if (!imp.resolved || !imp.resolved.startsWith(dsDir)) return;
+      if (!imp.resolved || !imp.resolved.startsWith(dsDir + sep)) return;
       const target = levelOf(imp.resolved);
 
       if (target && DS_LEVELS.indexOf(target) > DS_LEVELS.indexOf(level))
         add({ rule: 'level-order', severity: 'error', file: rel(file), line: imp.line, message: `${level.slice(0, -1)} imports from ${target} (${imp.spec})`, hint: `A ${level.slice(0, -1)} may only build on ${DS_LEVELS.slice(0, DS_LEVELS.indexOf(level) + 1).join(', ')}. Move the piece down a level or this component up.` });
     });
-    const imported = new Set(f.imports.flatMap((i) => (i.resolved?.startsWith(dsDir) ? i.names : [])));
+    const imported = new Set(f.imports.flatMap((i) => (i.resolved?.startsWith(dsDir + sep) ? i.names : [])));
 
     compOfFile(file).forEach((c) => {
       c.uses = [...new Set(f.jsxTags.map((t) => t.name).filter((n) => imported.has(n) && byName.has(n) && n !== c.name))];
@@ -223,7 +233,7 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
   components.forEach((c) => c.uses.forEach((u) => byName.get(u)?.usedBy.push(c.name)));
 
   // docs
-  walk(dsDir)
+  walk(root, dsDir)
     .filter((f) => /\.docs\.tsx?$/.test(f))
     .forEach((file) => {
       const text = readFileSync(file, 'utf8');
@@ -253,10 +263,10 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
     const entry = { used: new Set<string>(), parts: [] as string[] };
 
     screenCode.set(file, entry);
-    const { f } = scan(file, 'screen');
+    const { f, text } = scan(file, 'screen');
     const fromDs = new Set<string>();
 
-    screenLines.set(rel(file), readFileSync(file, 'utf8').split(/\r?\n/));
+    screenLines.set(rel(file), text.split(/\r?\n/));
     f.imports.forEach((imp) => {
       const at = { file: rel(file), line: imp.line, screen: id };
 
@@ -273,7 +283,8 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
         imp.names.forEach((n) => fromDs.add(n));
       } else if (isScreenFile(imp.resolved)) add({ rule: 'import-boundary', severity: 'error', ...at, message: `screen imports another screen (${imp.spec})`, hint: 'Shared parts belong in the design system (organisms or templates).' });
       else if (!imp.resolved.startsWith(screensDir + sep)) add({ rule: 'import-boundary', severity: 'warning', ...at, message: `screen imports from outside screens/ and design-system/ (${imp.spec})` });
-      else if (/\.[jt]sx?$/.test(imp.resolved)) entry.parts.push(imp.resolved);
+      // a part is read like the screen itself, so it has to be a file of this project, not a link that leads elsewhere
+      else if (/\.[jt]sx?$/.test(imp.resolved) && insideForReal(root, imp.resolved)) entry.parts.push(imp.resolved);
     });
     f.jsxTags.forEach((t) => fromDs.has(t.name) && byName.has(t.name) && entry.used.add(t.name));
 
@@ -297,7 +308,7 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
     return used;
   };
 
-  walk(screensDir)
+  walk(root, screensDir)
     .filter(isScreenFile)
     .sort()
     .forEach((file) => {

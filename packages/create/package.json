@@ -1,9 +1,17 @@
 {
   "name": "create-orbito",
   "version": "0.0.0",
-  "description": "Start a mockups-as-code project for Orbito: npm create orbito",
+  "private": true,
+  "description": "Start a mockups-as-code project for Orbito: node orbito/packages/create/src/index.ts <folder>",
   "type": "module",
-  "bin": { "create-orbito": "./src/index.ts" },
-  "engines": { "node": ">=22.18" },
+  "bin": {
+    "create-orbito": "./src/index.ts"
+  },
+  "dependencies": {
+    "@uncool-pro/orbito-cli": "*"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
   "license": "MIT"
 }

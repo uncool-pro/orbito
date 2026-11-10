@@ -1,5 +1,5 @@
 // The whole road of a new user, without Docker: create a project, check it, build it, open the board, set a status.
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, execSync, spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -12,7 +12,9 @@ const REPO = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 5192;
 const windows = process.platform === 'win32';
 
-const npm = (cwd: string, ...args: string[]) => execFileSync('npm', args, { cwd, shell: windows, encoding: 'utf8', stdio: 'pipe' });
+// on Windows npm is a .cmd script, which only a shell can start: one fixed command line there
+const npm = (cwd: string, ...args: string[]) =>
+  windows ? execSync(`npm ${args.join(' ')}`, { cwd, encoding: 'utf8', stdio: 'pipe' }) : execFileSync('npm', args, { cwd, encoding: 'utf8', stdio: 'pipe' });
 
 test.describe.serial('a new project', () => {
   test.setTimeout(300_000);
@@ -58,7 +60,9 @@ test.describe.serial('a new project', () => {
   });
 
   test('opens on the board, and a status set there lands in the file', async ({ page }) => {
-    server = spawn('npm', ['run', 'dev', '--', '--port', String(PORT), '--strictPort'], { cwd: project, shell: windows, stdio: 'ignore', detached: !windows });
+    const dev = ['run', 'dev', '--', '--port', String(PORT), '--strictPort'];
+
+    server = windows ? spawn(`npm ${dev.join(' ')}`, { cwd: project, shell: true, stdio: 'ignore' }) : spawn('npm', dev, { cwd: project, stdio: 'ignore', detached: true });
     await expect(async () => {
       expect((await fetch(`http://localhost:${PORT}/`)).ok).toBe(true);
     }).toPass({ timeout: 60_000 });

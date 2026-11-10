@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { computeLayout, flowStatusId, groupTargets, sharedTargets, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
+import { computeLayout, flowStatusId, groupTargets, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
 import type { Card, Page, Status } from '@uncool-pro/orbito-core';
 
 import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
 
 import { useViewer } from '../app/context';
 import { useT } from '../i18n';
+import { isTextField } from '../dom';
 import { useStatuses } from '../status';
 import { centerOn, fitRect, intersects, visibleWorld, zoomAt, zoomTo } from '../canvas/camera';
 import type { Camera } from '../canvas/camera';
@@ -33,13 +34,12 @@ const readView = (key: string): Camera | null => {
 };
 
 export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
-  const { project, links } = useViewer();
+  const { project, links, sources, shared, screens: byId, nameOf } = useViewer();
   const t = useT();
   const statuses = useStatuses();
   const flows = useMemo(() => (flowKey ? page.flows.filter((f) => f.key === flowKey) : page.flows), [page, flowKey]);
   const { options, selected, select, focusTick, canvas, inspectorOpen, togglePanel, devMode, commentsOn, openComments } = useShell();
   const showClosed = options.showClosed;
-  const byId = useMemo(() => new Map(project.screens.map((s) => [s.id, s])), [project]);
   const layout = useMemo(
     () => computeLayout({ flows, screens: byId, viewports: project.viewports, links: links ?? {}, showClosedVersions: showClosed }),
     [flows, byId, project.viewports, links, showClosed],
@@ -163,9 +163,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   // ---- keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-
-      if (/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+      if (isTextField(e.target)) return;
       const c = ctrl.current;
 
       if (!c) return;
@@ -260,20 +258,15 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     const card = hover.card ? layout.cards.find((c) => c.key === hover.card) : undefined;
 
     if (!card || !links) return null;
-    const set = new Set([card.screenId, ...targetsOf(links, card.screenId)]);
 
-    Object.keys(links).forEach((id) => targetsOf(links, id).includes(card.screenId) && set.add(id));
-
-    return set;
-  }, [hover, layout, links]);
+    return new Set([card.screenId, ...targetsOf(links, card.screenId), ...(sources.get(card.screenId) ?? [])]);
+  }, [hover, layout, links, sources]);
   // statuses belong to features (flows); a card takes the status of the flow its lane shows
   const flowOfLane = useMemo(() => new Map(layout.lanes.map((l) => [l.key, l.flowKey])), [layout.lanes]);
   const flowStatus = (flowKey: string) => statusOf(statuses, flowStatusId(page.key, flowKey));
-  // people read names, not codes: the functional name of a screen, and the feature a way out leads to
-  const nameOf = (id: string) => byId.get(id)?.title.split(' / ').pop() ?? id;
-  // the ways out under a card, sorted as in the screen details: a screen of the same feature by its name, another feature
+  // people read names, not codes: the functional name of a screen, and the feature a way out leads to.
+  // The ways out under a card, sorted as in the screen details: a screen of the same feature by its name, another feature
   // by the feature it opens ("arrow to a section"), and the navigation most screens repeat (a tab bar, a menu) as one line
-  const shared = useMemo(() => (links ? sharedTargets(links) : new Set<string>()), [links]);
   const exits = useMemo(() => {
     const onOtherPage = (id: string) => {
       const hit = project.pages.flatMap((p) => p.flows.map((f) => ({ p, f }))).find(({ f }) => f.screens.includes(id));
@@ -296,7 +289,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layout, page, project, shared, flowOfLane, t]);
+  }, [layout, page, project, shared, flowOfLane, t, nameOf]);
   const cardState = (c: Card): 'idle' | 'hl' | 'dim' => {
     if (statusFilter && flowStatus(flowOfLane.get(c.laneKey) ?? c.laneKey).status !== statusFilter) return 'dim';
     if (related) return related.has(c.screenId) ? 'hl' : 'dim';

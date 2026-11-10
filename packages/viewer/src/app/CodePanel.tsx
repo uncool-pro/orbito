@@ -4,6 +4,7 @@ import type { ComponentType } from 'react';
 import type { Screen } from '@uncool-pro/orbito-core';
 
 import { useT } from '../i18n';
+import { useCopy } from './useCopy';
 import { useViewer } from './context';
 import { useShell } from './shell/state';
 
@@ -21,7 +22,7 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
   const [file, setFile] = useState(screen.file);
   const [code, setCode] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   const drag = useRef<{ x: number; w: number } | null>(null);
 
   useEffect(() => setFile(screen.file), [screen.file]);
@@ -41,12 +42,6 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
       live = false;
     };
   }, [file]);
-
-  const copy = () =>
-    void navigator.clipboard?.writeText(code ?? '').then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1400);
-    });
 
   return (
     <section className="pd-code">
@@ -69,7 +64,7 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
       />
       <div className="pd-code__head">
         <b>{t.code}</b>
-        <button type="button" className="pd-btn pd-btn--sm" disabled={!code} onClick={copy}>
+        <button type="button" className="pd-btn pd-btn--sm" disabled={!code} onClick={() => copy('code', code ?? '')}>
           {copied ? `✓ ${t.copied}` : t.copyCode}
         </button>
       </div>

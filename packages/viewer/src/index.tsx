@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useMemo, useState } from 'react';
 import type { ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { linkSources, screenName, sharedTargets } from '@uncool-pro/orbito-core';
 import type { LinkMap, Project, ProjectProblem, Requirement, StatusFile, Team } from '@uncool-pro/orbito-core';
 import { registerParents } from '@uncool-pro/orbito-runtime';
 
@@ -10,7 +11,7 @@ import { ErrorBoundary } from './app/ErrorBoundary';
 import { setFavicon } from './app/Logo';
 import { ViewerContext } from './app/context';
 import { ShellProvider } from './app/shell/state';
-import type { DsData } from './app/context';
+import type { DsData, ViewerState } from './app/context';
 import { probeLinks } from './board/probe';
 import { MESSAGES, MessagesContext } from './i18n';
 import { initComments } from './comments';
@@ -26,8 +27,10 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
 
   useEffect(() => {
     let live = true;
+    // a probe that is no longer wanted (the project changed, or React ran this effect twice in dev) stops at once
+    const stop = new AbortController();
 
-    probeLinks(loaded.project)
+    probeLinks(loaded.project, stop.signal)
       .catch((err: unknown) => {
         // without links the board still shows every screen, only the arrows are missing
         console.error('[orbito] could not read the links of the screens', err);
@@ -43,11 +46,34 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
 
     return () => {
       live = false;
+      stop.abort();
     };
   }, [loaded]);
 
+  // worked out once here, not in every view that asks: every screen by id, and the links read both ways
+  const value = useMemo((): ViewerState => {
+    const screens = new Map(loaded.project.screens.map((s) => [s.id, s]));
+
+    return {
+      project: loaded.project,
+      problems: loaded.problems,
+      ds: loaded.ds,
+      team: loaded.team ?? null,
+      links,
+      sources: links ? linkSources(links) : new Map(),
+      shared: links ? sharedTargets(links) : new Set(),
+      requirements,
+      screens,
+      nameOf: (id) => {
+        const s = screens.get(id);
+
+        return s ? screenName(s) : id;
+      },
+    };
+  }, [loaded, links, requirements]);
+
   return (
-    <ViewerContext.Provider value={{ project: loaded.project, problems: loaded.problems, ds: loaded.ds, team: loaded.team ?? null, links, requirements }}>
+    <ViewerContext.Provider value={value}>
       <MessagesContext.Provider value={MESSAGES}>
         <ShellProvider>
           {/* the last line of defence: a message instead of an empty page */}

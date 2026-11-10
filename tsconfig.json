@@ -2,6 +2,7 @@
   "extends": "./tsconfig.base.json",
   "include": [
     "packages/*/src",
+    "docker",
     "packages/*/test",
     "e2e",
     "playwright.config.ts",
@@ -15,5 +16,9 @@
     "templates/base/design-system",
     "templates/base/screens",
     "templates/base/flows"
-  ]
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true
+  }
 }

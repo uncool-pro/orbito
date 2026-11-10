@@ -141,10 +141,10 @@ describe('orbito update', () => {
 
 describe('a project made by create', () => {
   const create = fileURLToPath(new URL('../../create/src/index.ts', import.meta.url));
-  const make = () => {
+  const make = (title = 'T') => {
     const target = join(base, 'made');
 
-    execFileSync(process.execPath, [create, target, '--title', 'T', '--platform', 'web', '--locale', 'en', '--no-install'], { stdio: 'ignore' });
+    execFileSync(process.execPath, [create, target, '--title', title, '--platform', 'web', '--locale', 'en', '--no-install'], { stdio: 'ignore' });
 
     return target;
   };
@@ -158,6 +158,29 @@ describe('a project made by create', () => {
 
     expect(r.removed).toEqual([]);
     expect(read(join(target, '.claude/skills/landing-page/SKILL.md'))).toBe('mine');
+  });
+
+  it('takes any product name: quotes stay text in the config, tags stay text in the page', () => {
+    const target = make(`Ola's "shop" <b>`);
+
+    expect(read(join(target, 'orbito.config.ts'))).toContain(String.raw`title: "Ola's \"shop\" <b>",`);
+    expect(read(join(target, 'index.html'))).toContain(`<title>Ola's "shop" &lt;b&gt; — mockups</title>`);
+  });
+
+  it("links Orbito's packages from the Orbito folder: none of them is looked up in the npm registry", () => {
+    const { dependencies } = JSON.parse(read(join(make(), 'package.json'))) as { dependencies: Record<string, string> };
+    const ours = Object.entries(dependencies).filter(([name]) => name.startsWith('@uncool-pro/'));
+
+    expect(ours).toHaveLength(5);
+    ours.forEach(([, where]) => expect(where).toMatch(/^file:/));
+  });
+
+  it('says what to do when the list of installed items is damaged, and changes nothing', () => {
+    const target = make();
+
+    put(join(target, MANIFEST), '<<<<<<< HEAD\n{}');
+    expect(() => updateProject({ root: target, install: false })).toThrow(/cannot be read.*run the update again/);
+    expect(read(join(target, MANIFEST))).toBe('<<<<<<< HEAD\n{}');
   });
 
   it('has no compose.yaml when it runs without a container', () => {

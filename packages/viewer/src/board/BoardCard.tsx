@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import type { ComponentType } from 'react';
 
+import { screenName } from '@uncool-pro/orbito-core';
 import type { Card, Screen, Viewport } from '@uncool-pro/orbito-core';
 import { FrameContext } from '@uncool-pro/orbito-runtime';
 
@@ -71,7 +72,7 @@ export const BoardCard = memo(({ card, screen, viewport, live, state, active, fi
             ))}
           </div>
         )}
-        <span className="pd-card__name">{screen.title.split(' / ').pop()}</span>
+        <span className="pd-card__name">{screenName(screen)}</span>
         {/* the comments on this screen, in a bubble next to it; the number says how many still wait to be made */}
         {(canComment() || comments.length > 0) && (
           <button

@@ -6,10 +6,12 @@
  * The screen is rendered with the project's own Vite config (SSR), so it resolves exactly as in the viewer.
  */
 import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { isAbsolute, join, relative, resolve } from 'node:path';
+import { join, relative, resolve } from 'node:path';
 
 import { tokensToCss } from '@uncool-pro/orbito-core';
 import type { ProjectConfig, TokenFile } from '@uncool-pro/orbito-core';
+
+import { inside } from './files.ts';
 
 const ENTRY = 'virtual:orbito/export-entry';
 const RESOLVED_ENTRY = '\0' + ENTRY;
@@ -40,12 +42,6 @@ const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;')
 
 /** Marks a folder as the export's own, so the next export may clean it. */
 export const EXPORT_MARKER = '.orbito-export';
-
-const inside = (dir: string, file: string) => {
-  const rel = relative(dir, file);
-
-  return !!rel && !rel.startsWith('..') && !isAbsolute(rel);
-};
 
 /** Finds `screens/**\/<id>.screen.tsx`, the file convention of a screen id. */
 const findScreenFile = (root: string, id: string): string | undefined => {

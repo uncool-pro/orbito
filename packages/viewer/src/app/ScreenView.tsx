@@ -11,6 +11,7 @@ import { useOpenCount } from '../comments';
 import { Icon } from './icons';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Measure } from './Measure';
+import { useCopy } from './useCopy';
 import { useViewer } from './context';
 import { useShell } from './shell/state';
 
@@ -158,7 +159,7 @@ const CommentsToggle = ({ open, onClick, screen }: { open: boolean; onClick: () 
 const DevPath = ({ file }: { file: string }) => {
   const dev = useDevEnv();
   const t = useT();
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   const full = pathOnComputer(dev, file);
 
   return (
@@ -169,12 +170,7 @@ const DevPath = ({ file }: { file: string }) => {
         className="pd-iconbtn pd-iconbtn--sm"
         aria-label={t.copyPath}
         title={t.copyPath}
-        onClick={() =>
-          void navigator.clipboard?.writeText(full ?? file).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1400);
-          })
-        }
+        onClick={() => copy('path', full ?? file)}
       >
         <Icon name={copied ? 'check' : 'copy'} size={14} />
       </button>

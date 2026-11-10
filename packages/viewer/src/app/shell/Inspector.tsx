@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import type { ComponentType } from 'react';
 
-import { featureOf, groupTargets, sharedTargets, targetsOf } from '@uncool-pro/orbito-core';
+import { featureOf, groupTargets, screenName, targetsOf } from '@uncool-pro/orbito-core';
 import type { Flow, Page, Screen } from '@uncool-pro/orbito-core';
 
 import { LiveScreen } from '../../board/BoardCard';
@@ -12,6 +12,7 @@ import { useT } from '../../i18n';
 import { useViewer } from '../context';
 import { canvasHash, canvasOf, dsHash, pickScreen, screenHash } from '../routes';
 import type { Mode } from '../routes';
+import { useCopy } from '../useCopy';
 import { useInspectorExtra, useShell } from './state';
 import { Icon } from '../icons';
 
@@ -19,9 +20,9 @@ import { Icon } from '../icons';
 export const Inspector = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: string }) => {
   const { selected, devMode } = useShell();
   const t = useT();
-  const { project } = useViewer();
+  const { screens } = useViewer();
   const extra = useInspectorExtra();
-  const s = selected ? project.screens.find((x) => x.id === selected) : undefined;
+  const s = selected ? screens.get(selected) : undefined;
 
   if (s && devMode)
     return (
@@ -50,14 +51,14 @@ export const Inspector = ({ mode, page, flowKey }: { mode: Mode; page?: Page; fl
  * for developers waits in dev mode.
  */
 const ScreenInspector = ({ screen: s, mode, page, flowKey }: { screen: Screen<ComponentType>; mode: Mode; page?: Page; flowKey?: string }) => {
-  const { project, links, ds } = useViewer();
+  const { project, links, sources, ds } = useViewer();
   const { select } = useShell();
   const t = useT();
   const vp = project.viewports[s.viewport ?? project.config.defaultViewport]!;
   const scale = Math.min(236 / vp.width, 300 / vp.height);
   const frame = { x: 0, y: 0, w: Math.round(vp.width * scale), h: Math.round(vp.height * scale), scale };
   const out = links ? targetsOf(links, s.id) : [];
-  const into = links ? Object.keys(links).filter((id) => targetsOf(links, id).includes(s.id)) : [];
+  const into = sources.get(s.id) ?? [];
   const inFlows = project.pages.flatMap((p) => p.flows.filter((f) => f.screens.includes(s.id)).map((f) => ({ p, f })));
   const parts = ds.report.screens[s.id] ?? [];
   // the feature the screen is seen in: the one open on the canvas, or the first on its page that lists it
@@ -68,7 +69,7 @@ const ScreenInspector = ({ screen: s, mode, page, flowKey }: { screen: Screen<Co
     <div className="pd-insp">
       {/* the panel is shown and hidden from the top bar only: one button for one thing */}
       <div className="pd-insp__head">
-        <b>{s.title.split(' / ').pop()}</b>
+        <b>{screenName(s)}</b>
       </div>
       <p className="pd-insp__title">
         {s.title} <small>{s.code}</small>
@@ -127,14 +128,11 @@ const ScreenInspector = ({ screen: s, mode, page, flowKey }: { screen: Screen<Co
 
 /** Ways in or out of a screen, in the three kinds a person reads differently: this feature, other features (folded), the menu (once). */
 const Connections = ({ title, ids, mode, page, feature, onPick }: { title: string; ids: string[]; mode: Mode; page?: Page; feature?: Flow; onPick: (id: string) => void }) => {
-  const { project, links } = useViewer();
+  const { shared, screens: byId, nameOf: name } = useViewer();
   const t = useT();
   const [open, setOpen] = useState(false);
-  const shared = useMemo(() => (links ? sharedTargets(links) : new Set<string>()), [links]);
-  const byId = useMemo(() => new Map(project.screens.map((x) => [x.id, x])), [project]);
   const g = groupTargets(ids, { page, feature, shared });
   const others = g.elsewhere.reduce((n, e) => n + e.ids.length, 0);
-  const name = (id: string) => byId.get(id)?.title.split(' / ').pop() ?? id;
   const chip = (id: string) => (
     <button key={id} type="button" className="pd-mini-chip" onClick={() => onPick(id)}>
       {name(id)} <small>{byId.get(id)?.code}</small>
@@ -213,24 +211,13 @@ const Requirements = ({ ids, ofFeature }: { ids: string[]; ofFeature: boolean })
   );
 };
 
-const useCopy = () => {
-  const [copied, setCopied] = useState<string | null>(null);
-  const copy = (what: string, text: string) =>
-    void navigator.clipboard?.writeText(text).then(() => {
-      setCopied(what);
-      setTimeout(() => setCopied((c) => (c === what ? null : c)), 1400);
-    });
-
-  return { copied, copy };
-};
-
 /** Outside dev mode one thing stays for designers too: a reference to the screen to paste into the chat with Claude. */
 const ClaudeRef = ({ screen: s }: { screen: Screen<ComponentType> }) => {
   const t = useT();
   const { copied, copy } = useCopy();
 
   return (
-    <button type="button" className="pd-btn pd-btn--sm" title={t.copyForClaudeTip} onClick={() => copy('claude', t.claudeRef(s.title.split(' / ').pop() ?? s.id, s.code ?? '', s.file))}>
+    <button type="button" className="pd-btn pd-btn--sm" title={t.copyForClaudeTip} onClick={() => copy('claude', t.claudeRef(screenName(s), s.code ?? '', s.file))}>
       {copied === 'claude' ? `✓ ${t.copied}` : t.copyForClaude}
     </button>
   );
@@ -243,7 +230,7 @@ const DevInspector = ({ screen: s }: { screen: Screen<ComponentType> }) => {
       <div className="pd-insp pd-insp--devhead">
         <div className="pd-insp__head">
           <b>
-            {s.title.split(' / ').pop()} <small className="pd-insp__key">{s.code}</small>
+            {screenName(s)} <small className="pd-insp__key">{s.code}</small>
           </b>
         </div>
         <DevSection screen={s} />
@@ -262,7 +249,7 @@ const DevSection = ({ screen: s }: { screen: Screen<ComponentType> }) => {
   const t = useT();
   const { copied, copy } = useCopy();
   const full = pathOnComputer(dev, s.file);
-  const name = s.title.split(' / ').pop() ?? s.id;
+  const name = screenName(s);
 
   return (
     <section className="pd-insp__dev">

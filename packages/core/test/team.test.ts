@@ -16,6 +16,13 @@ describe('team', () => {
     expect(purposeOf('No trigger list')).toBe('No trigger list.');
   });
 
+  it('takes a skill name with characters that mean something in a pattern', () => {
+    const skills = ['c++', 'a(b', 'user-flows'].map((name) => ({ name, description: '' }));
+    const team = buildTeam(skills, [{ name: 'dev', description: 'Works only through the c++ skill.', body: '' }]);
+
+    expect(team.agents[0]!.skills).toEqual(['c++']);
+  });
+
   it('reads the steps of a process', () => {
     const steps = parseSteps('# P\n\n## Steps\n| # | Step | Role | Skill | Output | Gate |\n|---|---|---|---|---|---|\n| 1 | Paths | ux-designer | user-flows | `flows/` | **person approves** |\n| 2 | Look | ui-designer | look-and-feel | variants | — |\n\n## Notes\n| 9 | not a step |');
 

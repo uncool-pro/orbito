@@ -11,8 +11,9 @@ const labelOf = (el: Element) =>
 /**
  * Renders every screen once, offscreen and at its real size, and records each link element with its position.
  * That is how the board knows the arrows (nothing is declared twice) and where on the screen each one starts.
+ * `signal` stops it between two screens: what it found so far is returned and is not complete.
  */
-export const probeLinks = async (project: Project<ComponentType>): Promise<LinkMap> => {
+export const probeLinks = async (project: Project<ComponentType>, signal?: AbortSignal): Promise<LinkMap> => {
   const host = document.createElement('div');
 
   host.setAttribute('aria-hidden', 'true');
@@ -24,6 +25,7 @@ export const probeLinks = async (project: Project<ComponentType>): Promise<LinkM
     for (const s of project.screens) {
       // a fresh task per screen: never flush a root while React is rendering, and keep the page responsive on big projects
       await new Promise((r) => setTimeout(r, 0));
+      if (signal?.aborted) break;
       const vp = project.viewports[s.viewport ?? project.config.defaultViewport]!;
       const box = document.createElement('div');
 

@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 
 import type { Page } from '@uncool-pro/orbito-core';
 
+import { isTextField } from '../../dom';
 import { useT } from '../../i18n';
 import { go, lastCanvasHash, parseRoute } from '../routes';
 import type { Mode } from '../routes';
@@ -54,7 +55,7 @@ const BackBar = () => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement).tagName)) return;
+      if (e.key !== 'Escape' || isTextField(e.target)) return;
       go(lastCanvasHash());
     };
 

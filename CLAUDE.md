@@ -2,6 +2,8 @@
 
 Mockups as code (React + TypeScript), reviewed as flows on a board. Not production code: no backend, fictional data, interactions are drawn and clickable, not real.
 
+For people, the same ground is covered in `docs/architecture.md` (how it fits together), `CONTRIBUTING.md` (checks and rules) and `SECURITY.md`; keep them in step when a rule below changes.
+
 ## Packages (npm workspaces)
 | Package | What | Depends on |
 |---|---|---|
@@ -9,8 +11,8 @@ Mockups as code (React + TypeScript), reviewed as flows on a board. Not producti
 | `packages/runtime` | what mockups import: `<Link>` / `useLinkProps`, `goTo` / `goBack`, `DeviceScreen`, `PageScreen` (windows of the viewport's size: only the content scrolls, bars and side panels sit in slots), `useFrame` | react |
 | `packages/viewer` | the browser app: overview, board (`board/`, camera in `canvas/`), single screen view, design-system catalog (`ds/`, route `#/ds`) | core, runtime |
 | `packages/cli` | `orbito check ds` and the design-system analyzer (TypeScript AST); `orbito export` (one screen → static `index.html` via the project's Vite, SSR); `orbito update [--pull]` (refreshes a project's skills, agents and commands from this folder; `--pull` updates the folder from GitHub first) | core, typescript (vite, react from the project) |
-| `packages/vite-plugin` | `virtual:orbito/project` (screens, flows, tokens, component docs, design-system report, the team for `#/skills`) + dev endpoints `/__orbito/status`, `/__orbito/file`, `/__orbito/env`, `/__orbito/reveal` | vite, core, cli |
-| `packages/create` | `npm create orbito <folder> [--title] [--platform mobile|web|both] [--locale en|pl] [--no-install]`: copies `templates/base`, fills it in, installs, runs `check:ds`. Technical only — no design questions | — |
+| `packages/vite-plugin` | `virtual:orbito/project` (screens, flows, tokens, component docs, design-system report, the team for `#/skills`) + dev endpoints `/__orbito/status`, `/__orbito/file`, `/__orbito/env`, `/__orbito/reveal`, `/__orbito/comments`, `/__orbito/source` | vite, core, cli |
+| `packages/create` | `node orbito/packages/create/src/index.ts <folder> [--title] [--platform mobile|web|both] [--locale en|pl] [--no-install]`: copies `templates/base`, fills it in, installs, runs `check:ds`. Technical only — no design questions | cli |
 | `templates/base` | the project template: base design-system kit (28 components, neutral tokens, docs), `CLAUDE.md` for the user's project, `.orbito/process.md` (design process state), a placeholder start screen | all |
 | `demo/` | **demo application** "Leafy": a fictional plant-care app, the reference structure of a project (mobile + web screens, atomic design system, a review version). Safe to delete | all |
 
@@ -68,7 +70,7 @@ After a change: typecheck, tests, and look at the board in the browser.
 ## Where things live in the viewer and the plugin
 - Addresses, the way back and the select-or-open rule: `viewer/src/app/routes.ts`. No view builds an address by hand.
 - Styles, one file per view: `viewer/src/styles/`. A rule belongs to the view it serves; change a selector where it is, do not add an override at the end. Every colour, radius and shadow of the interface is a `--pd-*` token in `styles/base.css` (no raw colours in the other files); the type scale is 11 / 12 / 13 / 15 / 18 / 30 px. Glass (`backdrop-filter`) only on what floats over the board and is small (island, menus), never on screen cards.
-- The plugin: `vite-plugin/index.mjs` (the virtual module and hot updates, the requirements), `endpoints.mjs` (dev endpoints and their protection against other sites), `team.mjs`, `status.mjs`, `comments.mjs`.
+- The plugin, in `vite-plugin/src/`: `index.ts` (the virtual module and hot updates, the requirements), `endpoints.ts` (dev endpoints and their protection against other sites, Vite's `/__open-in-editor` included), `team.ts`, `status.ts`, `comments.ts`; `errors.ts` is the error an endpoint answers with. Paths that come from the browser or from a project file are checked with `insideForReal` (`cli/src/files.ts`): inside the project, also once links are followed.
 - How connections are sorted for people (this feature, other features, the shared menu) and the links between features: `core/src/features.ts`. Stories from `requirements/*.md`: `core/src/requirements.ts`.
 - The shell, one file per panel in `viewer/src/app/shell/`: `Shell.tsx` (the frame), `TopBar.tsx`, `Drawer.tsx` (the trees), `Inspector.tsx` (the right panel: product mode the screen, its requirements and a line with its comments; dev mode its code from `app/CodePanel.tsx`), `Island.tsx`; shared bits in `common.tsx`, shared state in `state.tsx`. Choices remembered on the computer go through `viewer/src/remembered.ts`.
 - Comments: the bubble next to a screen (board and prototype, anchored by `data-comment-anchor`, opened through `openComments` in the shell state) in `app/Comments.tsx`, styles in `styles/comments.css`.

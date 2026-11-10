@@ -1,4 +1,5 @@
 import { panBy, wheelIntent, wheelPixels, wheelZoomFactor, zoomAt } from './camera';
+import { isTextField } from '../dom';
 import type { Camera } from './camera';
 
 /** A scrollable element inside the active card, with the total scale between screen pixels and its own pixels. */
@@ -207,9 +208,7 @@ export class CanvasController {
 
   private onKey = (e: KeyboardEvent) => {
     if (e.key !== ' ') return;
-    const t = e.target as HTMLElement | null;
-
-    if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+    if (isTextField(e.target)) return;
     e.preventDefault();
     this.setSpace(e.type === 'keydown');
   };

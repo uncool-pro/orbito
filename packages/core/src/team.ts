@@ -66,6 +66,9 @@ export const purposeOf = (description: string): string => description.split(/\.\
 
 const clean = (cell: string) => cell.replace(/\*\*|`/g, '').trim();
 
+/** `text` as it stands inside a regular expression: a name such as `c++` or `a(b` matches itself and nothing else. */
+const literal = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 /** The "## Steps" table of a process skill: `| # | Step | Role | Skill | Output | Gate |`. */
 export const parseSteps = (body: string): ProcessStep[] => {
   const section = /##\s+Steps\s*\r?\n([\s\S]*?)(?:\r?\n##\s|$)/.exec(body)?.[1] ?? '';
@@ -98,7 +101,7 @@ export const buildTeam = (skills: SkillSource[], agents: AgentSource[]): Team =>
         : [
             ...new Set([
               ...[...a.body.matchAll(/`([a-z][\w-]*)`/g)].map((m) => m[1]!),
-              ...[...names].filter((n) => new RegExp(`(^|[^\\w-])${n} skill\\b`).test(a.description)),
+              ...[...names].filter((n) => new RegExp(`(^|[^\\w-])${literal(n)} skill\\b`).test(a.description)),
             ]),
           ]
       ).filter(competence),

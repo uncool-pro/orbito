@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { DS_LEVELS, flowStatusId, statusOf } from '@uncool-pro/orbito-core';
+import { DS_LEVELS, flowStatusId, screenName, statusOf } from '@uncool-pro/orbito-core';
 import type { Page } from '@uncool-pro/orbito-core';
 
 import { useT } from '../../i18n';
@@ -79,7 +79,7 @@ const usePagesHeight = (count: number) => {
 };
 
 const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey?: string }) => {
-  const { project } = useViewer();
+  const { project, screens: byId } = useViewer();
   const { selected, select } = useShell();
   const statuses = useStatuses();
   const t = useT();
@@ -88,7 +88,6 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
   const pagesList = useRef<HTMLUListElement>(null);
   const drag = useRef<{ y: number; h: number } | null>(null);
   const listHeight = () => pagesList.current?.getBoundingClientRect().height ?? 0;
-  const byId = new Map(project.screens.map((s) => [s.id, s]));
   const [open, setOpen] = useState<Set<string>>(() => new Set(flowKey ? [flowKey] : page?.flows.slice(0, 2).map((f) => f.key)));
   const toggle = (key: string) => setOpen((o) => (o.has(key) ? new Set([...o].filter((k) => k !== key)) : new Set([...o, key])));
 
@@ -114,7 +113,7 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
           onDoubleClick={() => openScreen(id)}
           title={s.title}
         >
-          <span className="pd-tree__name">{s.title.split(' / ').pop()}</span>
+          <span className="pd-tree__name">{screenName(s)}</span>
           {s.code && <small className="pd-tree__code">{s.code}</small>}
         </button>
       </li>

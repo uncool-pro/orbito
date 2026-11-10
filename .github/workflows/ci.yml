@@ -8,9 +8,15 @@ on:
 permissions:
   contents: read
 
+# a newer push to the same pull request makes the older run pointless: it is stopped (main always runs to the end)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   check:
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -18,6 +24,8 @@ jobs:
         node: ['22.18', '24']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node }}
@@ -32,8 +40,11 @@ jobs:
   # real clicks in a real browser and the whole road of a new project; the runner already has Chrome
   browser:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
@@ -41,14 +52,20 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run test:e2e
 
-  # known holes in the packages that reach people's computers stop the build; dev tools are reported only
+  # the packages: known holes in what reaches people's computers stop the build (dev tools are reported only), and
+  # every package must carry the registry's signature, so what was installed is what its authors published
   audit:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'
+      - run: npm ci --ignore-scripts
+      - run: npm audit signatures
       - run: npm audit --omit=dev --audit-level=high
       - run: npm audit
         continue-on-error: true
@@ -56,8 +73,11 @@ jobs:
   # the sealed image builds, the whole road works inside it and the seal holds
   image:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24'

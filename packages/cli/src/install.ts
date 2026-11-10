@@ -32,6 +32,19 @@ export const toolVersion = (root: string) => {
   }
 };
 
+/** The list of what Orbito installed, or `null` in a project made before the list existed. */
+const readManifest = (file: string): Manifest | null => {
+  if (!existsSync(file)) return null;
+  try {
+    const manifest = JSON.parse(readFileSync(file, 'utf8')) as Partial<Manifest> | null;
+
+    if (manifest && typeof manifest.items === 'object' && manifest.items) return { version: manifest.version ?? '?', items: manifest.items };
+  } catch {
+    /* reported below */
+  }
+  throw new Error(`${MANIFEST} cannot be read (is there a merge conflict?): fix the file or restore it from git, then run the update again`);
+};
+
 /** Same files with the same content? (folders compared file by file) */
 const same = (a: string, b: string): boolean => {
   if (!existsSync(b)) return false;
@@ -58,7 +71,7 @@ export const installTeam = ({ root, tool, today = new Date().toISOString().slice
   root = resolve(root);
   const result: InstallResult = { added: [], updated: [], removed: [], conflicts: [], backedUp: [] };
   const manifestFile = join(root, MANIFEST);
-  const before: Manifest | null = existsSync(manifestFile) ? (JSON.parse(readFileSync(manifestFile, 'utf8')) as Manifest) : null;
+  const before = readManifest(manifestFile);
   const after: Manifest = { version: toolVersion(tool), items: {} };
   const rel = (p: string) => p.slice(root.length + 1).split('\\').join('/');
   const backup = (path: string) => {

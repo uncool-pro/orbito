@@ -1,8 +1,9 @@
 /**
  * `orbito update` — brings a project up to date with the Orbito it is linked to.
  *
- * 1. With `--pull`: updates the tool itself (`git pull --ff-only` in the Orbito folder, then `npm install` there). The
- *    code running now is then the old version, so the new version does step 2: its migrations work on the first run.
+ * 1. With `--pull`: updates the tool itself (`git pull --ff-only` in the Orbito folder, then `npm install` there, with
+ *    the install scripts of packages switched off, as in CI and in the image). The code running now is then the old
+ *    version, so the new version does step 2: its migrations work on the first run.
  * 2. Refreshes what Orbito owns inside the project (`install.ts`).
  * The project's own work (screens, flows, design system, process and status files, raw/) is never touched; template
  * changes such as new base components are listed in CHANGELOG.md for Orbito to apply on request.
@@ -22,6 +23,13 @@ export { fingerprint, MANIFEST };
 export const toolRoot = (): string => resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
 const git = (cwd: string, args: string[]) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8' }).trim();
+
+/**
+ * `npm` with fixed arguments. On Windows npm is a `.cmd` script, which only a shell can start: there it gets one fixed
+ * command line, with nothing in it that came from outside.
+ */
+const npm = (cwd: string, args: string[]) =>
+  process.platform === 'win32' ? spawnSync(`npm ${args.join(' ')}`, { cwd, stdio: 'inherit', shell: true }) : spawnSync('npm', args, { cwd, stdio: 'inherit' });
 
 export type UpdateResult = InstallResult & { tool: { from: string; to: string; commits?: string[] } };
 
@@ -65,7 +73,8 @@ export const updateProject = ({ root, pull, install = true, tool = toolRoot(), t
       pulled = true;
       toolChange.commits = git(tool, ['log', '--format=%s', `${before}..${after}`]).split('\n').filter(Boolean);
       if (install) {
-        const r = spawnSync('npm', ['install'], { cwd: tool, stdio: 'inherit', shell: process.platform === 'win32' });
+        // no install scripts: a package that comes with an update gets no chance to run code of its own while installing
+        const r = npm(tool, ['install', '--ignore-scripts', '--no-audit', '--no-fund']);
 
         if (r.status) throw new Error('npm install failed in the Orbito folder');
       }

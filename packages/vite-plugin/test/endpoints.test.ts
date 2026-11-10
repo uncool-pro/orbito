@@ -1,11 +1,11 @@
 import { EventEmitter } from 'node:events';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { devEndpoints, fromOtherSite } from '../endpoints.mjs';
+import { devEndpoints, fromOtherSite } from '../src/endpoints.ts';
 
 const HOST = 'localhost:5190';
 let root: string;
@@ -27,7 +27,8 @@ afterEach(() => {
   rmSync(join(root, '..', 'orbito-outside.md'), { force: true });
 });
 
-const call = (url: string, { method = 'GET', headers = {}, body }: { method?: string; headers?: Record<string, string>; body?: string } = {}) =>
+/** `body` as a list is sent chunk by chunk, the way a long request arrives. */
+const call = (url: string, { method = 'GET', headers = {}, body }: { method?: string; headers?: Record<string, string>; body?: string | Buffer[] } = {}) =>
   new Promise<{ code: number; text: string; passed?: boolean }>((done) => {
     const req = Object.assign(new EventEmitter(), { url, method, headers: { host: HOST, ...headers } });
     const res = {
@@ -39,7 +40,7 @@ const call = (url: string, { method = 'GET', headers = {}, body }: { method?: st
     };
 
     devEndpoints(root, statusFile)(req, res, () => done({ code: 0, text: '', passed: true }));
-    req.emit('data', body ?? '');
+    for (const chunk of Array.isArray(body) ? body : [body ?? '']) req.emit('data', chunk);
     req.emit('end');
   });
 
@@ -77,6 +78,54 @@ describe('reading a file', () => {
     expect((await call('/__orbito/file?path=../orbito-outside.md')).code).toBe(404);
     expect((await call('/__orbito/file?path=reviews/missing.md')).code).toBe(404);
   });
+
+  it('refuses a file reached through a link that leaves the project', async () => {
+    const outside = mkdtempSync(join(tmpdir(), 'orbito-outside-'));
+
+    writeFileSync(join(outside, 'notes.md'), 'not of this project');
+    // a junction on Windows (no special rights needed), a symbolic link elsewhere
+    symlinkSync(outside, join(root, 'reviews/elsewhere'), 'junction');
+    try {
+      expect((await call('/__orbito/file?path=reviews/elsewhere/notes.md')).code).toBe(404);
+      expect((await call('/__orbito/reveal?path=reviews/elsewhere/notes.md', { method: 'POST' })).code).toBe(404);
+    } finally {
+      rmSync(join(root, 'reviews/elsewhere'), { recursive: true, force: true });
+      rmSync(outside, { recursive: true, force: true });
+    }
+  });
+
+  it('takes GET only', async () => {
+    expect((await call('/__orbito/file?path=reviews/report.md', { method: 'POST' })).code).toBe(405);
+  });
+});
+
+describe('opening a file in the code editor, an address of Vite itself', () => {
+  it('lets the board through and stops other sites', async () => {
+    expect((await call('/__open-in-editor?file=screens/a.screen.tsx')).passed).toBe(true);
+    expect((await call('/__open-in-editor?file=screens/a.screen.tsx', { headers: { 'sec-fetch-site': 'cross-site' } })).code).toBe(403);
+    expect((await call('/__open-in-editor?file=screens/a.screen.tsx', { headers: { origin: 'https://evil.example' } })).code).toBe(403);
+  });
+});
+
+describe('the body of a request', () => {
+  const post = (body: string | Buffer[]) => call('/__orbito/comments', { method: 'POST', body });
+
+  it('keeps a letter whole when it arrives cut in two', async () => {
+    const bytes = Buffer.from(JSON.stringify({ action: 'add', screen: 'a', text: 'Zażółć gęślą jaźń' }));
+    // cut inside the two bytes of "ż"
+    const cut = bytes.indexOf(Buffer.from('ż')) + 1;
+    const saved = await post([bytes.subarray(0, cut), bytes.subarray(cut)]);
+
+    expect(saved.code).toBe(200);
+    expect(JSON.parse(saved.text).comments[0].text).toBe('Zażółć gęślą jaźń');
+  });
+
+  it('refuses one that is too large or is not an object', async () => {
+    expect((await post([Buffer.alloc(1024 * 1024 + 1, 0x20)])).code).toBe(413);
+    expect((await post('null')).code).toBe(400);
+    expect((await post('[]')).code).toBe(400);
+    expect(existsSync(join(root, 'comments'))).toBe(false);
+  });
 });
 
 describe('showing a file in the system', () => {
@@ -113,6 +162,13 @@ describe('statuses', () => {
 
   it('takes GET and POST only', async () => {
     expect((await call('/__orbito/status', { method: 'DELETE' })).code).toBe(405);
+  });
+
+  it('keeps an id that is also a built-in name of JavaScript as an ordinary entry', async () => {
+    expect((await call('/__orbito/status', { method: 'POST', body: JSON.stringify({ id: '__proto__', status: 'review' }) })).code).toBe(200);
+    await call('/__orbito/status', { method: 'POST', body: JSON.stringify({ id: 'flow:a/b', status: 'wip' }) });
+    expect(readFileSync(statusFile, 'utf8')).toContain('"__proto__": {');
+    expect(Object.keys(JSON.parse(readFileSync(statusFile, 'utf8'))).sort()).toEqual(['__proto__', 'flow:a/b']);
   });
 });
 
@@ -155,6 +211,20 @@ describe('comments', () => {
     writeFileSync(join(root, `comments/a/${id}.md`), '<<<<<<< HEAD\n---\nstatus: open\n');
     expect((await post({ action: 'status', screen: 'a', id, status: 'done' })).code).toBe(409);
     expect(readFileSync(join(root, `comments/a/${id}.md`), 'utf8')).toContain('<<<<<<< HEAD');
+  });
+
+  it('never leaves the comments folder: no screen or comment called "." or ".."', async () => {
+    writeFileSync(join(root, 'README.md'), '# the project');
+    for (const screen of ['..', '.', '.hidden']) {
+      expect((await post({ action: 'add', screen, text: 'a' })).code).toBe(400);
+      expect((await post({ action: 'remove', screen, id: 'README' })).code).toBe(400);
+      expect((await post({ action: 'status', screen, id: 'README', status: 'done' })).code).toBe(400);
+    }
+    await post({ action: 'add', screen: 'a', text: 'b' });
+    expect((await post({ action: 'remove', screen: 'a', id: '..' })).code).toBe(404);
+    // nothing written next to the project's own files, nothing removed
+    expect(readdirSync(root).sort()).toEqual(['.orbito', 'README.md', 'comments', 'reviews', 'secret.env']);
+    expect(readFileSync(join(root, 'README.md'), 'utf8')).toBe('# the project');
   });
 
   it('stops a comment from another site', async () => {

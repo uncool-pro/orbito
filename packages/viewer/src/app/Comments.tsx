@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ComponentType } from 'react';
 
-import { COMMENT_STATUSES } from '@uncool-pro/orbito-core';
+import { COMMENT_STATUSES, screenName } from '@uncool-pro/orbito-core';
 import type { CommentStatus, Screen, ScreenComment } from '@uncool-pro/orbito-core';
 
 import { addComment, canComment, readAuthor, removeComment, setCommentStatus, useComments } from '../comments';
@@ -35,8 +35,8 @@ const GAP = 12;
 /** The bubble of the screen whose comments are open, wherever that screen is drawn (`data-comment-anchor`). */
 export const CommentBubble = () => {
   const { commentsOn, openComments } = useShell();
-  const { project } = useViewer();
-  const screen = commentsOn ? project.screens.find((s) => s.id === commentsOn) : undefined;
+  const { screens } = useViewer();
+  const screen = commentsOn ? screens.get(commentsOn) : undefined;
 
   return screen ? <Bubble key={screen.id} screen={screen} onClose={() => openComments(null)} /> : null;
 };
@@ -111,7 +111,7 @@ const Bubble = ({ screen, onClose }: { screen: Screen<ComponentType>; onClose: (
     };
   }, []);
 
-  const name = screen.title.split(' / ').pop() ?? screen.id;
+  const name = screenName(screen);
 
   return (
     <div ref={box} className="pd-bubble" role="dialog" aria-label={t.commentsOn(name)} data-pd-ui style={{ visibility: 'hidden' }}>

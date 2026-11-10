@@ -57,7 +57,7 @@ Not sure about the technical words? You do not need them. Tell Claude you are no
 In the `orbito` folder: `npm run dev`, then http://localhost:5190 — "Leafy", a fictional plant-care app (mobile and web screens, its own design system, a review version). `demo/` is also the structure of a finished project.
 
 ## How it works
-Orbito (the lead) talks to you, picks a process that fits the project (a new product, a redesign, a landing page, a quick prototype) and calls a role for each step: business analyst, UX designer, UI designer, design auditor and synthetic users, each with its own competences (skills). People decide; agents build, check and keep everything consistent. Details: [skills/README.md](skills/README.md); the conventions for people and agents: [CLAUDE.md](CLAUDE.md).
+Orbito (the lead) talks to you, picks a process that fits the project (a new product, a redesign, a landing page, a quick prototype) and calls a role for each step: business analyst, UX designer, UI designer, design auditor and synthetic users, each with its own competences (skills). People decide; agents build, check and keep everything consistent. Details: [skills/README.md](skills/README.md); the conventions for people and agents: [CLAUDE.md](CLAUDE.md). For developers: [how the code is put together](docs/architecture.md), [how to contribute](CONTRIBUTING.md) and [security](SECURITY.md).
 
 ## Roadmap
 Orbito grows with its skills: each skill is one part of the product design process, and the tool shows its results on the board. No dates; the order may change as the beta shows what people need most.

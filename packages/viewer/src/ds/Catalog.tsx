@@ -212,10 +212,9 @@ const IssueRow = ({ issue: i }: { issue: DsIssue }) => (
 // ---- components
 
 const ComponentPage = ({ c, docs, issues }: { c: DsComponent; docs?: ComponentDocs<ReactNode>; issues: DsIssue[] }) => {
-  const { project } = useViewer();
+  const { screens: byId, nameOf } = useViewer();
   const { devMode } = useShell();
   const t = useT();
-  const byId = new Map(project.screens.map((s) => [s.id, s]));
   const [hero, ...rest] = docs?.variants ?? [];
   const guide: { do?: string[]; dont?: string[] } = docs?.guidelines ?? {};
   const usage = !!(guide.do?.length || guide.dont?.length);
@@ -294,7 +293,7 @@ const ComponentPage = ({ c, docs, issues }: { c: DsComponent; docs?: ComponentDo
           {c.screens.length ? (
             c.screens.map((id) => (
               <a key={id} className="pd-chip" href={screenHash(id)} title={byId.get(id)?.title}>
-                <b>{byId.get(id)?.code ?? id}</b> {byId.get(id)?.title.split(' / ').pop()}
+                <b>{byId.get(id)?.code ?? id}</b> {byId.has(id) ? nameOf(id) : null}
               </a>
             ))
           ) : (

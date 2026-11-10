@@ -3,9 +3,11 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const PROJECT = process.env.ORBITO_PROJECT ?? '/project';
+/** @param {string} path a file of the tool, relative to its folder */
 const tool = (path) => fileURLToPath(new URL(`../${path}`, import.meta.url));
 const [command = 'serve', ...rest] = process.argv.slice(2);
 
+/** Runs Node with `args` in `cwd` and ends this process with its exit code. @param {string[]} args @param {string} [cwd] */
 const run = (args, cwd = PROJECT) => {
   const r = spawnSync(process.execPath, args, { cwd, stdio: 'inherit' });
 

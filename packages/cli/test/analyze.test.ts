@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { analyzeProject } from '../src/analyze';
-import type { DsReport } from '../../core/src/ds';
+import type { DsReport } from '@uncool-pro/orbito-core';
 
 /** A small project that breaks every rule once. */
 const files: Record<string, string> = {

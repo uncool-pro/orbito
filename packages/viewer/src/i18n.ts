@@ -51,7 +51,7 @@ const en = {
   leadRole: 'The lead (main session): keeps the strategy, routes the work, asks you for decisions',
   leadModel: 'strongest model',
   skillsCount: (n: number) => (n === 1 ? '1 skill' : `${n} skills`),
-  noTeam: 'No skills or agents found. They live in .claude/skills and .claude/agents of the project (npm create orbito copies them, orbito update refreshes them).',
+  noTeam: 'No skills or agents found. They live in .claude/skills and .claude/agents of the project (creating the project copies them, orbito update refreshes them).',
   health: 'Health',
   foundations: 'Foundations',
   usage: 'Usage',
