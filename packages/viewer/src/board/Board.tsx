@@ -32,6 +32,11 @@ const readView = (key: string): Camera | null => {
     return null;
   }
 };
+/** The size of the board on screen (the window's, before the board is in the page). */
+const sizeOf = (el: HTMLElement | null) => ({
+  w: el?.clientWidth ?? window.innerWidth,
+  h: el?.clientHeight ?? window.innerHeight,
+});
 
 export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   const { project, links, sources, shared, screens: byId, nameOf } = useViewer();
@@ -79,13 +84,9 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   activeRef.current = active;
   layoutRef.current = layout;
 
-  const viewSize = () => ({
-    w: root.current?.clientWidth ?? window.innerWidth,
-    h: root.current?.clientHeight ?? window.innerHeight,
-  });
   /** First view: the board as wide as the canvas, from the top (fitting a tall board whole makes every screen tiny). */
   const fitWidth = useCallback(() => {
-    const { w, h } = viewSize();
+    const { w, h } = sizeOf(root.current);
     const L = layoutRef.current;
     const k = Math.min(0.9, Math.max(0.2, (w - 48) / Math.max(1, L.w)));
 
@@ -95,7 +96,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   }, []);
   const fitAll = useCallback(
     () =>
-      fitRect({ x: 0, y: 0, w: layoutRef.current.w, h: layoutRef.current.h }, viewSize(), {
+      fitRect({ x: 0, y: 0, w: layoutRef.current.w, h: layoutRef.current.h }, sizeOf(root.current), {
         inset: TOOLBAR_INSET,
         maxK: 1,
       }),
@@ -104,7 +105,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
 
   /** Cards near the view get their live screen; once mounted they stay (no remount churn while panning back and forth). */
   const mountVisible = useCallback((c: Camera) => {
-    const view = visibleWorld(c, viewSize(), MOUNT_MARGIN);
+    const view = visibleWorld(c, sizeOf(root.current), MOUNT_MARGIN);
     const add = layoutRef.current.cards.filter((card) => !mountedRef.current.has(card.key) && intersects(view, card));
 
     if (!add.length) return;
@@ -153,7 +154,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     controller.set(controller.camera);
     canvas.current = {
       zoomBy: (f) => {
-        const { w, h } = viewSize();
+        const { w, h } = sizeOf(root.current);
 
         controller.set(zoomAt(controller.camera, f, w / 2, h / 2));
       },
@@ -179,10 +180,10 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
       ctrl.current = null;
       canvas.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewKey, fitAll, fitWidth, mountVisible]);
+  }, [viewKey, fitAll, fitWidth, mountVisible, canvas]);
 
   // new cards (closed versions shown) may appear in view
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs again when the layout changes; mountVisible reads it from a ref
   useEffect(() => {
     if (ctrl.current) mountVisible(ctrl.current.camera);
   }, [layout, mountVisible]);
@@ -194,7 +195,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
       const c = ctrl.current;
 
       if (!c) return;
-      const { w, h } = viewSize();
+      const { w, h } = sizeOf(root.current);
 
       if (e.key === 'Escape') {
         setActive(null);
@@ -220,11 +221,11 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   }, [selected]);
 
   // a screen picked in the left panel or the search: bring its first card into view
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only a focus request moves the camera, a plain selection does not
   useEffect(() => {
     const c = selected ? layoutRef.current.cards.find((x) => x.screenId === selected) : undefined;
 
-    if (c && ctrl.current && focusTick) ctrl.current.set(centerOn(ctrl.current.camera, c, viewSize(), 0.7));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (c && ctrl.current && focusTick) ctrl.current.set(centerOn(ctrl.current.camera, c, sizeOf(root.current), 0.7));
   }, [focusTick]);
 
   // ---- clicks: a click on a screen selects it and shows its details on the right (in dev mode, its code), the same in
@@ -291,7 +292,10 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   }, [hover, layout, links, sources]);
   // statuses belong to features (flows); a card takes the status of the flow its lane shows
   const flowOfLane = useMemo(() => new Map(layout.lanes.map((l) => [l.key, l.flowKey])), [layout.lanes]);
-  const flowStatus = (flowKey: string) => statusOf(statuses, flowStatusId(page.key, flowKey));
+  const flowStatus = useCallback(
+    (flowKey: string) => statusOf(statuses, flowStatusId(page.key, flowKey)),
+    [statuses, page.key],
+  );
   // people read names, not codes: the functional name of a screen, and the feature a way out leads to.
   // The ways out under a card, sorted as in the screen details: a screen of the same feature by its name, another feature
   // by the feature it opens ("arrow to a section"), and the navigation most screens repeat (a tab bar, a menu) as one line
@@ -316,7 +320,6 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
         return [s.cardKey, [...new Set(labels)]];
       }),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layout, page, project, shared, flowOfLane, t, nameOf]);
   const cardState = (c: Card): 'idle' | 'hl' | 'dim' => {
     if (statusFilter && flowStatus(flowOfLane.get(c.laneKey) ?? c.laneKey).status !== statusFilter) return 'dim';
@@ -368,9 +371,11 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     );
 
     return () => setInspectorExtra(null);
-  }, [counts, screensCount, links, t, page, statuses]);
+  }, [counts, screensCount, links, t, page, flowStatus]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: the board is a canvas the pointer works on; its keys are listened to on the window
+    // biome-ignore lint/a11y/useKeyWithClickEvents: the left panel and the search select screens from the keyboard
     <div
       ref={root}
       className="pd-board"
@@ -430,7 +435,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
             />
           );
         })}
-        <svg className="pd-svg" width={layout.w} height={layout.h}>
+        <svg aria-hidden="true" className="pd-svg" width={layout.w} height={layout.h}>
           <defs>
             {['', '-hl', '-tie'].map((v) => (
               <marker

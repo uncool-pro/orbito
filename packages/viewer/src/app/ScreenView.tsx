@@ -110,9 +110,9 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
   const commentsOpen = !!commentsOn;
 
   // the bubble stays open while you click through the prototype: it moves on to the screen you reach
+  // biome-ignore lint/correctness/useExhaustiveDependencies: follows the screen only; opening or closing the bubble must not move it
   useEffect(() => {
     if (commentsOn && commentsOn !== screen.id) openComments(screen.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen.id]);
 
   useEffect(() => select(screen.id), [screen.id, select]);
@@ -138,6 +138,7 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
             screen={screen.id}
           />
           {sizes.length > 1 && (
+            // biome-ignore lint/a11y/useSemanticElements: a row of buttons; <fieldset> belongs to forms
             <div className="pd-sizes" role="group" aria-label={t.responsive}>
               {sizes.map((s) => (
                 <button

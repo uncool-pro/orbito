@@ -277,8 +277,8 @@
   gap: 24px;
   border-radius: var(--pd-r-lg);
   overflow-x: auto;
-  background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px) !important;
-  background-size: 16px 16px !important;
+  background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 16px 16px;
 }
 .pd-hero figcaption {
   font-size: 12px;

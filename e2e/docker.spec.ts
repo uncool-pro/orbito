@@ -135,6 +135,7 @@ test.describe
         const shown = (
           await page
             .locator('body')
+            // biome-ignore lint/performance/useDomNodeTextContent: the report shows what a person sees, hidden text left out
             .innerText()
             .catch(() => '')
         ).slice(0, 300);

@@ -237,8 +237,8 @@
   font-style: normal;
   color: var(--pd-muted);
 }
-.pd-team__mode {
-  margin-top: 12px !important;
+.pd-team__head .pd-team__mode {
+  margin-top: 12px;
   font-size: 13px;
 }
 .pd-team__mode b {

@@ -189,6 +189,7 @@ const Issues = ({ issues }: { issues: DsIssue[] }) => {
       {issues.length > 0 && (
         <ul className="pd-issues">
           {issues.map((i, n) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: the report lists issues in a fixed order and has no ids
             <IssueRow key={n} issue={i} />
           ))}
         </ul>
@@ -253,7 +254,7 @@ const ComponentPage = ({ c, docs, issues }: { c: DsComponent; docs?: ComponentDo
         )}
       </nav>
       {hero && (
-        <figure className="pd-hero" style={{ background: `var(--${hero.background ?? 'color-bg'}, #fff)` }}>
+        <figure className="pd-hero" style={{ backgroundColor: `var(--${hero.background ?? 'color-bg'}, #fff)` }}>
           <Live c={c.name} v={hero} />
           <figcaption>{hero.name}</figcaption>
         </figure>
@@ -335,6 +336,7 @@ const ComponentPage = ({ c, docs, issues }: { c: DsComponent; docs?: ComponentDo
           <h2 id="pd-comp-health">{t.health}</h2>
           <ul className="pd-issues">
             {issues.map((i, n) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: the report lists issues in a fixed order and has no ids
               <IssueRow key={n} issue={i} />
             ))}
           </ul>

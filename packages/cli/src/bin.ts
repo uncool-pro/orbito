@@ -33,7 +33,7 @@ const checkDs = () => {
 
   if (flag('json')) {
     process.stdout.write(
-      JSON.stringify({ counts: report.counts, issues: report.issues, components: report.components }, null, 2) + '\n',
+      `${JSON.stringify({ counts: report.counts, issues: report.issues, components: report.components }, null, 2)}\n`,
     );
   } else {
     const mark = { error: paint(31, 'error'), warning: paint(33, 'warn '), info: paint(36, 'info ') };
@@ -44,7 +44,7 @@ const checkDs = () => {
         const where = i.file ? `${i.file}${i.line ? `:${i.line}` : ''}` : '';
 
         console.log(`${mark[i.severity]}  ${paint(2, i.rule.padEnd(16))} ${where ? `${where}  ` : ''}${i.message}`);
-        if (i.hint) console.log(`       ${paint(2, '→ ' + i.hint)}`);
+        if (i.hint) console.log(`       ${paint(2, `→ ${i.hint}`)}`);
       });
     const c = report.counts;
 
@@ -118,7 +118,7 @@ const updateCmd = () => {
 
 const modelsCmd = (mode: string | undefined) => {
   if (mode && mode !== 'optimal' && mode !== 'high') {
-    console.error(paint(31, 'models: ') + 'use optimal or high');
+    console.error(`${paint(31, 'models: ')}use optimal or high`);
     process.exitCode = 1;
 
     return;

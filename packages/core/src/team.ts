@@ -86,7 +86,7 @@ export const listOf = (value?: string): string[] | undefined =>
     : undefined;
 
 /** The part of a skill description that says what it is for, without the trigger list ("Use when …"). */
-export const purposeOf = (description: string): string => description.split(/\.\s+Use\b/)[0]!.replace(/\.$/, '') + '.';
+export const purposeOf = (description: string): string => `${description.split(/\.\s+Use\b/)[0]!.replace(/\.$/, '')}.`;
 
 const clean = (cell: string) => cell.replace(/\*\*|`/g, '').trim();
 

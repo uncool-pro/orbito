@@ -115,7 +115,7 @@ export const updateProject = ({
 
     if (pkg.scripts && !pkg.scripts.update) {
       pkg.scripts.update = 'orbito update --pull';
-      writeFileSync(pkgFile, JSON.stringify(pkg, null, 2) + '\n');
+      writeFileSync(pkgFile, `${JSON.stringify(pkg, null, 2)}\n`);
       result.added.push('npm script update');
     }
   }

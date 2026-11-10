@@ -126,7 +126,7 @@ export const FeatureMap = ({ page }: { page: Page }) => {
         <div className="pd-empty">{t.noFlows}</div>
       ) : (
         <div className="pd-fmap__world" style={{ width, height, zoom: k }}>
-          <svg width={width} height={height} className="pd-svg">
+          <svg aria-hidden="true" width={width} height={height} className="pd-svg">
             <defs>
               <marker
                 id="pd-fmap-arrow"
@@ -214,6 +214,7 @@ export const FlowsPage = ({ page, flowKey }: { page: Page; flowKey?: string }) =
   return (
     <>
       {mode === 'features' ? <FeatureMap page={page} /> : <FlowsView page={page} />}
+      {/* biome-ignore lint/a11y/useSemanticElements: a row of buttons; <fieldset> belongs to forms */}
       <div className="pd-mapswitch pd-sizes" role="group" data-pd-ui>
         {(['screens', 'features'] as const).map((m) => (
           <button key={m} type="button" aria-pressed={mode === m} onClick={() => pick(m)}>

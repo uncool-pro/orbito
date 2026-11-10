@@ -16,7 +16,7 @@ export const ListItem = ({ title, subtitle, leading, trailing, ...link }: ListIt
     <div
       role={pressable ? 'button' : undefined}
       tabIndex={pressable ? 0 : undefined}
-      aria-label={title}
+      aria-label={pressable ? title : undefined}
       style={{
         display: 'flex',
         alignItems: 'center',

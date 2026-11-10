@@ -160,7 +160,7 @@ describe('analyzeProject, screens built from views', () => {
   it('counts a component used in a view, and in a part of it, as used by every screen that shows the view', () => {
     expect([...r.components.find((c) => c.name === 'Badge')!.screens].sort()).toEqual(['accounts', 'accounts-empty']);
     expect([...r.components.find((c) => c.name === 'Text')!.screens].sort()).toEqual(['accounts', 'accounts-empty']);
-    expect(r.screens['accounts']).toEqual(['Badge', 'Text']);
+    expect(r.screens.accounts).toEqual(['Badge', 'Text']);
     expect(r.issues.filter((i) => i.rule === 'unused').map((i) => i.component)).toEqual(['Lonely']);
   });
 

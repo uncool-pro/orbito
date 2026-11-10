@@ -327,7 +327,7 @@ export const analyzeProject = ({ root }: AnalyzeOptions): DsReport => {
     const level = levelOf(file)!;
 
     f.imports.forEach((imp) => {
-      if (!imp.resolved || !imp.resolved.startsWith(dsDir + sep)) return;
+      if (!imp.resolved?.startsWith(dsDir + sep)) return;
       const target = levelOf(imp.resolved);
 
       if (target && DS_LEVELS.indexOf(target) > DS_LEVELS.indexOf(level))

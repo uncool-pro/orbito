@@ -30,7 +30,7 @@ import { inside, insideForReal, readJson } from './files.ts';
 import { readTeam, teamDirs } from './team.ts';
 
 const VIRTUAL = 'virtual:orbito/project';
-const RESOLVED = '\0' + VIRTUAL;
+const RESOLVED = `\0${VIRTUAL}`;
 const STATUS_FILE = '.orbito/status.json';
 const COMMENTS_DIR = 'comments';
 const FONTS_FILE = 'design-system/fonts.css';
@@ -109,7 +109,7 @@ export default function orbito(options: OrbitoOptions = {}): Plugin {
     },
     load(id) {
       if (id !== RESOLVED) return undefined;
-      const configPath = '/' + (options.config ?? 'orbito.config.ts').replace(/^\/+/, '');
+      const configPath = `/${(options.config ?? 'orbito.config.ts').replace(/^\/+/, '')}`;
       const statusPath = resolve(root, STATUS_FILE);
       const tokensPath = resolve(root, 'design-system/tokens.json');
       const fontsPath = resolve(root, FONTS_FILE);

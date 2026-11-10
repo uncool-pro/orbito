@@ -14,7 +14,7 @@ import type { ProjectConfig, TokenFile } from '@uncool-pro/orbito-core';
 import { inside } from './files.ts';
 
 const ENTRY = 'virtual:orbito/export-entry';
-const RESOLVED_ENTRY = '\0' + ENTRY;
+const RESOLVED_ENTRY = `\0${ENTRY}`;
 
 // renders inside the project's module graph, so React and the runtime are the project's own instances
 const ENTRY_SOURCE = `
@@ -101,7 +101,7 @@ export const exportSite = async ({ root, screen, out }: ExportOptions): Promise<
     const file = findScreenFile(root, id);
 
     if (!file) throw new Error(`screen "${id}" not found (expected screens/**/${id}.screen.tsx)`);
-    const mod = await server.ssrLoadModule('/' + relative(root, file).split('\\').join('/'));
+    const mod = await server.ssrLoadModule(`/${relative(root, file).split('\\').join('/')}`);
 
     if (typeof mod.default !== 'function')
       throw new Error(`${relative(root, file)} has no default export (the screen component)`);

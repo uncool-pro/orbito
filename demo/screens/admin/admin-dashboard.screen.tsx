@@ -74,6 +74,7 @@ export default function AdminDashboard() {
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2)' }}>
             {[...plants, ...plants].map((p, i) => (
               <ListItem
+                // biome-ignore lint/suspicious/noArrayIndexKey: the list repeats to fill the page, so ids repeat
                 key={`${p.id}-${i}`}
                 title={p.name}
                 subtitle={p.room}

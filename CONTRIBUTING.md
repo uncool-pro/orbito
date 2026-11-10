@@ -20,6 +20,7 @@ There is no build step: Node and Vite run the TypeScript sources directly.
 | Command | What it checks | Runs in CI |
 |---|---|---|
 | `npm run typecheck` | types of every package, the tests, the demo, the template and the Docker scripts | yes |
+| `npm run lint` | Biome: lint rules and formatting (`npm run format` formats everything) | yes |
 | `npm test` | unit tests (Vitest) | yes, Linux and Windows, Node 22.18 and 24 |
 | `npm run check:ds` | the design-system rules on the demo (`-w template-base` for the template) | yes |
 | `npm run build` | the demo builds as a static site | yes |
@@ -27,7 +28,18 @@ There is no build step: Node and Vite run the TypeScript sources directly.
 | `ORBITO_IMAGE=orbito:dev npx playwright test e2e/docker.spec.ts` | the image works and its seal holds (after `docker build -t orbito:dev .`) | yes |
 | `npm audit --omit=dev` | known holes in what reaches people's computers | yes, high and critical fail the build |
 
-Before you open a pull request: `npm run typecheck`, `npm test` and `npm run check:ds` pass, and you have looked at the board in the browser.
+Before you open a pull request: `npm run typecheck`, `npm run lint`, `npm test` and `npm run check:ds` pass, and you have looked at the board in the browser.
+
+## Code style
+
+Biome formats the code and checks it with its recommended rules (`biome.json`); your editor can run it on save. A rule is never silenced without a reason: a `// biome-ignore <rule>: <why>` comment says why this place is right as it is. A few rules are switched off on purpose:
+
+- `noNonNullAssertion`: with `noUncheckedIndexedAccess` on, `!` marks a lookup the code has just made sure of.
+- `noDescendingSpecificity`: the styles are written per view, one block per element; the order of blocks follows the view, not specificity.
+- `useIterableCallbackReturn`: short `forEach((x) => set.add(x))` callbacks are used on purpose; TypeScript checks what they are given.
+- Some accessibility rules in the design systems of the template and the demo: those components draw controls in mockups (a checkbox, a tab) and carry the role for the accessibility audit, but are not operated from the keyboard.
+
+The commit that formatted the whole codebase is listed in `.git-blame-ignore-revs`: `git config blame.ignoreRevsFile .git-blame-ignore-revs` makes `git blame` skip it.
 
 ## Rules
 

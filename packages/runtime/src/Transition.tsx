@@ -29,5 +29,6 @@ export const Transition = ({ to, on, label, after }: TransitionProps) => {
     return () => window.clearTimeout(t);
   }, [mode, on, after, to]);
 
+  // biome-ignore lint/a11y/useAriaPropsSupportedByRole: the link probe reads the label from here; the element itself is hidden
   return <span data-pd-to={to} data-pd-trigger={on} aria-label={label} aria-hidden="true" hidden />;
 };

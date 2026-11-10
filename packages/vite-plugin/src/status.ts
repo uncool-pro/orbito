@@ -48,7 +48,7 @@ export const saveStatus = (
   entries.sort(([a], [b]) => a.localeCompare(b, 'en', { numeric: true }));
   mkdirSync(dirname(file), { recursive: true });
   // written in place, never replaced by a rename: in a container this file is mounted on its own
-  writeFileSync(file, JSON.stringify(Object.fromEntries(entries), null, 2) + '\n');
+  writeFileSync(file, `${JSON.stringify(Object.fromEntries(entries), null, 2)}\n`);
 
   return entry;
 };

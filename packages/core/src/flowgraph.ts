@@ -76,6 +76,14 @@ const PRIORITY: FlowEdgeKind[] = ['happy', 'alternative', 'negative', 'other'];
 
 type Pt = [number, number];
 
+/** Adds a value to the list under a key, starting the list on first use. */
+const pushTo = <K extends string | number, T>(lists: Partial<Record<K, T[]>>, key: K, value: T) => {
+  const list = lists[key] ?? [];
+
+  list.push(value);
+  lists[key] = list;
+};
+
 /** Right-angled path through the points, corners slightly rounded (never curves between them). */
 export const orthoPath = (pts: Pt[], r: number = FG.radius): string => {
   const clean = pts.filter((p, i) => i === 0 || p[0] !== pts[i - 1]![0] || p[1] !== pts[i - 1]![1]);
@@ -163,7 +171,7 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
 
   ids.forEach((from) =>
     targetsOf(links, from).forEach((to) => {
-      if (!inScope.has(to)) return void (exits[from] ??= []).push(to);
+      if (!inScope.has(to)) return pushTo(exits, from, to);
       const info = kindsOf.get(`${from}>${to}`);
       const kind = info ? PRIORITY.find((p) => info.kinds.has(p))! : 'other';
       const spot = (links[from] ?? []).find((h) => h.to === to);
@@ -224,7 +232,7 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
     return i < 0 ? order.length + ids.indexOf(id) : i;
   };
 
-  ids.forEach((id) => (columns[level.get(id)!] ??= []).push(id));
+  ids.forEach((id) => pushTo(columns, level.get(id)!, id));
   columns.forEach((col) => col.sort((a, b) => rank(a) - rank(b)));
   // one barycentre pass: place screens near the screens that lead to them
   for (let c = 1; c < columns.length; c++) {

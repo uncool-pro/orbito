@@ -1,3 +1,4 @@
+// biome-ignore-all lint/correctness/noVoidTypeReturn: middleware style, `return reply(...)` answers and ends the request in one line
 // Dev endpoints of the board (never in a build):
 //   GET  /__orbito/status                 the status file
 //   POST /__orbito/status  {id,status,note?}  writes that one entry, nothing else

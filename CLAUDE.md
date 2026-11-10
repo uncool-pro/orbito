@@ -63,9 +63,9 @@ When the user asks to remove the demo application ("usuń demo", "remove the dem
 Never delete anything outside `demo/` other than these references.
 
 ## Commands
-`npm install` · `npm run dev` (demo on :5190) · `npm test` · `npm run test:e2e` (real clicks and the whole road of a new project, in the Chrome on your computer) · `npm run typecheck` · `npm run check:ds` · `npm run build`. Node 22.18+ (the CLI runs its TypeScript sources directly; a build step comes before publishing).
+`npm install` · `npm run dev` (demo on :5190) · `npm run lint` (Biome; `npm run format` formats) · `npm test` · `npm run test:e2e` (real clicks and the whole road of a new project, in the Chrome on your computer) · `npm run typecheck` · `npm run check:ds` · `npm run build`. Node 22.18+ (the CLI runs its TypeScript sources directly; a build step comes before publishing).
 The container tests run with a built image: `docker build -t orbito:dev .`, then `ORBITO_IMAGE=orbito:dev npx playwright test e2e/docker.spec.ts`. Stop any other board on port 5190 first: the browser would reach that one instead.
-After a change: typecheck, tests, and look at the board in the browser.
+After a change: typecheck, lint, tests, and look at the board in the browser. A lint rule is silenced only with a `// biome-ignore <rule>: <why>` comment that gives the reason.
 
 ## Where things live in the viewer and the plugin
 - Addresses, the way back and the select-or-open rule: `viewer/src/app/routes.ts`. No view builds an address by hand.

@@ -118,6 +118,10 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
   const pagesList = useRef<HTMLUListElement>(null);
   const drag = useRef<{ y: number; h: number } | null>(null);
   const listHeight = () => pagesList.current?.getBoundingClientRect().height ?? 0;
+  // the handle tells assistive technology how many pages the list shows, of how many
+  const visiblePages = pagesHeight
+    ? Math.min(project.pages.length, Math.round((pagesHeight + 1) / PAGE_ROW))
+    : project.pages.length;
   const [open, setOpen] = useState<Set<string>>(
     () => new Set(flowKey ? [flowKey] : page?.flows.slice(0, 2).map((f) => f.key)),
   );
@@ -185,10 +189,14 @@ const ProjectTree = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowKey
           })}
         </ul>
         {project.pages.length > 2 && (
+          // biome-ignore lint/a11y/useSemanticElements: a handle moved with the pointer and the arrow keys, which <hr> cannot be
           <div
             className="pd-pages__grip"
             role="separator"
             aria-orientation="horizontal"
+            aria-valuemin={2}
+            aria-valuemax={project.pages.length}
+            aria-valuenow={visiblePages}
             aria-label={t.resizePages}
             title={t.resizePages}
             tabIndex={0}

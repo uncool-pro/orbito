@@ -50,6 +50,7 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
 
   return (
     <section className="pd-code">
+      {/* biome-ignore lint/a11y/useSemanticElements: a drag handle, not a line between parts of the content */}
       <div
         className="pd-code__grip"
         role="separator"
@@ -95,6 +96,7 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
       ) : (
         <pre className="pd-code__text">
           {(code ?? '').split('\n').map((line, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: a line of code is its number
             <span key={i}>
               <i>{i + 1}</i>
               {line}

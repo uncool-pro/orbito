@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { computeFlowGraph, screenName } from '@uncool-pro/orbito-core';
 import type { FlowEdgeKind, FlowNode, Page } from '@uncool-pro/orbito-core';
@@ -38,7 +38,7 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
   const root = useRef<HTMLDivElement>(null);
   const world = useRef<HTMLDivElement>(null);
   const ctrl = useRef<CanvasController | null>(null);
-  const code = (id: string) => byId.get(id)?.code ?? id;
+  const code = useCallback((id: string) => byId.get(id)?.code ?? id, [byId]);
 
   useLayoutEffect(() => {
     const el = root.current;
@@ -88,19 +88,18 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
       controller.destroy();
       canvas.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph]);
+  }, [graph, canvas]);
 
-  const focus = (id: string) => select(id, { focus: true });
+  const focus = useCallback((id: string) => select(id, { focus: true }), [select]);
 
   // a step picked in the left panel, the search or the findings: bring it into view
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only a focus request moves the camera, a plain selection does not
   useEffect(() => {
     const n = selected ? graph?.nodes.find((x) => x.id === selected) : undefined;
     const el = root.current;
 
     if (n && el && ctrl.current && focusTick)
       ctrl.current.set(centerOn(ctrl.current.camera, n, { w: el.clientWidth, h: el.clientHeight }, 0.9));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusTick, graph]);
   const focusId = hover ?? selected;
   const related = useMemo(() => {
@@ -159,10 +158,11 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
     );
 
     return () => setInspectorExtra(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph, findings, t]);
+  }, [graph, findings, t, code, focus]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: the diagram is a canvas the pointer works on; its keys are listened to on the window
+    // biome-ignore lint/a11y/useKeyWithClickEvents: the left panel and the search select steps from the keyboard
     <div
       ref={root}
       className="pd-board pd-flows"
@@ -180,7 +180,7 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
         <div className="pd-empty">{t.detecting}</div>
       ) : (
         <div ref={world} className="pd-world" style={{ width: graph.w, height: graph.h }}>
-          <svg className="pd-svg" width={graph.w} height={graph.h}>
+          <svg aria-hidden="true" className="pd-svg" width={graph.w} height={graph.h}>
             <defs>
               {KINDS.map((k) => (
                 <marker
@@ -243,6 +243,7 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
             const exits = graph.exits[n.id] ?? [];
 
             return (
+              // biome-ignore lint/a11y/noStaticElementInteractions: a double click opens the prototype; the left panel does it from the keyboard
               <div
                 key={n.id}
                 data-step={n.id}

@@ -210,7 +210,7 @@ export const installTeam = ({
   for (const name of RETIRED_SKILLS) retire(join(claude, 'skills', name), `skill ${name}`);
   for (const name of RETIRED_AGENTS) retire(join(claude, 'agents', `${name}.md`), `agent ${name}`);
   mkdirSync(dirname(manifestFile), { recursive: true });
-  writeFileSync(manifestFile, JSON.stringify(after, null, 2) + '\n');
+  writeFileSync(manifestFile, `${JSON.stringify(after, null, 2)}\n`);
 
   return result;
 };

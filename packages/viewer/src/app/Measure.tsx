@@ -80,7 +80,7 @@ const deepestAt = (root: Element, x: number, y: number): Element | null => {
 const scaleOf = (el: Element) => {
   const screen = el.closest<HTMLElement>('.pd-card__inner, .pd-stage__frame');
 
-  return screen && screen.offsetWidth ? screen.getBoundingClientRect().width / screen.offsetWidth : 1;
+  return screen?.offsetWidth ? screen.getBoundingClientRect().width / screen.offsetWidth : 1;
 };
 
 /**
@@ -205,6 +205,7 @@ export const Measure = ({ host, on }: { host: RefObject<HTMLElement | null>; on:
         const w = text.length * 6.4 + 10;
 
         return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: the lines are measured again on every move, never reordered
           <g key={i}>
             <line className="pd-measure__line" x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} />
             <rect className="pd-measure__tag" x={mx - w / 2} y={my - 9} width={w} height={18} rx={4} />

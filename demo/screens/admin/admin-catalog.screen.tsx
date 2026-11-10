@@ -48,6 +48,7 @@ export default function AdminCatalog() {
         <Text tone="muted">Care templates used when someone adds a plant. Changes apply to new plants only.</Text>
         {[...plants, ...plants].map((p, i) => (
           <ListItem
+            // biome-ignore lint/suspicious/noArrayIndexKey: the list repeats to fill the page, so ids repeat
             key={`${p.id}-${i}`}
             title={p.name}
             subtitle={`Template · ${p.next.replace('today', 'every 7 days')}`}

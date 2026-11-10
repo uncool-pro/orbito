@@ -35,5 +35,5 @@ export const saveMode = (root: string, mode: ModelMode, team = false) => {
   const current = readJson<OrbitoSettings>(file, {});
 
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, JSON.stringify({ ...current, models: mode }, null, 2) + '\n');
+  writeFileSync(file, `${JSON.stringify({ ...current, models: mode }, null, 2)}\n`);
 };

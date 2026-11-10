@@ -127,7 +127,7 @@ const main = async () => {
     else
       pkg.dependencies[`@uncool-pro/orbito-${p}`] = `file:${relative(target, join(PACKAGES, p)).split('\\').join('/')}`;
   });
-  writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+  writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 
   if (!flag('no-install') && !DOCKER) {
     console.log('Installing…');

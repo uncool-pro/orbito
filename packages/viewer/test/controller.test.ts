@@ -27,7 +27,10 @@ let ctrl: CanvasController;
 
 beforeEach(() => {
   vi.stubGlobal('window', new EventTarget());
-  vi.stubGlobal('requestAnimationFrame', (f: () => void) => (f(), 1));
+  vi.stubGlobal('requestAnimationFrame', (f: () => void) => {
+    f();
+    return 1;
+  });
   vi.stubGlobal('cancelAnimationFrame', () => undefined);
   el = board();
   ctrl = new CanvasController(el, {

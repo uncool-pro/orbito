@@ -2,6 +2,11 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
+## 0.9.68 — not released yet
+One code style for the whole tool, checked on every change. Nothing changes in how the board, the flows or the prototype behave.
+- **For developers: Biome formats and checks the code.** `npm run lint` runs in CI next to the type check, `npm run format` formats everything. The rules it found that matter were fixed: hooks on the board and the flows diagram list what they depend on, two styles no longer need `!important`, decorative drawings are hidden from screen readers. A place where a rule does not fit says why in a comment; the rules switched off on purpose are listed in `CONTRIBUTING.md`.
+- **Accessibility:** the handle of the pages list tells a screen reader how many pages it shows, of how many. In new projects an `Avatar` with a name is announced as a picture of that person (**template**).
+
 ## 0.9.67 — not released yet
 A security and code review of the whole tool before people's development teams look at it. Nothing changes in how the board, the flows or the prototype behave.
 - **Fix (security): a comment can no longer reach outside the comments folder.** A request to the board's comments endpoint naming the screen `..` wrote a file in the project's main folder, and could remove a `.md` file there, such as `README.md` or `CLAUDE.md`. Only the board itself or a program on the same computer could send it (other sites were already refused), and in Docker the project is read-only, but a screen id is now a plain name that never starts with a dot. Nothing to change in your projects.

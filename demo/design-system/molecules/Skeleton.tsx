@@ -49,6 +49,7 @@ export const Skeleton = ({
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
       <Bar width="55%" strong />
       {Array.from({ length: Math.max(0, lines - 1) }, (_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: placeholder bars, nothing else tells them apart
         <Bar key={i} width={i % 2 ? '60%' : '85%'} />
       ))}
     </div>
