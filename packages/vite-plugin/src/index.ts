@@ -45,15 +45,25 @@ const readRequirements = (root: string): Requirement[] => {
 
   if (!existsSync(dir)) return [];
 
-  return readdirSync(dir, { recursive: true, encoding: 'utf8' })
-    // a link that leads out of the project is not a requirements file of this project
-    .filter((f) => f.endsWith('.md') && insideForReal(root, resolve(dir, f)))
-    .sort()
-    .flatMap((f) => parseRequirements(`requirements/${f.split(sep).join('/')}`, readFileSync(resolve(dir, f), 'utf8')));
+  return (
+    readdirSync(dir, { recursive: true, encoding: 'utf8' })
+      // a link that leads out of the project is not a requirements file of this project
+      .filter((f) => f.endsWith('.md') && insideForReal(root, resolve(dir, f)))
+      .sort()
+      .flatMap((f) =>
+        parseRequirements(`requirements/${f.split(sep).join('/')}`, readFileSync(resolve(dir, f), 'utf8')),
+      )
+  );
 };
 
 /** The report when the check itself fails: the tokens as they are, nothing else. */
-const emptyReport = (tokens: TokenFile): DsReport => ({ tokens, components: [], screens: {}, issues: [], counts: { error: 0, warning: 0, info: 0 } });
+const emptyReport = (tokens: TokenFile): DsReport => ({
+  tokens,
+  components: [],
+  screens: {},
+  issues: [],
+  counts: { error: 0, warning: 0, info: 0 },
+});
 
 export type OrbitoOptions = {
   /** The project config file, relative to the Vite root (default `orbito.config.ts`). */
@@ -76,7 +86,8 @@ export default function orbito(options: OrbitoOptions = {}): Plugin {
     if (message) server.ws.send(message);
   };
   const reload = (server: ViteDevServer) => refresh(server, { type: 'full-reload' });
-  const pushComments = (server: ViteDevServer) => refresh(server, { type: 'custom', event: 'orbito:comments', data: readComments(resolve(root, COMMENTS_DIR)) });
+  const pushComments = (server: ViteDevServer) =>
+    refresh(server, { type: 'custom', event: 'orbito:comments', data: readComments(resolve(root, COMMENTS_DIR)) });
 
   return {
     name: 'orbito',
@@ -145,7 +156,9 @@ export default function orbito(options: OrbitoOptions = {}): Plugin {
         });
       }
       // a fonts.css or a settings file created while the server runs
-      const createdLater = [FONTS_FILE, '.orbito/settings.json', '.orbito/settings.local.json'].map((f) => resolve(root, f));
+      const createdLater = [FONTS_FILE, '.orbito/settings.json', '.orbito/settings.local.json'].map((f) =>
+        resolve(root, f),
+      );
 
       server.watcher.on('add', (file) => {
         if (createdLater.includes(resolve(file))) reload(server);
@@ -178,7 +191,12 @@ export default function orbito(options: OrbitoOptions = {}): Plugin {
         return [];
       }
       // text and values the board cannot take in place: the model mode, the stories, the tokens and the typefaces
-      if (SETTINGS_FILES.includes(rel) || /^requirements\/.*\.md$/.test(rel) || rel === 'design-system/tokens.json' || rel === FONTS_FILE) {
+      if (
+        SETTINGS_FILES.includes(rel) ||
+        /^requirements\/.*\.md$/.test(rel) ||
+        rel === 'design-system/tokens.json' ||
+        rel === FONTS_FILE
+      ) {
         reload(server);
 
         return [];

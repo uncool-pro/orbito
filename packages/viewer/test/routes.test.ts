@@ -1,6 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { canvasHash, canvasOf, dsHash, lastCanvasHash, parseRoute, pickScreen, rememberCanvas, screenHash } from '../src/app/routes';
+import {
+  canvasHash,
+  canvasOf,
+  dsHash,
+  lastCanvasHash,
+  parseRoute,
+  pickScreen,
+  rememberCanvas,
+  screenHash,
+} from '../src/app/routes';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -32,7 +41,11 @@ describe('parseRoute', () => {
 
 describe('addresses', () => {
   it('reads back what it builds, also for names with spaces and Polish letters', () => {
-    expect(parseRoute(canvasHash('board', 'strona główna', 'krok 1'))).toEqual({ view: 'board', page: 'strona główna', flow: 'krok 1' });
+    expect(parseRoute(canvasHash('board', 'strona główna', 'krok 1'))).toEqual({
+      view: 'board',
+      page: 'strona główna',
+      flow: 'krok 1',
+    });
     expect(parseRoute(dsHash('tokens/kolor tła'))).toEqual({ view: 'ds', section: 'tokens/kolor tła' });
     expect(parseRoute(screenHash('ekran ł'))).toEqual({ view: 'screen', screen: 'ekran ł' });
   });
@@ -77,7 +90,10 @@ describe('the way back', () => {
   it('returns to the remembered canvas', () => {
     const store = new Map<string, string>();
 
-    vi.stubGlobal('sessionStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => store.set(k, v) });
+    vi.stubGlobal('sessionStorage', {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => store.set(k, v),
+    });
     expect(lastCanvasHash()).toBe('#/board');
     rememberCanvas('#/flows/web');
     expect(lastCanvasHash()).toBe('#/flows/web');

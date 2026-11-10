@@ -18,7 +18,12 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
   const { codeWidth, setCodeWidth } = useShell();
   const t = useT();
   const parts = ds.report.screens[screen.id] ?? [];
-  const files = [{ label: screen.file.split('/').pop()!, file: screen.file }, ...parts.flatMap((name) => ds.report.components.filter((c) => c.name === name).map((c) => ({ label: c.name, file: c.file })))];
+  const files = [
+    { label: screen.file.split('/').pop()!, file: screen.file },
+    ...parts.flatMap((name) =>
+      ds.report.components.filter((c) => c.name === name).map((c) => ({ label: c.name, file: c.file })),
+    ),
+  ];
   const [file, setFile] = useState(screen.file);
   const [code, setCode] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -56,7 +61,8 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
           drag.current = { x: e.clientX, w: codeWidth };
         }}
         onPointerMove={(e) => {
-          if (drag.current) setCodeWidth(Math.round(Math.min(900, Math.max(300, drag.current.w + drag.current.x - e.clientX))));
+          if (drag.current)
+            setCodeWidth(Math.round(Math.min(900, Math.max(300, drag.current.w + drag.current.x - e.clientX))));
         }}
         onPointerUp={() => {
           drag.current = null;
@@ -70,7 +76,15 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
       </div>
       <div className="pd-code__files" role="tablist">
         {files.map((f) => (
-          <button key={f.file} type="button" role="tab" aria-selected={f.file === file} className={f.file === file ? 'is-on' : ''} onClick={() => setFile(f.file)} title={f.file}>
+          <button
+            key={f.file}
+            type="button"
+            role="tab"
+            aria-selected={f.file === file}
+            className={f.file === file ? 'is-on' : ''}
+            onClick={() => setFile(f.file)}
+            title={f.file}
+          >
             {f.label}
           </button>
         ))}

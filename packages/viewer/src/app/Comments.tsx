@@ -26,7 +26,9 @@ const when = (iso: string) => {
 
   if (Number.isNaN(d.getTime())) return iso;
 
-  return /T/.test(iso) ? d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  return /T/.test(iso)
+    ? d.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 };
 
 const MARGIN = 8;
@@ -55,12 +57,16 @@ const Bubble = ({ screen, onClose }: { screen: Screen<ComponentType>; onClose: (
     let missing = 0;
     const place = () => {
       const el = box.current;
-      const anchor = [...document.querySelectorAll<HTMLElement>(`[data-comment-anchor="${CSS.escape(screen.id)}"]`)].find((a) => a.offsetParent !== null);
+      const anchor = [
+        ...document.querySelectorAll<HTMLElement>(`[data-comment-anchor="${CSS.escape(screen.id)}"]`),
+      ].find((a) => a.offsetParent !== null);
 
       if (el && anchor) {
         missing = 0;
         const r = anchor.getBoundingClientRect();
-        const area = document.querySelector('.pd-main')?.getBoundingClientRect() ?? new DOMRect(0, 0, window.innerWidth, window.innerHeight);
+        const area =
+          document.querySelector('.pd-main')?.getBoundingClientRect() ??
+          new DOMRect(0, 0, window.innerWidth, window.innerHeight);
         const w = el.offsetWidth;
         const h = el.offsetHeight;
         const right = r.right + GAP;
@@ -114,12 +120,25 @@ const Bubble = ({ screen, onClose }: { screen: Screen<ComponentType>; onClose: (
   const name = screenName(screen);
 
   return (
-    <div ref={box} className="pd-bubble" role="dialog" aria-label={t.commentsOn(name)} data-pd-ui style={{ visibility: 'hidden' }}>
+    <div
+      ref={box}
+      className="pd-bubble"
+      role="dialog"
+      aria-label={t.commentsOn(name)}
+      data-pd-ui
+      style={{ visibility: 'hidden' }}
+    >
       <header className="pd-bubble__head" title={t.commentsWhere(screen.id)}>
         <Icon name="message-circle" size={15} />
         <b>{name}</b>
         {screen.code && <small>{screen.code}</small>}
-        <button type="button" className="pd-bubble__close" onClick={onClose} aria-label={t.closeComments} title={t.closeComments}>
+        <button
+          type="button"
+          className="pd-bubble__close"
+          onClick={onClose}
+          aria-label={t.closeComments}
+          title={t.closeComments}
+        >
           <Icon name="x" size={15} />
         </button>
       </header>
@@ -155,10 +174,11 @@ const Thread = ({ screen }: { screen: string }) => {
     );
   };
   const submit = () => {
-    if (text.trim() && !busy) run(addComment(screen, text, author), () => {
-      setText('');
-      if (author.trim()) setNaming(false);
-    });
+    if (text.trim() && !busy)
+      run(addComment(screen, text, author), () => {
+        setText('');
+        if (author.trim()) setNaming(false);
+      });
   };
 
   return (
@@ -168,11 +188,17 @@ const Thread = ({ screen }: { screen: string }) => {
           <Item key={c.id} c={c} screen={screen} editable={editable} busy={busy} run={run} />
         ))}
         {done.length > 0 && (
-          <button type="button" className="pd-bubble__more" aria-expanded={showDone} onClick={() => setShowDone((v) => !v)}>
+          <button
+            type="button"
+            className="pd-bubble__more"
+            aria-expanded={showDone}
+            onClick={() => setShowDone((v) => !v)}
+          >
             <Icon name="circle-check" size={14} /> {t.doneCount(done.length)}
           </button>
         )}
-        {showDone && done.map((c) => <Item key={c.id} c={c} screen={screen} editable={editable} busy={busy} run={run} />)}
+        {showDone &&
+          done.map((c) => <Item key={c.id} c={c} screen={screen} editable={editable} busy={busy} run={run} />)}
         {list.length === 0 && <p className="pd-bubble__empty">{editable ? t.firstComment : t.noComments}</p>}
       </div>
       {editable && (
@@ -183,7 +209,15 @@ const Thread = ({ screen }: { screen: string }) => {
             submit();
           }}
         >
-          {naming && <input className="pd-input" placeholder={t.yourName} value={author} maxLength={80} onChange={(e) => setAuthor(e.target.value)} />}
+          {naming && (
+            <input
+              className="pd-input"
+              placeholder={t.yourName}
+              value={author}
+              maxLength={80}
+              onChange={(e) => setAuthor(e.target.value)}
+            />
+          )}
           <div className="pd-bubble__write">
             <textarea
               rows={2}
@@ -199,7 +233,13 @@ const Thread = ({ screen }: { screen: string }) => {
                 }
               }}
             />
-            <button type="submit" className="pd-bubble__send" disabled={!text.trim() || busy} aria-label={t.addComment} title={t.addComment}>
+            <button
+              type="submit"
+              className="pd-bubble__send"
+              disabled={!text.trim() || busy}
+              aria-label={t.addComment}
+              title={t.addComment}
+            >
               <Icon name="send" size={15} />
             </button>
           </div>
@@ -218,7 +258,19 @@ const Thread = ({ screen }: { screen: string }) => {
   );
 };
 
-const Item = ({ c, screen, editable, busy, run }: { c: ScreenComment; screen: string; editable: boolean; busy: boolean; run: (job: Promise<void>) => void }) => {
+const Item = ({
+  c,
+  screen,
+  editable,
+  busy,
+  run,
+}: {
+  c: ScreenComment;
+  screen: string;
+  editable: boolean;
+  busy: boolean;
+  run: (job: Promise<void>) => void;
+}) => {
   const t = useT();
   const who = c.author ?? t.anonymous;
 
@@ -233,7 +285,14 @@ const Item = ({ c, screen, editable, busy, run }: { c: ScreenComment; screen: st
           {when(c.createdAt)}
         </time>
         {editable && (
-          <button type="button" className="pd-comment__remove" disabled={busy} title={t.removeComment} aria-label={t.removeComment} onClick={() => run(removeComment(screen, c.id))}>
+          <button
+            type="button"
+            className="pd-comment__remove"
+            disabled={busy}
+            title={t.removeComment}
+            aria-label={t.removeComment}
+            onClick={() => run(removeComment(screen, c.id))}
+          >
             <Icon name="x" size={13} />
           </button>
         )}

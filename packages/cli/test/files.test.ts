@@ -17,7 +17,10 @@ beforeEach(() => {
   outside = join(base, 'outside');
   mkdirSync(join(root, 'screens'), { recursive: true });
   mkdirSync(outside);
-  writeFileSync(join(root, 'screens/a.screen.tsx'), 'export default () => null;\nexport const meta = { title: "A" };\n');
+  writeFileSync(
+    join(root, 'screens/a.screen.tsx'),
+    'export default () => null;\nexport const meta = { title: "A" };\n',
+  );
   writeFileSync(join(outside, 'b.screen.tsx'), 'export default () => <button />;\n');
   // a junction on Windows (no special rights needed), a symbolic link elsewhere
   symlinkSync(outside, join(root, 'screens/elsewhere'), 'junction');

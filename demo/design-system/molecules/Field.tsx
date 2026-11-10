@@ -1,7 +1,17 @@
 import { Text } from '../atoms/Text';
 
 /** Labelled text field (static in mockups: shows a value or a placeholder). */
-export const Field = ({ label, value, placeholder, hint }: { label: string; value?: string; placeholder?: string; hint?: string }) => (
+export const Field = ({
+  label,
+  value,
+  placeholder,
+  hint,
+}: {
+  label: string;
+  value?: string;
+  placeholder?: string;
+  hint?: string;
+}) => (
   <label style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
     <Text variant="caption" tone="muted">
       {label}

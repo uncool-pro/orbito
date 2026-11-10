@@ -11,7 +11,8 @@ const tabs: Tab[] = [
 
 export default defineDocs({
   component: 'TabBar',
-  description: 'Main navigation of a mobile app: 3–5 tabs at the bottom of tab root screens. The current tab is highlighted and is not a link.',
+  description:
+    'Main navigation of a mobile app: 3–5 tabs at the bottom of tab root screens. The current tab is highlighted and is not a link.',
   guidelines: {
     do: ['Show it only on tab root screens, not on nested ones.', 'Labels of one word.'],
     dont: ["Don't add a sixth tab: revisit the information architecture instead."],

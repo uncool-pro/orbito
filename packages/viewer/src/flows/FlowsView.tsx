@@ -24,7 +24,8 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
   const flow = page.flows.find((f) => f.key === flowKey);
   const scope = useMemo(() => [...new Set((flow ? [flow] : page.flows).flatMap((f) => f.screens))], [page, flow]);
   const graph = useMemo(
-    () => (links ? computeFlowGraph({ scope, flows: page.flows, links, screens: byId, viewports: project.viewports }) : null),
+    () =>
+      links ? computeFlowGraph({ scope, flows: page.flows, links, screens: byId, viewports: project.viewports }) : null,
     [links, scope, page, byId, project.viewports],
   );
   const [hover, setHover] = useState<string | null>(null);
@@ -43,7 +44,12 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
     const el = root.current;
 
     if (!el || !graph) return;
-    const fit = () => fitRect({ x: 0, y: 0, w: graph.w, h: graph.h }, { w: el.clientWidth, h: el.clientHeight - 64 }, { inset: 8, pad: 48, maxK: 1.6 });
+    const fit = () =>
+      fitRect(
+        { x: 0, y: 0, w: graph.w, h: graph.h },
+        { w: el.clientWidth, h: el.clientHeight - 64 },
+        { inset: 8, pad: 48, maxK: 1.6 },
+      );
     const place = world.current ? sharpWhenStill(world.current) : () => undefined;
     const controller = new CanvasController(el, {
       initial: fit(),
@@ -92,7 +98,8 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
     const n = selected ? graph?.nodes.find((x) => x.id === selected) : undefined;
     const el = root.current;
 
-    if (n && el && ctrl.current && focusTick) ctrl.current.set(centerOn(ctrl.current.camera, n, { w: el.clientWidth, h: el.clientHeight }, 0.9));
+    if (n && el && ctrl.current && focusTick)
+      ctrl.current.set(centerOn(ctrl.current.camera, n, { w: el.clientWidth, h: el.clientHeight }, 0.9));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusTick, graph]);
   const focusId = hover ?? selected;
@@ -176,29 +183,44 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
           <svg className="pd-svg" width={graph.w} height={graph.h}>
             <defs>
               {KINDS.map((k) => (
-                <marker key={k} id={`pd-fa-${k}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <marker
+                  key={k}
+                  id={`pd-fa-${k}`}
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto-start-reverse"
+                >
                   <path d="M0 0 L10 5 L0 10 z" className={`pd-fa pd-fa--${k}`} />
                 </marker>
               ))}
             </defs>
-            {graph.edges.filter((e) => showOther || e.kind !== 'other').map((e) => {
-              const on = focusId && (e.from === focusId || e.to === focusId);
+            {graph.edges
+              .filter((e) => showOther || e.kind !== 'other')
+              .map((e) => {
+                const on = focusId && (e.from === focusId || e.to === focusId);
 
-              return (
-                <path
-                  key={e.id}
-                  d={e.d}
-                  className={`pd-fedge pd-fedge--${e.kind}${on ? ' is-on' : focusId ? ' is-faded' : ''}`}
-                  markerEnd={`url(#pd-fa-${e.kind})`}
-                >
-                  <title>{`${name(e.from)} → ${name(e.to)}${e.label ? ` · „${e.label}”` : ''}${e.flows.length ? ` · ${e.flows.join(', ')}` : ''}`}</title>
-                </path>
-              );
-            })}
+                return (
+                  <path
+                    key={e.id}
+                    d={e.d}
+                    className={`pd-fedge pd-fedge--${e.kind}${on ? ' is-on' : focusId ? ' is-faded' : ''}`}
+                    markerEnd={`url(#pd-fa-${e.kind})`}
+                  >
+                    <title>{`${name(e.from)} → ${name(e.to)}${e.label ? ` · „${e.label}”` : ''}${e.flows.length ? ` · ${e.flows.join(', ')}` : ''}`}</title>
+                  </path>
+                );
+              })}
             {graph.edges
               .filter((e) => e.trigger !== 'tap' && (showOther || e.kind !== 'other'))
               .map((e) => (
-                <g key={`l${e.id}`} className={`pd-flabel pd-flabel--${e.kind}`} transform={`translate(${e.mid.x} ${e.mid.y})`}>
+                <g
+                  key={`l${e.id}`}
+                  className={`pd-flabel pd-flabel--${e.kind}`}
+                  transform={`translate(${e.mid.x} ${e.mid.y})`}
+                >
                   <text textAnchor="middle" y={-8}>
                     {t.triggers[e.trigger] ?? e.trigger}: {e.label}
                   </text>
@@ -207,7 +229,12 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
             {graph.nodes
               .filter((n) => n.entry)
               .map((n) => (
-                <path key={`sl${n.id}`} d={`M${n.x - 42} ${n.y + n.h / 2} L${n.x - 1} ${n.y + n.h / 2}`} className="pd-fedge pd-fedge--happy" markerEnd="url(#pd-fa-happy)" />
+                <path
+                  key={`sl${n.id}`}
+                  d={`M${n.x - 42} ${n.y + n.h / 2} L${n.x - 1} ${n.y + n.h / 2}`}
+                  className="pd-fedge pd-fedge--happy"
+                  markerEnd="url(#pd-fa-happy)"
+                />
               ))}
           </svg>
           {graph.nodes.map((n) => {
@@ -226,20 +253,28 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
               >
                 <span>{screenName(s)}</span>
                 <b>{code(n.id)}</b>
-                {exits.length > 0 && <small className="pd-fbox__exits" title={exits.map((id) => byId.get(id)?.title ?? id).join('\n')}>→ {exits.length === 1 ? name(exits[0]!) : t.exitsCount(exits.length)}</small>}
+                {exits.length > 0 && (
+                  <small className="pd-fbox__exits" title={exits.map((id) => byId.get(id)?.title ?? id).join('\n')}>
+                    → {exits.length === 1 ? name(exits[0]!) : t.exitsCount(exits.length)}
+                  </small>
+                )}
               </div>
             );
           })}
           {graph.nodes
             .filter((n) => n.entry)
             .map((n) => (
-              <div key={`s${n.id}`} className="pd-fstart" style={{ left: n.x - 64, top: n.y + n.h / 2 - 11 }} title={t.start}>
+              <div
+                key={`s${n.id}`}
+                className="pd-fstart"
+                style={{ left: n.x - 64, top: n.y + n.h / 2 - 11 }}
+                title={t.start}
+              >
                 <i />
               </div>
             ))}
         </div>
       )}
-
     </div>
   );
 };

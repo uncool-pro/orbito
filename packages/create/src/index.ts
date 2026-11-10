@@ -32,7 +32,9 @@ const opt = (name: string) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const flag = (name: string) => args.includes(`--${name}`);
-const positional = args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1]!.startsWith('--') && args[i - 1] !== '--no-install'));
+const positional = args.filter(
+  (a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1]!.startsWith('--') && args[i - 1] !== '--no-install'),
+);
 
 const fail = (msg: string): never => {
   console.error(`\n✗ ${msg}\n`);
@@ -65,10 +67,12 @@ const main = async () => {
   if (existsSync(target) && readdirSync(target).length) fail(`${target} is not empty. Choose a new folder.`);
   const title = opt('title') ?? (await ask('Product name', basename(target)));
   const platform = (opt('platform') ?? (await ask('Platform: mobile, web or both', 'mobile'))) as Platform;
-  const locale = opt('locale') ?? (await ask('Language of the product (the mockups are written in it), e.g. en, pl, de', 'en'));
+  const locale =
+    opt('locale') ?? (await ask('Language of the product (the mockups are written in it), e.g. en, pl, de', 'en'));
 
   if (!(platform in PLATFORMS)) fail(`--platform must be mobile, web or both (got "${platform}")`);
-  if (!/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(locale)) fail(`--locale must be a language tag such as en, pl or pt-BR (got "${locale}")`);
+  if (!/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(locale))
+    fail(`--locale must be a language tag such as en, pl or pt-BR (got "${locale}")`);
 
   console.log(`\nCreating ${title} in ${target}`);
   cpSync(TEMPLATE, target, { recursive: true, filter: (src) => !/[\\/](node_modules|dist)([\\/]|$)/.test(src) });
@@ -85,18 +89,31 @@ const main = async () => {
   };
   const platforms = platform === 'both' ? 'mobile + web' : platform;
 
-  const version = (JSON.parse(readFileSync(join(PACKAGES, '../package.json'), 'utf8')) as { version?: string }).version ?? 'latest';
+  const version =
+    (JSON.parse(readFileSync(join(PACKAGES, '../package.json'), 'utf8')) as { version?: string }).version ?? 'latest';
 
-  const values = { '{{title}}': title, '{{viewport}}': platforms, '{{date}}': new Date().toISOString().slice(0, 10), '{{version}}': version };
+  const values = {
+    '{{title}}': title,
+    '{{viewport}}': platforms,
+    '{{date}}': new Date().toISOString().slice(0, 10),
+    '{{version}}': version,
+  };
 
   ['CLAUDE.md', 'README.md', '.orbito/process.md', 'compose.yaml'].forEach((f) => fill(f, values));
   // the name is the person's text: in a page it goes in as text, in code as a string, whatever characters it has
-  fill('index.html', { ...values, '{{title}}': title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') });
+  fill('index.html', {
+    ...values,
+    '{{title}}': title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+  });
   writeFileSync(join(target, '.orbito', 'runtime'), DOCKER ? 'docker\n' : 'local\n');
   if (!DOCKER) rmSync(join(target, 'compose.yaml'), { force: true });
   // what Orbito installed is recorded from the first moment: later updates must be able to tell the person's own items from Orbito's
   installTeam({ root: target, tool: TOOL });
-  fill('orbito.config.ts', { "title: 'My product'": `title: ${JSON.stringify(title)}`, "locale: 'en'": `locale: '${locale}'`, "defaultViewport: 'mobile'": `defaultViewport: '${PLATFORMS[platform]}'` });
+  fill('orbito.config.ts', {
+    "title: 'My product'": `title: ${JSON.stringify(title)}`,
+    "locale: 'en'": `locale: '${locale}'`,
+    "defaultViewport: 'mobile'": `defaultViewport: '${PLATFORMS[platform]}'`,
+  });
 
   const pkgPath = join(target, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
@@ -107,7 +124,8 @@ const main = async () => {
   // mistake has nothing of Orbito's to look for.
   PD_PACKAGES.forEach((p) => {
     if (DOCKER) delete pkg.dependencies[`@uncool-pro/orbito-${p}`];
-    else pkg.dependencies[`@uncool-pro/orbito-${p}`] = `file:${relative(target, join(PACKAGES, p)).split('\\').join('/')}`;
+    else
+      pkg.dependencies[`@uncool-pro/orbito-${p}`] = `file:${relative(target, join(PACKAGES, p)).split('\\').join('/')}`;
   });
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
 

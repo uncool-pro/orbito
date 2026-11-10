@@ -8,10 +8,27 @@ export const meta = defineScreen({ code: 'PR-03', title: 'Profile / Rooms', back
 
 export default function Rooms() {
   return (
-    <DeviceScreen background="var(--color-bg-glow), var(--color-bg)" top={<AppBar title="Rooms" back action={<Button variant="ghost" icon="plus" label="Add a room" />} />}>
-      <div data-name="room-list" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', padding: 'var(--space-2) var(--space-4) var(--space-5)' }}>
+    <DeviceScreen
+      background="var(--color-bg-glow), var(--color-bg)"
+      top={<AppBar title="Rooms" back action={<Button variant="ghost" icon="plus" label="Add a room" />} />}
+    >
+      <div
+        data-name="room-list"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--space-2)',
+          padding: 'var(--space-2) var(--space-4) var(--space-5)',
+        }}
+      >
         {rooms.map((r) => (
-          <ListItem key={r.name} to="room-detail" title={r.name} subtitle={`${r.plants} ${r.plants === 1 ? 'plant' : 'plants'} · ${r.light}`} leading={<PlantThumb size={44} />} />
+          <ListItem
+            key={r.name}
+            to="room-detail"
+            title={r.name}
+            subtitle={`${r.plants} ${r.plants === 1 ? 'plant' : 'plants'} · ${r.light}`}
+            leading={<PlantThumb size={44} />}
+          />
         ))}
       </div>
     </DeviceScreen>

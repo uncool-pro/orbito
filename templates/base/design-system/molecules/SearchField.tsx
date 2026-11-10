@@ -4,7 +4,11 @@ import type { LinkTarget } from '@uncool-pro/orbito-runtime';
 import { Icon } from '../atoms/Icon';
 
 /** Search input. On a list screen it can open a dedicated search screen (`to`). */
-export const SearchField = ({ placeholder = 'Search', value, ...link }: LinkTarget & { placeholder?: string; value?: string }) => {
+export const SearchField = ({
+  placeholder = 'Search',
+  value,
+  ...link
+}: LinkTarget & { placeholder?: string; value?: string }) => {
   const linkProps = useLinkProps(link);
 
   return (

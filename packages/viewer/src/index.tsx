@@ -19,7 +19,16 @@ import type { CommentsFile } from './comments';
 import { initStatuses } from './status';
 import './viewer.css';
 
-export type LoadedProject = { project: Project<ComponentType>; problems: ProjectProblem[]; statuses: StatusFile; comments?: CommentsFile; dev: boolean; ds: DsData; team?: Team | null; requirements?: Requirement[] };
+export type LoadedProject = {
+  project: Project<ComponentType>;
+  problems: ProjectProblem[];
+  statuses: StatusFile;
+  comments?: CommentsFile;
+  dev: boolean;
+  ds: DsData;
+  team?: Team | null;
+  requirements?: Requirement[];
+};
 
 const Root = ({ loaded }: { loaded: LoadedProject }) => {
   const [links, setLinks] = useState<LinkMap | null>(null);
@@ -41,7 +50,12 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
         if (!live) return;
         setLinks(l);
         // read by agents (e.g. to check that every flow step is reachable)
-        (window as unknown as Record<string, unknown>).__orbito = { screens: loaded.project.screens.map(({ component: _c, ...s }) => s), pages: loaded.project.pages, links: l, problems: loaded.problems };
+        (window as unknown as Record<string, unknown>).__orbito = {
+          screens: loaded.project.screens.map(({ component: _c, ...s }) => s),
+          pages: loaded.project.pages,
+          links: l,
+          problems: loaded.problems,
+        };
       });
 
     return () => {
@@ -91,17 +105,23 @@ export const mount = (loaded: LoadedProject, container: HTMLElement | null = doc
   if (!container) throw new Error('orbito: no #root element');
   registerParents(loaded.project.screens);
   // tokens.json -> CSS variables, so screens and the catalog read the same values
-  const style = document.getElementById('pd-tokens') ?? document.head.appendChild(Object.assign(document.createElement('style'), { id: 'pd-tokens' }));
+  const style =
+    document.getElementById('pd-tokens') ??
+    document.head.appendChild(Object.assign(document.createElement('style'), { id: 'pd-tokens' }));
 
   style.textContent = loaded.ds.css;
   // the typefaces the tokens name (design-system/fonts.css), shared with the static export
-  const fonts = document.getElementById('pd-fonts') ?? document.head.appendChild(Object.assign(document.createElement('style'), { id: 'pd-fonts' }));
+  const fonts =
+    document.getElementById('pd-fonts') ??
+    document.head.appendChild(Object.assign(document.createElement('style'), { id: 'pd-fonts' }));
 
   fonts.textContent = loaded.ds.fonts ?? '';
   initStatuses(loaded.statuses, loaded.dev);
   initComments(loaded.comments, loaded.dev);
   setFavicon();
-  loaded.problems.forEach((p) => console[p.level === 'error' ? 'error' : 'warn'](`[orbito] ${p.file ? `${p.file}: ` : ''}${p.message}`));
+  loaded.problems.forEach((p) =>
+    console[p.level === 'error' ? 'error' : 'warn'](`[orbito] ${p.file ? `${p.file}: ` : ''}${p.message}`),
+  );
   const root = createRoot(container);
 
   root.render(

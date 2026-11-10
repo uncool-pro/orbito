@@ -23,13 +23,21 @@ const readEntries = (file: string): [string, unknown][] => {
   } catch {
     data = null;
   }
-  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new RequestError(`${file} cannot be read: fix the file (is there a merge conflict?), then set the status again`, 409);
+  if (!data || typeof data !== 'object' || Array.isArray(data))
+    throw new RequestError(
+      `${file} cannot be read: fix the file (is there a merge conflict?), then set the status again`,
+      409,
+    );
 
   return Object.entries(data);
 };
 
 /** Saves the status of one feature (`today` is `YYYY-MM-DD`) and returns the saved entry. */
-export const saveStatus = (file: string, { id, status, note }: StatusChange, today = new Date().toISOString().slice(0, 10)): SavedStatus => {
+export const saveStatus = (
+  file: string,
+  { id, status, note }: StatusChange,
+  today = new Date().toISOString().slice(0, 10),
+): SavedStatus => {
   if (typeof id !== 'string' || !/^[\w.:/-]+$/.test(id)) throw new RequestError('invalid status id');
   if (!isStatus(status)) throw new RequestError(`status must be one of: ${STATUSES.join(', ')}`);
   if (note !== undefined && note !== null && typeof note !== 'string') throw new RequestError('note must be text');

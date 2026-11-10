@@ -2,9 +2,25 @@ import { createContext, useContext } from 'react';
 
 import type { ComponentType, ReactNode } from 'react';
 
-import type { ComponentDocs, DsReport, LinkMap, Project, ProjectProblem, Requirement, Screen, Team, TokenFile } from '@uncool-pro/orbito-core';
+import type {
+  ComponentDocs,
+  DsReport,
+  LinkMap,
+  Project,
+  ProjectProblem,
+  Requirement,
+  Screen,
+  Team,
+  TokenFile,
+} from '@uncool-pro/orbito-core';
 
-export type DsData = { tokens: TokenFile; css: string; report: DsReport; docs: ComponentDocs<ReactNode>[]; /** design-system/fonts.css, if the project has one */ fonts?: string };
+export type DsData = {
+  tokens: TokenFile;
+  css: string;
+  report: DsReport;
+  docs: ComponentDocs<ReactNode>[] /** design-system/fonts.css, if the project has one */;
+  fonts?: string;
+};
 
 export type ViewerState = {
   project: Project<ComponentType>;

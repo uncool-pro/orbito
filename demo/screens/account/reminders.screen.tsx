@@ -19,10 +19,28 @@ export default function Reminders() {
         </div>
       }
     >
-      <div data-name="reminder-list" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', padding: 'var(--space-2) var(--space-4) var(--space-5)' }}>
+      <div
+        data-name="reminder-list"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--space-2)',
+          padding: 'var(--space-2) var(--space-4) var(--space-5)',
+        }}
+      >
         <Text tone="muted">Leafy reminds you only when a plant needs you.</Text>
         {reminders.map((r) => (
-          <ListItem key={r.title} title={r.title} subtitle={r.when} leading={<Icon name="sun" />} trailing={<Text variant="caption" tone="primary">On</Text>} />
+          <ListItem
+            key={r.title}
+            title={r.title}
+            subtitle={r.when}
+            leading={<Icon name="sun" />}
+            trailing={
+              <Text variant="caption" tone="primary">
+                On
+              </Text>
+            }
+          />
         ))}
       </div>
     </DeviceScreen>

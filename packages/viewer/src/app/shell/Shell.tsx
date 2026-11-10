@@ -27,10 +27,14 @@ type ShellProps = { mode: Mode; page?: Page; flowKey?: string; dsSection?: strin
 export const Shell = ({ mode, page, flowKey, dsSection, children }: ShellProps) => {
   const { drawerOpen, inspectorOpen, devMode, selected, codeWidth } = useShell();
   // in dev mode the right panel shows the selected screen's code, as wide as the person dragged it
-  const width = devMode && selected && !isPage(mode) ? ({ '--pd-insp-w': `${codeWidth}px` } as CSSProperties) : undefined;
+  const width =
+    devMode && selected && !isPage(mode) ? ({ '--pd-insp-w': `${codeWidth}px` } as CSSProperties) : undefined;
 
   return (
-    <div className={`pd-shell${drawerOpen ? '' : ' no-drawer'}${inspectorOpen && !isPage(mode) ? '' : ' no-inspector'}`} style={width}>
+    <div
+      className={`pd-shell${drawerOpen ? '' : ' no-drawer'}${inspectorOpen && !isPage(mode) ? '' : ' no-inspector'}`}
+      style={width}
+    >
       <TopBar mode={mode} page={page} flowKey={flowKey} />
       <Welcome />
       <CommentBubble />

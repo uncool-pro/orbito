@@ -29,21 +29,38 @@ const git = (cwd: string, args: string[]) => execFileSync('git', ['-C', cwd, ...
  * command line, with nothing in it that came from outside.
  */
 const npm = (cwd: string, args: string[]) =>
-  process.platform === 'win32' ? spawnSync(`npm ${args.join(' ')}`, { cwd, stdio: 'inherit', shell: true }) : spawnSync('npm', args, { cwd, stdio: 'inherit' });
+  process.platform === 'win32'
+    ? spawnSync(`npm ${args.join(' ')}`, { cwd, stdio: 'inherit', shell: true })
+    : spawnSync('npm', args, { cwd, stdio: 'inherit' });
 
 export type UpdateResult = InstallResult & { tool: { from: string; to: string; commits?: string[] } };
 
 /** The refresh, done by the version just pulled. */
 const refreshWithNewVersion = (tool: string, root: string): InstallResult => {
-  const r = spawnSync(process.execPath, [join(tool, 'packages/cli/src/bin.ts'), 'update', '--json', '--root', root], { encoding: 'utf8' });
+  const r = spawnSync(process.execPath, [join(tool, 'packages/cli/src/bin.ts'), 'update', '--json', '--root', root], {
+    encoding: 'utf8',
+  });
 
   if (r.status) throw new Error(`the new version of Orbito could not finish the update:\n${r.stderr || r.stdout}`);
 
   return JSON.parse(r.stdout) as InstallResult;
 };
 
-export const updateProject = ({ root, pull, install = true, tool = toolRoot(), today }: { root: string; pull?: boolean; install?: boolean; tool?: string; today?: string }): UpdateResult => {
-  if (!existsSync(join(tool, 'skills')) || !existsSync(join(tool, 'agents'))) throw new Error(`no skills/ and agents/ in the Orbito folder ${tool}`);
+export const updateProject = ({
+  root,
+  pull,
+  install = true,
+  tool = toolRoot(),
+  today,
+}: {
+  root: string;
+  pull?: boolean;
+  install?: boolean;
+  tool?: string;
+  today?: string;
+}): UpdateResult => {
+  if (!existsSync(join(tool, 'skills')) || !existsSync(join(tool, 'agents')))
+    throw new Error(`no skills/ and agents/ in the Orbito folder ${tool}`);
   root = resolve(root);
   if (root === resolve(tool)) throw new Error('run it in your project, not in the Orbito folder');
   const from = toolVersion(tool);
@@ -71,7 +88,9 @@ export const updateProject = ({ root, pull, install = true, tool = toolRoot(), t
     toolChange = { from: `${from} (${before.slice(0, 7)})`, to: `${toolVersion(tool)} (${after.slice(0, 7)})` };
     if (before !== after) {
       pulled = true;
-      toolChange.commits = git(tool, ['log', '--format=%s', `${before}..${after}`]).split('\n').filter(Boolean);
+      toolChange.commits = git(tool, ['log', '--format=%s', `${before}..${after}`])
+        .split('\n')
+        .filter(Boolean);
       if (install) {
         // no install scripts: a package that comes with an update gets no chance to run code of its own while installing
         const r = npm(tool, ['install', '--ignore-scripts', '--no-audit', '--no-fund']);

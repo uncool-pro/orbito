@@ -11,9 +11,35 @@ export default defineDocs({
     dont: ["Don't use a banner for field errors (they belong under the field)."],
   },
   variants: [
-    { name: 'Info', width: 358, render: () => <Banner title="New: export to PDF">Find it in the menu of any report.</Banner> },
+    {
+      name: 'Info',
+      width: 358,
+      render: () => <Banner title="New: export to PDF">Find it in the menu of any report.</Banner>,
+    },
     { name: 'Success', width: 358, render: () => <Banner tone="success" title="Invoice sent" /> },
-    { name: 'Warning with action', width: 358, render: () => <Banner tone="warning" title="2 invoices due this week" action={<Button size="sm" variant="ghost">View</Button>} /> },
-    { name: 'Danger', width: 358, render: () => <Banner tone="danger" title="Payment failed">The card was declined. Try another card or contact your bank.</Banner> },
+    {
+      name: 'Warning with action',
+      width: 358,
+      render: () => (
+        <Banner
+          tone="warning"
+          title="2 invoices due this week"
+          action={
+            <Button size="sm" variant="ghost">
+              View
+            </Button>
+          }
+        />
+      ),
+    },
+    {
+      name: 'Danger',
+      width: 358,
+      render: () => (
+        <Banner tone="danger" title="Payment failed">
+          The card was declined. Try another card or contact your bank.
+        </Banner>
+      ),
+    },
   ],
 });

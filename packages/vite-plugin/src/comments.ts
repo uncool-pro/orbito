@@ -15,7 +15,15 @@ const MAX = 2000;
 const ID = /^[\w-][\w.-]*$/;
 const CONFLICT = /^(<{7}|>{7}|={7})( |$)/m;
 
-export type CommentChange = { action?: unknown; screen?: unknown; text?: unknown; author?: unknown; id?: unknown; status?: unknown; note?: unknown };
+export type CommentChange = {
+  action?: unknown;
+  screen?: unknown;
+  text?: unknown;
+  author?: unknown;
+  id?: unknown;
+  status?: unknown;
+  note?: unknown;
+};
 export type CommentsByScreen = Record<string, ScreenComment[]>;
 
 const isId = (v: unknown): v is string => typeof v === 'string' && ID.test(v);
@@ -41,7 +49,8 @@ export const readComments = (dir: string): CommentsByScreen => {
 
 const oneLine = (v: unknown, max: number, what: string): string | undefined => {
   if (v === undefined || v === null || v === '') return undefined;
-  if (typeof v !== 'string' || v.length > max || /[\r\n]/.test(v)) throw new RequestError(`${what} must be one short line`);
+  if (typeof v !== 'string' || v.length > max || /[\r\n]/.test(v))
+    throw new RequestError(`${what} must be one short line`);
 
   return v.trim() || undefined;
 };
@@ -50,7 +59,11 @@ const oneLine = (v: unknown, max: number, what: string): string | undefined => {
  * Changes the comments of one screen: `add` (screen, text, author?), `status` (screen, id, status, note?) or `remove`
  * (screen, id). Returns the screen's comments after the change, oldest first.
  */
-export const changeComments = (dir: string, { action, screen, text, author, id, status, note }: CommentChange, now = new Date()): ScreenComment[] => {
+export const changeComments = (
+  dir: string,
+  { action, screen, text, author, id, status, note }: CommentChange,
+  now = new Date(),
+): ScreenComment[] => {
   if (!isId(screen)) throw new RequestError('invalid screen id');
   const folder = join(dir, screen);
 
@@ -64,14 +77,24 @@ export const changeComments = (dir: string, { action, screen, text, author, id, 
     const fresh = `${now.getTime().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
     mkdirSync(folder, { recursive: true });
-    writeFileSync(join(folder, `${fresh}.md`), formatComment({ id: fresh, status: 'open', text: text.trim(), ...(who ? { author: who } : {}), createdAt: now.toISOString().replace(/\.\d+Z$/, 'Z') }));
+    writeFileSync(
+      join(folder, `${fresh}.md`),
+      formatComment({
+        id: fresh,
+        status: 'open',
+        text: text.trim(),
+        ...(who ? { author: who } : {}),
+        createdAt: now.toISOString().replace(/\.\d+Z$/, 'Z'),
+      }),
+    );
   } else if (action === 'status' || action === 'remove') {
     if (!isId(id) || !existsSync(join(folder, `${id}.md`))) throw new RequestError('no such comment', 404);
     const file = join(folder, `${id}.md`);
     const before = readFileSync(file, 'utf8');
 
     // a merge conflict in the file: writing would drop one side of it
-    if (CONFLICT.test(before)) throw new RequestError(`comments/${screen}/${id}.md has a merge conflict: fix the file, then try again`, 409);
+    if (CONFLICT.test(before))
+      throw new RequestError(`comments/${screen}/${id}.md has a merge conflict: fix the file, then try again`, 409);
     if (action === 'remove') {
       rmSync(file);
       // a screen with no comments left has no folder: nothing to carry around in git
@@ -80,7 +103,8 @@ export const changeComments = (dir: string, { action, screen, text, author, id, 
       if (!isCommentStatus(status)) throw new RequestError('status must be open, doing or done');
       const current = parseComment(id, before);
 
-      if (!current) throw new RequestError(`comments/${screen}/${id}.md cannot be read: fix the file, then try again`, 409);
+      if (!current)
+        throw new RequestError(`comments/${screen}/${id}.md cannot be read: fix the file, then try again`, 409);
       const why = oneLine(note, 300, 'note');
 
       writeFileSync(file, formatComment({ ...current, status, ...(why ? { note: why } : {}) }));

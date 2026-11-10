@@ -1,40 +1,202 @@
 /* The prototype: one screen on its stage. */
-.pd-screen-page { min-height: 100vh; background: var(--pd-bg); }
-.pd-stage { display: flex; justify-content: center; padding: 32px 24px 64px; }
-.pd-stage--device .pd-stage__frame { border-radius: 44px; overflow: hidden; box-shadow: 0 0 0 10px var(--pd-night), var(--pd-shadow-dialog); }
-.pd-stage--page .pd-stage__frame { box-shadow: 0 0 0 1px var(--pd-panel-line), var(--pd-shadow-float); border-radius: var(--pd-r-md); overflow: hidden; }
+.pd-screen-page {
+  min-height: 100vh;
+  background: var(--pd-bg);
+}
+.pd-stage {
+  display: flex;
+  justify-content: center;
+  padding: 32px 24px 64px;
+}
+.pd-stage--device .pd-stage__frame {
+  border-radius: 44px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 10px var(--pd-night),
+    var(--pd-shadow-dialog);
+}
+.pd-stage--page .pd-stage__frame {
+  box-shadow:
+    0 0 0 1px var(--pd-panel-line),
+    var(--pd-shadow-float);
+  border-radius: var(--pd-r-md);
+  overflow: hidden;
+}
 /* prototype stage inside the shell */
-.pd-main .pd-screen-page { position: absolute; inset: 0; overflow: auto; min-height: 0; }
-.pd-main .pd-stage { padding: 32px 24px 96px; }
+.pd-main .pd-screen-page {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  min-height: 0;
+}
+.pd-main .pd-stage {
+  padding: 32px 24px 96px;
+}
 /* a responsive page: one size at a time, the switch stays in the top right corner while the page scrolls */
-.pd-sizebar { position: sticky; top: 0; z-index: 5; display: flex; justify-content: flex-end; padding: 12px 16px 0; pointer-events: none; }
-.pd-main .pd-sizebar + .pd-stage { padding-top: 12px; }
-.pd-sizes { pointer-events: auto; display: inline-flex; gap: 2px; padding: 3px; border-radius: var(--pd-r-md); background: var(--pd-panel); border: 1px solid var(--pd-panel-line); box-shadow: var(--pd-shadow-card); }
-.pd-sizes button { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border: 0; border-radius: var(--pd-r-sm); background: transparent; color: var(--pd-muted); font: 600 13px var(--pd-font); cursor: pointer; }
-.pd-sizes button:hover { color: var(--pd-ink); background: var(--pd-hover); }
-.pd-sizes button[aria-pressed='true'] { background: var(--pd-accent-soft); color: var(--pd-accent); }
-.pd-sizes button:focus-visible { outline: 2px solid var(--pd-accent); outline-offset: 1px; }
+.pd-sizebar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px 16px 0;
+  pointer-events: none;
+}
+.pd-main .pd-sizebar + .pd-stage {
+  padding-top: 12px;
+}
+.pd-sizes {
+  pointer-events: auto;
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--pd-r-md);
+  background: var(--pd-panel);
+  border: 1px solid var(--pd-panel-line);
+  box-shadow: var(--pd-shadow-card);
+}
+.pd-sizes button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--pd-r-sm);
+  background: transparent;
+  color: var(--pd-muted);
+  font: 600 13px var(--pd-font);
+  cursor: pointer;
+}
+.pd-sizes button:hover {
+  color: var(--pd-ink);
+  background: var(--pd-hover);
+}
+.pd-sizes button[aria-pressed="true"] {
+  background: var(--pd-accent-soft);
+  color: var(--pd-accent);
+}
+.pd-sizes button:focus-visible {
+  outline: 2px solid var(--pd-accent);
+  outline-offset: 1px;
+}
 /* dev mode: the path above the screen, measuring on it */
-.pd-screen-page.is-dev .pd-sizebar { justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; }
-.pd-sizes button { white-space: nowrap; }
-.pd-stage { position: relative; }
+.pd-screen-page.is-dev .pd-sizebar {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.pd-sizes button {
+  white-space: nowrap;
+}
+.pd-stage {
+  position: relative;
+}
 /* the screen keeps its own width; a narrow stage scales it down instead of cutting it */
 /* a mockup lives in its own layer: whatever z-index it uses stays under Orbito (size switch, island, bubble) */
-.pd-stage__frame { flex: none; isolation: isolate; }
-.pd-devpath { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; min-width: 0; padding: 3px 4px 3px 10px; border-radius: var(--pd-r-md); background: var(--pd-panel); border: 1px solid var(--pd-panel-line); box-shadow: var(--pd-shadow-card); }
-.pd-devpath code { font: 12px var(--pd-mono); color: var(--pd-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pd-devpath__link { font: 600 12px var(--pd-font); color: var(--pd-accent); text-decoration: none; padding: 4px 8px; border-radius: var(--pd-r-xs); white-space: nowrap; }
-.pd-devpath__link:hover { background: var(--pd-accent-soft); }
-.pd-measure { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; z-index: 4; }
-.pd-measure__box { fill: rgba(47, 111, 208, 0.08); stroke: #2f6fd0; stroke-width: 1; }
-.pd-measure__picked { fill: none; stroke: var(--pd-accent); stroke-width: 1.5; }
-.pd-measure__line { stroke: #e5484d; stroke-width: 1; }
-.pd-measure__tag { fill: #e5484d; }
-.pd-measure__size { fill: #2f6fd0; }
-.pd-measure__text { fill: #fff; font: 600 11px var(--pd-font); text-anchor: middle; }
-.pd-measure__hint { margin: -72px auto 96px; max-width: 520px; text-align: center; font-size: 12px; color: var(--pd-muted); }
+.pd-stage__frame {
+  flex: none;
+  isolation: isolate;
+}
+.pd-devpath {
+  pointer-events: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 3px 4px 3px 10px;
+  border-radius: var(--pd-r-md);
+  background: var(--pd-panel);
+  border: 1px solid var(--pd-panel-line);
+  box-shadow: var(--pd-shadow-card);
+}
+.pd-devpath code {
+  font: 12px var(--pd-mono);
+  color: var(--pd-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pd-devpath__link {
+  font: 600 12px var(--pd-font);
+  color: var(--pd-accent);
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: var(--pd-r-xs);
+  white-space: nowrap;
+}
+.pd-devpath__link:hover {
+  background: var(--pd-accent-soft);
+}
+.pd-measure {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+  z-index: 4;
+}
+.pd-measure__box {
+  fill: rgba(47, 111, 208, 0.08);
+  stroke: #2f6fd0;
+  stroke-width: 1;
+}
+.pd-measure__picked {
+  fill: none;
+  stroke: var(--pd-accent);
+  stroke-width: 1.5;
+}
+.pd-measure__line {
+  stroke: #e5484d;
+  stroke-width: 1;
+}
+.pd-measure__tag {
+  fill: #e5484d;
+}
+.pd-measure__size {
+  fill: #2f6fd0;
+}
+.pd-measure__text {
+  fill: #fff;
+  font: 600 11px var(--pd-font);
+  text-anchor: middle;
+}
+.pd-measure__hint {
+  margin: -72px auto 96px;
+  max-width: 520px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--pd-muted);
+}
 /* comments next to the screen in the prototype: a switch in the top bar of the stage, a panel at its right */
-.pd-sizebar__end { pointer-events: auto; margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.pd-commentstoggle { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: var(--pd-r-sm); border: 1px solid var(--pd-panel-line); background: var(--pd-panel); color: var(--pd-ink); font: 600 13px var(--pd-font); cursor: pointer; box-shadow: var(--pd-shadow-card); }
-.pd-commentstoggle[aria-pressed='true'] { background: var(--pd-accent-soft); color: var(--pd-accent); border-color: var(--pd-accent); }
-.pd-commentstoggle .pd-count { background: var(--pd-accent-soft); color: var(--pd-accent); }
+.pd-sizebar__end {
+  pointer-events: auto;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pd-commentstoggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--pd-r-sm);
+  border: 1px solid var(--pd-panel-line);
+  background: var(--pd-panel);
+  color: var(--pd-ink);
+  font: 600 13px var(--pd-font);
+  cursor: pointer;
+  box-shadow: var(--pd-shadow-card);
+}
+.pd-commentstoggle[aria-pressed="true"] {
+  background: var(--pd-accent-soft);
+  color: var(--pd-accent);
+  border-color: var(--pd-accent);
+}
+.pd-commentstoggle .pd-count {
+  background: var(--pd-accent-soft);
+  color: var(--pd-accent);
+}

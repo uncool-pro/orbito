@@ -53,11 +53,38 @@ export type Card = {
 };
 
 export type EdgeKind = 'next' | 'skip' | 'back' | 'outer';
-export type Edge = { id: string; kind: EdgeKind; fromCard: string; toCard: string; from: string; to: string; d: string; label: string; mid: { x: number; y: number } };
+export type Edge = {
+  id: string;
+  kind: EdgeKind;
+  fromCard: string;
+  toCard: string;
+  from: string;
+  to: string;
+  d: string;
+  label: string;
+  mid: { x: number; y: number };
+};
 export type Stub = { cardKey: string; x: number; y: number; targets: string[] };
 export type Tie = { id: string; d: string; fromCard: string; toCard: string };
-export type Lane = { key: string; flowKey: string; name: string; version?: FlowVersion; y: number; h: number; w: number; cards: Card[] };
-export type BoardLayout = { lanes: Lane[]; cards: Card[]; edges: Edge[]; stubs: Stub[]; ties: Tie[]; w: number; h: number };
+export type Lane = {
+  key: string;
+  flowKey: string;
+  name: string;
+  version?: FlowVersion;
+  y: number;
+  h: number;
+  w: number;
+  cards: Card[];
+};
+export type BoardLayout = {
+  lanes: Lane[];
+  cards: Card[];
+  edges: Edge[];
+  stubs: Stub[];
+  ties: Tie[];
+  w: number;
+  h: number;
+};
 
 export type LayoutInput = {
   flows: Flow[];
@@ -116,7 +143,13 @@ const makeCard = (laneKey: string, idx: number, screen: Screen, vp: Viewport, x:
   };
 };
 
-export const computeLayout = ({ flows, screens, viewports, links, showClosedVersions = false }: LayoutInput): BoardLayout => {
+export const computeLayout = ({
+  flows,
+  screens,
+  viewports,
+  links,
+  showClosedVersions = false,
+}: LayoutInput): BoardLayout => {
   const lanes: Lane[] = [];
   const edges: Edge[] = [];
   const stubs: Stub[] = [];
@@ -141,7 +174,9 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
       targetsOf(links, c.screenId).forEach((t) => {
         const label = firstHotspot(links, c.screenId, t)?.label ?? '';
         // the same screen can appear twice in a lane: prefer the nearest occurrence ahead of the source
-        const inLane = cards.filter((o) => o.screenId === t).sort((a, b) => (a.idx > c.idx ? 0 : 1) - (b.idx > c.idx ? 0 : 1) || a.idx - b.idx)[0];
+        const inLane = cards
+          .filter((o) => o.screenId === t)
+          .sort((a, b) => (a.idx > c.idx ? 0 : 1) - (b.idx > c.idx ? 0 : 1) || a.idx - b.idx)[0];
         const up = outer?.find((o) => o.screenId === t);
 
         if (inLane) {
@@ -149,7 +184,11 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
 
           if (inLane.idx === c.idx + 1) {
             const h = firstHotspot(links, c.screenId, t);
-            const sy = h ? (h.belowFold ? c.frame.y + c.frame.h - 8 : c.frame.y + (h.y + h.h / 2) * c.frame.scale) : c.frame.y + c.frame.h / 2;
+            const sy = h
+              ? h.belowFold
+                ? c.frame.y + c.frame.h - 8
+                : c.frame.y + (h.y + h.h / 2) * c.frame.scale
+              : c.frame.y + c.frame.h / 2;
             const y1 = clamp(sy, c.frame.y + 6, c.frame.y + c.frame.h - 6);
             const x1 = c.x + c.w;
             const x2 = inLane.x;
@@ -164,7 +203,12 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
               from: c.screenId,
               to: t,
               label,
-              d: orthoPath([[x1, y1], [mx, y1], [mx, y2], [x2 - 1, y2]]),
+              d: orthoPath([
+                [x1, y1],
+                [mx, y1],
+                [mx, y2],
+                [x2 - 1, y2],
+              ]),
               mid: { x: (x1 + x2) / 2, y: (y1 + y2) / 2 },
             });
           } else if (inLane.idx > c.idx) skips.push(arc);
@@ -177,7 +221,22 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
           const y2 = up.y + up.h;
           const my = (y1 + y2) / 2;
 
-          edges.push({ id: `${lane.key}>o${edges.length}`, kind: 'outer', fromCard: c.key, toCard: up.key, from: c.screenId, to: t, label, d: orthoPath([[x1, y1], [x1, my], [x2, my], [x2, y2 + 1]]), mid: { x: (x1 + x2) / 2, y: my } });
+          edges.push({
+            id: `${lane.key}>o${edges.length}`,
+            kind: 'outer',
+            fromCard: c.key,
+            toCard: up.key,
+            from: c.screenId,
+            to: t,
+            label,
+            d: orthoPath([
+              [x1, y1],
+              [x1, my],
+              [x2, my],
+              [x2, y2 + 1],
+            ]),
+            mid: { x: (x1 + x2) / 2, y: my },
+          });
         } else outside.push(t);
       });
       if (outside.length) stubs.push({ cardKey: c.key, x: c.x + c.w - 28, y: c.y + c.h, targets: outside });
@@ -186,7 +245,8 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
     // spread arc end points along the card edges, ordered by where the other end is, so lines do not cross at the card
     const spread = (arcs: Arc[], edge: 'top' | 'bottom', from: number, to: number) => {
       const ports = new Map<Card, { arc: Arc; end: 's' | 't'; other: number }[]>();
-      const add = (c: Card, p: { arc: Arc; end: 's' | 't'; other: number }) => (ports.get(c) ?? ports.set(c, []).get(c)!).push(p);
+      const add = (c: Card, p: { arc: Arc; end: 's' | 't'; other: number }) =>
+        (ports.get(c) ?? ports.set(c, []).get(c)!).push(p);
 
       arcs.forEach((a) => {
         add(a.from, { arc: a, end: 's', other: a.to.x });
@@ -196,7 +256,9 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
 
       ports.forEach((list, c) => {
         list.sort((a, b) => a.other - b.other);
-        list.forEach((p, i) => xOf.set(`${arcs.indexOf(p.arc)}${p.end}`, c.x + c.w * (from + ((to - from) * (i + 1)) / (list.length + 1))));
+        list.forEach((p, i) =>
+          xOf.set(`${arcs.indexOf(p.arc)}${p.end}`, c.x + c.w * (from + ((to - from) * (i + 1)) / (list.length + 1))),
+        );
       });
       const levels = assignLevels(arcs);
 
@@ -241,7 +303,15 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
       x += card.w + G.colGap;
     });
     const cardsH = Math.max(0, ...cards.map((c) => c.h));
-    const lane: Lane = { key: flow.key, flowKey: flow.key, name: flow.name, y: laneY, h: G.chTop + cardsH + G.chBottom, w: x, cards };
+    const lane: Lane = {
+      key: flow.key,
+      flowKey: flow.key,
+      name: flow.name,
+      y: laneY,
+      h: G.chTop + cardsH + G.chBottom,
+      w: x,
+      cards,
+    };
 
     lanes.push(lane);
     wire(lane);
@@ -270,7 +340,10 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
         const s = screens.get(vs.id);
 
         if (!s || placed.some((p) => p.vs === vs)) return;
-        let slot = vs.after !== undefined && slotOf.has(vs.after) ? slotOf.get(vs.after)! + 1 : Math.max(cards.length, ...[...used].map((u) => u + 1));
+        let slot =
+          vs.after !== undefined && slotOf.has(vs.after)
+            ? slotOf.get(vs.after)! + 1
+            : Math.max(cards.length, ...[...used].map((u) => u + 1));
 
         while (used.has(slot)) slot++;
         used.add(slot);
@@ -294,7 +367,16 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
         return c;
       });
       const vh = G.versionTop + Math.max(0, ...vcards.map((c) => c.h)) + G.chBottom;
-      const vlane: Lane = { key: laneKey, flowKey: flow.key, name: version.name, version, y: vy, h: vh, w: Math.max(lane.w, ...vcards.map((c) => c.x + c.w + G.colGap)), cards: vcards };
+      const vlane: Lane = {
+        key: laneKey,
+        flowKey: flow.key,
+        name: version.name,
+        version,
+        y: vy,
+        h: vh,
+        w: Math.max(lane.w, ...vcards.map((c) => c.x + c.w + G.colGap)),
+        cards: vcards,
+      };
 
       lanes.push(vlane);
       vcards.forEach((c) => {
@@ -303,7 +385,12 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
         if (orig) {
           const tx = c.x + c.w * 0.12;
 
-          ties.push({ id: `${c.key}^`, fromCard: c.key, toCard: orig.key, d: `M${tx} ${c.y} L${tx} ${orig.y + orig.h + 1}` });
+          ties.push({
+            id: `${c.key}^`,
+            fromCard: c.key,
+            toCard: orig.key,
+            d: `M${tx} ${c.y} L${tx} ${orig.y + orig.h + 1}`,
+          });
         }
       });
       wire(vlane, cards);
@@ -319,5 +406,13 @@ export const computeLayout = ({ flows, screens, viewports, links, showClosedVers
 
   const cards = lanes.flatMap((l) => l.cards);
 
-  return { lanes, cards, edges, stubs, ties, w: Math.max(0, ...lanes.map((l) => l.w)), h: Math.max(0, cursor - G.laneGap) };
+  return {
+    lanes,
+    cards,
+    edges,
+    stubs,
+    ties,
+    w: Math.max(0, ...lanes.map((l) => l.w)),
+    h: Math.max(0, cursor - G.laneGap),
+  };
 };

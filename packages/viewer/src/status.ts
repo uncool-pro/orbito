@@ -52,7 +52,11 @@ export const setStatus = async (id: string, status: Status, note?: string) => {
   state = { ...state, [id]: { status, note, updatedAt: new Date().toISOString().slice(0, 10) } };
   emit();
   try {
-    const r = await fetch('/__orbito/status', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, status, note }) });
+    const r = await fetch('/__orbito/status', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status, note }),
+    });
 
     if (!r.ok) throw new Error(((await r.json()) as { error?: string }).error ?? `HTTP ${r.status}`);
   } catch (err) {

@@ -13,7 +13,13 @@ const looks: Record<ButtonVariant, CSSProperties> = {
   secondary: { background: 'var(--color-accent-soft)', color: 'var(--color-accent)' },
   ghost: { background: 'transparent', color: 'var(--color-accent)' },
   danger: { background: 'var(--color-danger)', color: 'var(--color-accent-ink)' },
-  floating: { background: 'var(--color-accent)', color: 'var(--color-accent-ink)', boxShadow: 'var(--shadow-raised)', minHeight: 56, padding: '0 var(--space-5)' },
+  floating: {
+    background: 'var(--color-accent)',
+    color: 'var(--color-accent-ink)',
+    boxShadow: 'var(--shadow-raised)',
+    minHeight: 56,
+    padding: '0 var(--space-5)',
+  },
 };
 
 type ButtonProps = LinkTarget & {
@@ -31,7 +37,17 @@ type ButtonProps = LinkTarget & {
  * Starts an action or opens another screen (`to` / `back`). With `href` it is a real link (a section of the page, `#id`,
  * or another site) and renders an `<a>`. The only button in the product; `md` is 44px high (touch target).
  */
-export const Button = ({ variant = 'primary', size = 'md', icon, iconEnd, full, disabled, label, children, ...link }: ButtonProps) => {
+export const Button = ({
+  variant = 'primary',
+  size = 'md',
+  icon,
+  iconEnd,
+  full,
+  disabled,
+  label,
+  children,
+  ...link
+}: ButtonProps) => {
   const linkProps = useLinkProps(disabled ? {} : link);
   const As = link.href && !disabled ? 'a' : 'button';
 

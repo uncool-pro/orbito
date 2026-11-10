@@ -12,14 +12,37 @@ const tones: Record<TextTone, string> = {
   danger: 'var(--color-danger)',
   inverse: 'var(--color-accent-ink)',
 };
-const tags: Record<TextVariant, ElementType> = { display: 'h1', title: 'h1', heading: 'h2', body: 'p', label: 'span', caption: 'span' };
+const tags: Record<TextVariant, ElementType> = {
+  display: 'h1',
+  title: 'h1',
+  heading: 'h2',
+  body: 'p',
+  label: 'span',
+  caption: 'span',
+};
 
-type TextProps = { variant?: TextVariant; tone?: TextTone; as?: ElementType; align?: 'start' | 'center' | 'end'; clamp?: number; style?: CSSProperties; children: ReactNode };
+type TextProps = {
+  variant?: TextVariant;
+  tone?: TextTone;
+  as?: ElementType;
+  align?: 'start' | 'center' | 'end';
+  clamp?: number;
+  style?: CSSProperties;
+  children: ReactNode;
+};
 
 /** All text in the product. Each variant is one type token; tone picks one of the text colours. */
 export const Text = ({ variant = 'body', tone = 'default', as, align, clamp, style, children }: TextProps) => {
   const Tag = as ?? tags[variant];
-  const clamped: CSSProperties = clamp ? { display: '-webkit-box', WebkitLineClamp: clamp, WebkitBoxOrient: 'vertical', overflow: 'hidden' } : {};
+  const clamped: CSSProperties = clamp
+    ? { display: '-webkit-box', WebkitLineClamp: clamp, WebkitBoxOrient: 'vertical', overflow: 'hidden' }
+    : {};
 
-  return <Tag style={{ margin: 0, font: `var(--text-${variant})`, color: tones[tone], textAlign: align, ...clamped, ...style }}>{children}</Tag>;
+  return (
+    <Tag
+      style={{ margin: 0, font: `var(--text-${variant})`, color: tones[tone], textAlign: align, ...clamped, ...style }}
+    >
+      {children}
+    </Tag>
+  );
 };

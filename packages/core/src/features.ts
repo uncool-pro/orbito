@@ -35,7 +35,10 @@ export type GroupedTargets = {
 };
 
 /** Sorts a screen's connections (its targets, or the screens leading to it) into the three kinds a person reads differently. */
-export const groupTargets = (ids: string[], { page, feature, shared }: { page?: Page; feature?: Flow; shared: Set<string> }): GroupedTargets => {
+export const groupTargets = (
+  ids: string[],
+  { page, feature, shared }: { page?: Page; feature?: Flow; shared: Set<string> },
+): GroupedTargets => {
   const here: string[] = [];
   const sharedOut: string[] = [];
   const byFeature = new Map<string, string[]>();
@@ -51,7 +54,9 @@ export const groupTargets = (ids: string[], { page, feature, shared }: { page?: 
       else loose.push(id);
     }
   }
-  const elsewhere: GroupedTargets['elsewhere'] = (page?.flows ?? []).filter((f) => byFeature.has(f.key)).map((f) => ({ feature: f, ids: byFeature.get(f.key)! }));
+  const elsewhere: GroupedTargets['elsewhere'] = (page?.flows ?? [])
+    .filter((f) => byFeature.has(f.key))
+    .map((f) => ({ feature: f, ids: byFeature.get(f.key)! }));
 
   if (loose.length) elsewhere.push({ ids: loose });
 

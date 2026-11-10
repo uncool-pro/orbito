@@ -20,15 +20,38 @@ export default function PlantList() {
         </div>
       }
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', padding: 'var(--space-2) var(--space-4) var(--space-4)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-md)', background: 'var(--color-warning-soft)', color: 'var(--color-warning)' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--space-2)',
+          padding: 'var(--space-2) var(--space-4) var(--space-4)',
+        }}
+      >
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-2)',
+            padding: 'var(--space-3) var(--space-4)',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--color-warning-soft)',
+            color: 'var(--color-warning)',
+          }}
+        >
           <Icon name="drop" size={20} />
           <Text variant="heading" tone="warning">
             2 plants need you today
           </Text>
         </div>
         {plants.map((p) => (
-          <ListItem key={p.id} to="plant-detail" title={p.name} subtitle={`${p.room} · ${p.next}`} leading={<PlantThumb tone={p.due ? 'warning' : 'primary'} />} />
+          <ListItem
+            key={p.id}
+            to="plant-detail"
+            title={p.name}
+            subtitle={`${p.room} · ${p.next}`}
+            leading={<PlantThumb tone={p.due ? 'warning' : 'primary'} />}
+          />
         ))}
       </div>
     </DeviceScreen>

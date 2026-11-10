@@ -10,5 +10,6 @@ export const isPage = (mode: Mode) => mode === 'ds' || mode === 'skills';
 
 /** The page a screen belongs to: the first page with a flow (or a version) that lists it. */
 export const pageOfScreen = (project: Project<ComponentType>, id: string): Page | undefined =>
-  project.pages.find((p) => p.flows.some((f) => f.screens.includes(id) || (f.versions ?? []).some((v) => v.screens.some((s) => s.id === id))));
-
+  project.pages.find((p) =>
+    p.flows.some((f) => f.screens.includes(id) || (f.versions ?? []).some((v) => v.screens.some((s) => s.id === id))),
+  );

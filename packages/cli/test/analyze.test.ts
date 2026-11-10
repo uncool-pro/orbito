@@ -52,7 +52,12 @@ afterAll(() => rmSync(root, { recursive: true, force: true }));
 
 describe('analyzeProject', () => {
   it('finds components by level and how they compose', () => {
-    expect(report.components.map((c) => `${c.level}/${c.name}`)).toEqual(['atoms/Badge', 'atoms/Text', 'molecules/Row', 'organisms/Card']);
+    expect(report.components.map((c) => `${c.level}/${c.name}`)).toEqual([
+      'atoms/Badge',
+      'atoms/Text',
+      'molecules/Row',
+      'organisms/Card',
+    ]);
     const card = report.components.find((c) => c.name === 'Card')!;
 
     expect(card.uses).toEqual(['Row']);
@@ -72,7 +77,11 @@ describe('analyzeProject', () => {
 
     expect(ex).toHaveLength(1);
     expect(ex[0]).toMatchObject({ severity: 'info', file: 'screens/promo.screen.tsx' });
-    expect(ex[0]!.message.startsWith('exception (campaign colour agreed with marketing, until the token exists): raw colour')).toBe(true);
+    expect(
+      ex[0]!.message.startsWith(
+        'exception (campaign colour agreed with marketing, until the token exists): raw colour',
+      ),
+    ).toBe(true);
   });
 
   it('flags a hard-coded spacing written as text, and only that one', () => {
@@ -97,7 +106,9 @@ describe('analyzeProject', () => {
   });
 
   it('keeps screens on the design system', () => {
-    const msgs = report.issues.filter((i) => i.screen === 'home' || i.file === 'screens/home.screen.tsx').map((i) => i.rule);
+    const msgs = report.issues
+      .filter((i) => i.screen === 'home' || i.file === 'screens/home.screen.tsx')
+      .map((i) => i.rule);
 
     expect(msgs).toEqual(expect.arrayContaining(['raw-interactive', 'deep-import', 'import-boundary']));
     expect(report.issues.some((i) => i.rule === 'import-boundary' && /framer-motion/.test(i.message))).toBe(true);
@@ -117,7 +128,10 @@ describe('analyzeProject', () => {
 
 /** Thin screen files that render a view from screens/<area>/views/ (one view, several states as screens). */
 const withViews: Record<string, string> = {
-  'design-system/tokens.json': JSON.stringify({ color: [{ name: 'color-ink', value: '#111111', usage: 'Text.' }], space: [{ name: 'space-2', value: '8px', usage: 'Gaps.' }] }),
+  'design-system/tokens.json': JSON.stringify({
+    color: [{ name: 'color-ink', value: '#111111', usage: 'Text.' }],
+    space: [{ name: 'space-2', value: '8px', usage: 'Gaps.' }],
+  }),
   'design-system/atoms/Text.tsx': `export const Text = ({ children }: { children: string }) => <span>{children}</span>;`,
   'design-system/atoms/Lonely.tsx': `export const Lonely = () => <span />;`,
   'design-system/molecules/Badge.tsx': `export const Badge = () => <span />;`,
@@ -155,8 +169,17 @@ describe('analyzeProject, screens built from views', () => {
 
     expect(inView.filter((i) => i.rule === 'raw-color')).toHaveLength(1);
     expect(inView.map((i) => i.rule)).toContain('raw-interactive');
-    expect(r.issues.filter((i) => i.rule === 'raw-spacing').map((i) => i.file)).toEqual(['screens/invest/views/parts/Row.tsx']);
-    expect(r.issues.some((i) => i.file === 'screens/invest/views/parts/Row.tsx' && i.rule === 'import-boundary' && /another screen/.test(i.message))).toBe(true);
+    expect(r.issues.filter((i) => i.rule === 'raw-spacing').map((i) => i.file)).toEqual([
+      'screens/invest/views/parts/Row.tsx',
+    ]);
+    expect(
+      r.issues.some(
+        (i) =>
+          i.file === 'screens/invest/views/parts/Row.tsx' &&
+          i.rule === 'import-boundary' &&
+          /another screen/.test(i.message),
+      ),
+    ).toBe(true);
   });
 
   it('keeps a deliberate exception in a view visible with its reason', () => {

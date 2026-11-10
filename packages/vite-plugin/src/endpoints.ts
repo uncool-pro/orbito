@@ -29,7 +29,11 @@ export type EndpointRequest = {
   on(event: 'data', listener: (chunk: Buffer | string) => void): unknown;
   on(event: 'end', listener: () => void): unknown;
 };
-export type EndpointResponse = { statusCode: number; setHeader(name: string, value: string): unknown; end(body: string): unknown };
+export type EndpointResponse = {
+  statusCode: number;
+  setHeader(name: string, value: string): unknown;
+  end(body: string): unknown;
+};
 
 type Reply = (code: number, body: unknown, type?: string) => void;
 
@@ -44,7 +48,16 @@ const MAX_BODY = 1024 * 1024;
 const gitName = (root: string): string | undefined => {
   if (process.env.ORBITO_CONTAINER) return undefined;
   try {
-    return execFileSync('git', ['config', 'user.name'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 2000 }).trim().slice(0, 80) || undefined;
+    return (
+      execFileSync('git', ['config', 'user.name'], {
+        cwd: root,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+        timeout: 2000,
+      })
+        .trim()
+        .slice(0, 80) || undefined
+    );
   } catch {
     return undefined;
   }
@@ -67,7 +80,8 @@ const withBody = (req: EndpointRequest, reply: Reply, handle: (body: Record<stri
       // decoded once, whole: a letter cut in half between two chunks stays one letter
       const body: unknown = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
 
-      if (!body || typeof body !== 'object' || Array.isArray(body)) throw new RequestError('the request must be a JSON object');
+      if (!body || typeof body !== 'object' || Array.isArray(body))
+        throw new RequestError('the request must be a JSON object');
       reply(200, handle(body as Record<string, unknown>));
     } catch (e) {
       reply(e instanceof RequestError ? e.code : 400, { error: e instanceof Error ? e.message : String(e) });
@@ -100,88 +114,109 @@ export const fromOtherSite = ({ headers }: { headers: Headers }): boolean => {
 };
 
 /** Middleware for the dev server: the endpoints above, for the project in `root`. */
-export const devEndpoints = (root: string, statusFile: string, commentsDir = resolve(root, 'comments')) => (req: EndpointRequest, res: EndpointResponse, next: () => void): void => {
-  const url = new URL(req.url ?? '/', 'http://x');
-  const reply: Reply = (code, body, type = 'application/json; charset=utf-8') => {
-    res.statusCode = code;
-    res.setHeader('Content-Type', type);
-    res.end(typeof body === 'string' ? body : JSON.stringify(body));
+export const devEndpoints =
+  (root: string, statusFile: string, commentsDir = resolve(root, 'comments')) =>
+  (req: EndpointRequest, res: EndpointResponse, next: () => void): void => {
+    const url = new URL(req.url ?? '/', 'http://x');
+    const reply: Reply = (code, body, type = 'application/json; charset=utf-8') => {
+      res.statusCode = code;
+      res.setHeader('Content-Type', type);
+      res.end(typeof body === 'string' ? body : JSON.stringify(body));
+    };
+    const notFound = () => reply(404, { error: 'not found' });
+    /** The project file the request names, or `undefined` when the path leaves the project (also through a link) or is missing. */
+    const projectFile = () => {
+      const file = resolve(root, url.searchParams.get('path') ?? '');
+
+      return insideForReal(root, file) ? file : undefined;
+    };
+    const only = (...methods: string[]) => {
+      if (methods.includes(req.method ?? 'GET')) return true;
+      reply(405, { error: methods.join(' or ') });
+
+      return false;
+    };
+
+    // Vite's own address, which opens a file in the code editor: it stays Vite's, but another site must not reach it
+    if (url.pathname === '/__open-in-editor')
+      return fromOtherSite(req) ? reply(403, { error: 'requests from other sites are not allowed' }) : next();
+    if (!url.pathname.startsWith('/__orbito/')) return next();
+    if (fromOtherSite(req)) return reply(403, { error: 'requests from other sites are not allowed' });
+
+    switch (url.pathname) {
+      case '/__orbito/file': {
+        const file = projectFile();
+
+        if (!only('GET')) return;
+        if (!file || !/\.(md|txt|json)$/i.test(file)) return notFound();
+
+        return reply(200, readFileSync(file, 'utf8'), TEXT);
+      }
+      // only the code of screens and components: what dev mode shows next to a screen, nothing else in the project
+      case '/__orbito/source': {
+        const file = projectFile();
+        const rel = file ? relative(root, file).split(sep).join('/') : '';
+
+        if (!only('GET')) return;
+        if (!file || !/^(screens|design-system)\//.test(rel) || !/\.(tsx|ts|jsx|css)$/i.test(rel)) return notFound();
+
+        return reply(200, readFileSync(file, 'utf8'), TEXT);
+      }
+      case '/__orbito/comments': {
+        if (!only('GET', 'POST')) return;
+        if (req.method === 'POST')
+          return withBody(req, reply, (change: CommentChange) => ({
+            screen: change.screen,
+            comments: changeComments(commentsDir, change),
+          }));
+
+        return reply(200, readComments(commentsDir));
+      }
+      // in a container the root is the container's; the folder on the person's computer comes from compose (ORBITO_HOST_ROOT)
+      case '/__orbito/env': {
+        const name = gitName(root);
+        const hostRoot = process.env.ORBITO_HOST_ROOT;
+
+        if (!only('GET')) return;
+
+        return reply(200, {
+          root: resolve(root),
+          platform: process.platform,
+          sep,
+          container: !!process.env.ORBITO_CONTAINER,
+          ...(hostRoot ? { hostRoot } : {}),
+          ...(name ? { name } : {}),
+        });
+      }
+      case '/__orbito/reveal': {
+        const file = projectFile();
+
+        if (!only('POST')) return;
+        // in a container there is no file manager to open, and the system's own is out of reach
+        if (process.env.ORBITO_CONTAINER) return reply(501, { error: 'not available in the container' });
+        if (!file) return notFound();
+        // the file manager of the system, the file selected; arguments, never a shell string
+        const [cmd, args]: [string, string[]] =
+          process.platform === 'win32'
+            ? ['explorer.exe', [`/select,${file}`]]
+            : process.platform === 'darwin'
+              ? ['open', ['-R', file]]
+              : ['xdg-open', [dirname(file)]];
+
+        spawn(cmd, args, { detached: true, stdio: 'ignore' })
+          .on('error', () => undefined)
+          .unref();
+
+        return reply(200, { ok: true });
+      }
+      case '/__orbito/status': {
+        if (!only('GET', 'POST')) return;
+        if (req.method === 'POST')
+          return withBody(req, reply, (change: StatusChange) => ({ id: change.id, ...saveStatus(statusFile, change) }));
+
+        return reply(200, readJson(statusFile, {}));
+      }
+      default:
+        return next();
+    }
   };
-  const notFound = () => reply(404, { error: 'not found' });
-  /** The project file the request names, or `undefined` when the path leaves the project (also through a link) or is missing. */
-  const projectFile = () => {
-    const file = resolve(root, url.searchParams.get('path') ?? '');
-
-    return insideForReal(root, file) ? file : undefined;
-  };
-  const only = (...methods: string[]) => {
-    if (methods.includes(req.method ?? 'GET')) return true;
-    reply(405, { error: methods.join(' or ') });
-
-    return false;
-  };
-
-  // Vite's own address, which opens a file in the code editor: it stays Vite's, but another site must not reach it
-  if (url.pathname === '/__open-in-editor') return fromOtherSite(req) ? reply(403, { error: 'requests from other sites are not allowed' }) : next();
-  if (!url.pathname.startsWith('/__orbito/')) return next();
-  if (fromOtherSite(req)) return reply(403, { error: 'requests from other sites are not allowed' });
-
-  switch (url.pathname) {
-    case '/__orbito/file': {
-      const file = projectFile();
-
-      if (!only('GET')) return;
-      if (!file || !/\.(md|txt|json)$/i.test(file)) return notFound();
-
-      return reply(200, readFileSync(file, 'utf8'), TEXT);
-    }
-    // only the code of screens and components: what dev mode shows next to a screen, nothing else in the project
-    case '/__orbito/source': {
-      const file = projectFile();
-      const rel = file ? relative(root, file).split(sep).join('/') : '';
-
-      if (!only('GET')) return;
-      if (!file || !/^(screens|design-system)\//.test(rel) || !/\.(tsx|ts|jsx|css)$/i.test(rel)) return notFound();
-
-      return reply(200, readFileSync(file, 'utf8'), TEXT);
-    }
-    case '/__orbito/comments': {
-      if (!only('GET', 'POST')) return;
-      if (req.method === 'POST') return withBody(req, reply, (change: CommentChange) => ({ screen: change.screen, comments: changeComments(commentsDir, change) }));
-
-      return reply(200, readComments(commentsDir));
-    }
-    // in a container the root is the container's; the folder on the person's computer comes from compose (ORBITO_HOST_ROOT)
-    case '/__orbito/env': {
-      const name = gitName(root);
-      const hostRoot = process.env.ORBITO_HOST_ROOT;
-
-      if (!only('GET')) return;
-
-      return reply(200, { root: resolve(root), platform: process.platform, sep, container: !!process.env.ORBITO_CONTAINER, ...(hostRoot ? { hostRoot } : {}), ...(name ? { name } : {}) });
-    }
-    case '/__orbito/reveal': {
-      const file = projectFile();
-
-      if (!only('POST')) return;
-      // in a container there is no file manager to open, and the system's own is out of reach
-      if (process.env.ORBITO_CONTAINER) return reply(501, { error: 'not available in the container' });
-      if (!file) return notFound();
-      // the file manager of the system, the file selected; arguments, never a shell string
-      const [cmd, args]: [string, string[]] =
-        process.platform === 'win32' ? ['explorer.exe', [`/select,${file}`]] : process.platform === 'darwin' ? ['open', ['-R', file]] : ['xdg-open', [dirname(file)]];
-
-      spawn(cmd, args, { detached: true, stdio: 'ignore' }).on('error', () => undefined).unref();
-
-      return reply(200, { ok: true });
-    }
-    case '/__orbito/status': {
-      if (!only('GET', 'POST')) return;
-      if (req.method === 'POST') return withBody(req, reply, (change: StatusChange) => ({ id: change.id, ...saveStatus(statusFile, change) }));
-
-      return reply(200, readJson(statusFile, {}));
-    }
-    default:
-      return next();
-  }
-};

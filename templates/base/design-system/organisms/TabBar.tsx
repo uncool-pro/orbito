@@ -28,7 +28,20 @@ const TabItem = ({ tab, current }: { tab: Tab; current: boolean }) => {
       {...linkProps}
     >
       <Icon name={tab.icon} />
-      {tab.badge && <span aria-hidden style={{ position: 'absolute', top: 6, left: '56%', width: 8, height: 8, borderRadius: 'var(--radius-pill)', background: 'var(--color-danger)' }} />}
+      {tab.badge && (
+        <span
+          aria-hidden
+          style={{
+            position: 'absolute',
+            top: 6,
+            left: '56%',
+            width: 8,
+            height: 8,
+            borderRadius: 'var(--radius-pill)',
+            background: 'var(--color-danger)',
+          }}
+        />
+      )}
       <Text variant="caption" tone={current ? 'accent' : 'muted'}>
         {tab.label}
       </Text>
@@ -38,7 +51,15 @@ const TabItem = ({ tab, current }: { tab: Tab; current: boolean }) => {
 
 /** Main app navigation, 3–5 tabs, on tab root screens only. The current tab is not a link (no arrow to itself on the board). */
 export const TabBar = ({ tabs, current }: { tabs: Tab[]; current: string }) => (
-  <nav role="tablist" style={{ display: 'flex', borderTop: '1px solid var(--color-line)', background: 'var(--color-surface)', paddingBottom: 'var(--space-5)' }}>
+  <nav
+    role="tablist"
+    style={{
+      display: 'flex',
+      borderTop: '1px solid var(--color-line)',
+      background: 'var(--color-surface)',
+      paddingBottom: 'var(--space-5)',
+    }}
+  >
     {tabs.map((t) => (
       <TabItem key={t.key} tab={t} current={t.key === current} />
     ))}

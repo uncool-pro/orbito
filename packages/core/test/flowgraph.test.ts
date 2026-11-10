@@ -3,7 +3,16 @@ import { describe, expect, it } from 'vitest';
 import { BUILT_IN_VIEWPORTS, computeFlowGraph } from '../src';
 import type { Hotspot, LinkMap, Screen } from '../src';
 
-const to = (t: string | null): Hotspot => ({ to: t, label: t ?? 'back', trigger: 'tap', x: 0, y: 0, w: 10, h: 10, belowFold: false });
+const to = (t: string | null): Hotspot => ({
+  to: t,
+  label: t ?? 'back',
+  trigger: 'tap',
+  x: 0,
+  y: 0,
+  w: 10,
+  h: 10,
+  belowFold: false,
+});
 const scr = (id: string): Screen => ({ id, title: id, viewport: 'mobile', file: '', component: null });
 const ids = ['list', 'detail', 'done', 'error', 'orphan', 'stuck'];
 const screens = new Map(ids.map((id) => [id, scr(id)]));

@@ -6,7 +6,10 @@ import type { Hotspot, LinkMap, Project } from '@uncool-pro/orbito-core';
 import { FrameContext } from '@uncool-pro/orbito-runtime';
 
 const labelOf = (el: Element) =>
-  (el.getAttribute('aria-label') ?? el.getAttribute('title') ?? el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  (el.getAttribute('aria-label') ?? el.getAttribute('title') ?? el.textContent ?? '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 60);
 
 /**
  * Renders every screen once, offscreen and at its real size, and records each link element with its position.

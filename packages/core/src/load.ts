@@ -28,7 +28,8 @@ export const loadProject = <C>(
   const defaultViewport = viewports[wantedDefault] ? wantedDefault : 'mobile';
   const locale = config.locale ?? 'en';
 
-  if (!viewports[wantedDefault]) problems.push({ level: 'error', message: `defaultViewport "${wantedDefault}" is not a known viewport` });
+  if (!viewports[wantedDefault])
+    problems.push({ level: 'error', message: `defaultViewport "${wantedDefault}" is not a known viewport` });
   // a language tag: two or three letters, optionally a region (pt-BR)
   const knownForm = /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(locale);
 
@@ -44,24 +45,53 @@ export const loadProject = <C>(
       const rel = file.replace(/^\/+/, '');
 
       if (!id) return;
-      if (mod.loadError) return void problems.push({ level: 'error', file: rel, message: `screen file cannot be loaded: ${mod.loadError}` });
-      if (!mod.default) return void problems.push({ level: 'error', file: rel, message: 'screen file has no default export (the screen component)' });
-      if (!mod.meta) return void problems.push({ level: 'error', file: rel, message: 'screen file has no `meta` export (defineScreen({...}))' });
-      if (screens.some((s) => s.id === id)) return void problems.push({ level: 'error', file: rel, message: `duplicate screen id "${id}" (file names must be unique)` });
+      if (mod.loadError)
+        return void problems.push({
+          level: 'error',
+          file: rel,
+          message: `screen file cannot be loaded: ${mod.loadError}`,
+        });
+      if (!mod.default)
+        return void problems.push({
+          level: 'error',
+          file: rel,
+          message: 'screen file has no default export (the screen component)',
+        });
+      if (!mod.meta)
+        return void problems.push({
+          level: 'error',
+          file: rel,
+          message: 'screen file has no `meta` export (defineScreen({...}))',
+        });
+      if (screens.some((s) => s.id === id))
+        return void problems.push({
+          level: 'error',
+          file: rel,
+          message: `duplicate screen id "${id}" (file names must be unique)`,
+        });
       const wanted = mod.meta.viewport ?? mod.meta.viewports?.[0] ?? defaultViewport;
       const sizes = mod.meta.viewports?.filter((v) => viewports[v]);
       const viewport = viewports[wanted] ? wanted : (sizes?.[0] ?? defaultViewport);
 
       [wanted, ...(mod.meta.viewports ?? [])].forEach((v, i, all) => {
-        if (all.indexOf(v) === i && !viewports[v]) problems.push({ level: 'error', file: rel, message: `unknown viewport "${v}"` });
+        if (all.indexOf(v) === i && !viewports[v])
+          problems.push({ level: 'error', file: rel, message: `unknown viewport "${v}"` });
       });
       if (mod.meta.code) {
         const other = seenCodes.get(mod.meta.code.toLowerCase());
 
-        if (other) problems.push({ level: 'error', file: rel, message: `code ${mod.meta.code} is already used by "${other}"` });
+        if (other)
+          problems.push({ level: 'error', file: rel, message: `code ${mod.meta.code} is already used by "${other}"` });
         seenCodes.set(mod.meta.code.toLowerCase(), id);
       }
-      screens.push({ ...mod.meta, ...(sizes ? { viewports: sizes } : {}), viewport, id, file: rel, component: mod.default });
+      screens.push({
+        ...mod.meta,
+        ...(sizes ? { viewports: sizes } : {}),
+        viewport,
+        id,
+        file: rel,
+        component: mod.default,
+      });
     });
 
   const ids = new Set(screens.map((s) => s.id));
@@ -81,9 +111,11 @@ export const loadProject = <C>(
 
       const page = mod.default;
 
-      if (!Array.isArray(page.flows)) problems.push({ level: 'error', file, message: `page "${page.key}" has no list of flows` });
+      if (!Array.isArray(page.flows))
+        problems.push({ level: 'error', file, message: `page "${page.key}" has no list of flows` });
       const flows = (Array.isArray(page.flows) ? page.flows : []).map((flow) => {
-        if (!Array.isArray(flow.screens)) problems.push({ level: 'error', file, message: `flow ${page.key}/${flow.key} has no list of screens` });
+        if (!Array.isArray(flow.screens))
+          problems.push({ level: 'error', file, message: `flow ${page.key}/${flow.key} has no list of screens` });
 
         return { ...flow, screens: Array.isArray(flow.screens) ? flow.screens : [] };
       });
@@ -95,16 +127,27 @@ export const loadProject = <C>(
     page.flows.forEach((flow) => {
       const where = `${page.key}/${flow.key}`;
 
-      flow.screens.filter((id) => !ids.has(id)).forEach((id) => problems.push({ level: 'warning', message: `flow ${where} lists a missing screen "${id}"` }));
+      flow.screens
+        .filter((id) => !ids.has(id))
+        .forEach((id) => problems.push({ level: 'warning', message: `flow ${where} lists a missing screen "${id}"` }));
       (flow.versions ?? []).forEach((v) =>
         (v.screens ?? []).forEach((vs) => {
-          if (!ids.has(vs.id)) problems.push({ level: 'warning', message: `version ${where}/${v.key} lists a missing screen "${vs.id}"` });
-          if (vs.replaces && !flow.screens.includes(vs.replaces)) problems.push({ level: 'warning', message: `version ${where}/${v.key}: "${vs.replaces}" is not in the flow` });
+          if (!ids.has(vs.id))
+            problems.push({ level: 'warning', message: `version ${where}/${v.key} lists a missing screen "${vs.id}"` });
+          if (vs.replaces && !flow.screens.includes(vs.replaces))
+            problems.push({
+              level: 'warning',
+              message: `version ${where}/${v.key}: "${vs.replaces}" is not in the flow`,
+            });
         }),
       );
     }),
   );
-  screens.filter((s) => s.back && !ids.has(s.back)).forEach((s) => problems.push({ level: 'warning', file: s.file, message: `back points to a missing screen "${s.back}"` }));
+  screens
+    .filter((s) => s.back && !ids.has(s.back))
+    .forEach((s) =>
+      problems.push({ level: 'warning', file: s.file, message: `back points to a missing screen "${s.back}"` }),
+    );
 
   return {
     project: { config: { ...config, locale: knownForm ? locale : 'en', defaultViewport }, viewports, screens, pages },

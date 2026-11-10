@@ -4,7 +4,11 @@ import { Text } from '../atoms/Text';
 
 export type SectionTone = 'bg' | 'surface' | 'accent';
 
-const grounds: Record<SectionTone, string> = { bg: 'var(--color-bg)', surface: 'var(--color-surface)', accent: 'var(--color-accent-soft)' };
+const grounds: Record<SectionTone, string> = {
+  bg: 'var(--color-bg)',
+  surface: 'var(--color-surface)',
+  accent: 'var(--color-accent-soft)',
+};
 
 type SectionProps = {
   /** Anchor of the section: links with `href="#<id>"` scroll here. Name it after its content (`pricing`, `faq`). */
@@ -25,11 +29,18 @@ type SectionProps = {
  * A landing is a sequence of sections; each answers one question of the visitor.
  */
 export const Section = ({ id, tone = 'bg', title, lead, width = 1120, children }: SectionProps) => (
-  <section id={id} style={{ background: grounds[tone], padding: 'var(--space-8) var(--space-6)', scrollMarginTop: 'var(--space-8)' }}>
+  <section
+    id={id}
+    style={{ background: grounds[tone], padding: 'var(--space-8) var(--space-6)', scrollMarginTop: 'var(--space-8)' }}
+  >
     <div style={{ maxWidth: width, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       {(title || lead) && (
         <header style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', maxWidth: 720 }}>
-          {title && <Text variant="title" as="h2">{title}</Text>}
+          {title && (
+            <Text variant="title" as="h2">
+              {title}
+            </Text>
+          )}
           {lead && <Text tone="muted">{lead}</Text>}
         </header>
       )}

@@ -8,13 +8,29 @@ import type { IconName } from './Icon';
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'fab';
 
 const looks: Record<ButtonVariant, CSSProperties> = {
-  primary: { background: 'var(--color-primary-gradient)', color: 'var(--color-primary-ink)', boxShadow: 'var(--shadow-raised)' },
+  primary: {
+    background: 'var(--color-primary-gradient)',
+    color: 'var(--color-primary-ink)',
+    boxShadow: 'var(--shadow-raised)',
+  },
   secondary: { background: 'var(--color-primary-soft)', color: 'var(--color-primary)' },
   ghost: { background: 'transparent', color: 'var(--color-primary)', padding: '0 var(--space-2)' },
-  fab: { background: 'var(--color-primary-gradient)', color: 'var(--color-primary-ink)', boxShadow: 'var(--shadow-raised)', minHeight: 56, padding: '0 var(--space-5)' },
+  fab: {
+    background: 'var(--color-primary-gradient)',
+    color: 'var(--color-primary-ink)',
+    boxShadow: 'var(--shadow-raised)',
+    minHeight: 56,
+    padding: '0 var(--space-5)',
+  },
 };
 
-type ButtonProps = LinkTarget & { variant?: ButtonVariant; icon?: IconName; full?: boolean; label?: string; children?: ReactNode };
+type ButtonProps = LinkTarget & {
+  variant?: ButtonVariant;
+  icon?: IconName;
+  full?: boolean;
+  label?: string;
+  children?: ReactNode;
+};
 
 /** The only pressable button. Pass `to` / `back` to make it a prototype link. Minimum height 48px (touch target). Primary and fab wear the brand gradient with a soft green glow. */
 export const Button = ({ variant = 'primary', icon, full, label, children, ...link }: ButtonProps) => {

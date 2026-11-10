@@ -7,8 +7,14 @@ export default defineDocs({
   component: 'Glass',
   description: 'A frosted-glass surface over the screen glow: cards, list rows, the tab bar.',
   guidelines: {
-    do: ['Put it straight on the screen background, where the glow shows through.', 'Use radius md for cards, lg for the tab bar.'],
-    dont: ["Don't stack glass on glass: the blur turns to mud.", "Don't put long text on it without enough contrast behind."],
+    do: [
+      'Put it straight on the screen background, where the glow shows through.',
+      'Use radius md for cards, lg for the tab bar.',
+    ],
+    dont: [
+      "Don't stack glass on glass: the blur turns to mud.",
+      "Don't put long text on it without enough contrast behind.",
+    ],
   },
   variants: [
     {

@@ -38,10 +38,28 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   const t = useT();
   const statuses = useStatuses();
   const flows = useMemo(() => (flowKey ? page.flows.filter((f) => f.key === flowKey) : page.flows), [page, flowKey]);
-  const { options, selected, select, focusTick, canvas, inspectorOpen, togglePanel, devMode, commentsOn, openComments } = useShell();
+  const {
+    options,
+    selected,
+    select,
+    focusTick,
+    canvas,
+    inspectorOpen,
+    togglePanel,
+    devMode,
+    commentsOn,
+    openComments,
+  } = useShell();
   const showClosed = options.showClosed;
   const layout = useMemo(
-    () => computeLayout({ flows, screens: byId, viewports: project.viewports, links: links ?? {}, showClosedVersions: showClosed }),
+    () =>
+      computeLayout({
+        flows,
+        screens: byId,
+        viewports: project.viewports,
+        links: links ?? {},
+        showClosedVersions: showClosed,
+      }),
     [flows, byId, project.viewports, links, showClosed],
   );
   const findingTitles = useFindingTitles(flows);
@@ -61,17 +79,26 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   activeRef.current = active;
   layoutRef.current = layout;
 
-  const viewSize = () => ({ w: root.current?.clientWidth ?? window.innerWidth, h: root.current?.clientHeight ?? window.innerHeight });
+  const viewSize = () => ({
+    w: root.current?.clientWidth ?? window.innerWidth,
+    h: root.current?.clientHeight ?? window.innerHeight,
+  });
   /** First view: the board as wide as the canvas, from the top (fitting a tall board whole makes every screen tiny). */
   const fitWidth = useCallback(() => {
     const { w, h } = viewSize();
     const L = layoutRef.current;
     const k = Math.min(0.9, Math.max(0.2, (w - 48) / Math.max(1, L.w)));
 
-    return L.h * k <= h - 80 ? fitRect({ x: 0, y: 0, w: L.w, h: L.h }, { w, h }, { inset: TOOLBAR_INSET, maxK: 0.9 }) : { k, x: (w - L.w * k) / 2, y: 24 };
+    return L.h * k <= h - 80
+      ? fitRect({ x: 0, y: 0, w: L.w, h: L.h }, { w, h }, { inset: TOOLBAR_INSET, maxK: 0.9 })
+      : { k, x: (w - L.w * k) / 2, y: 24 };
   }, []);
   const fitAll = useCallback(
-    () => fitRect({ x: 0, y: 0, w: layoutRef.current.w, h: layoutRef.current.h }, viewSize(), { inset: TOOLBAR_INSET, maxK: 1 }),
+    () =>
+      fitRect({ x: 0, y: 0, w: layoutRef.current.w, h: layoutRef.current.h }, viewSize(), {
+        inset: TOOLBAR_INSET,
+        maxK: 1,
+      }),
     [],
   );
 
@@ -172,8 +199,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
       if (e.key === 'Escape') {
         setActive(null);
         select(null);
-      }
-      else if (e.shiftKey && e.code === 'Digit1') c.set(fitAll());
+      } else if (e.shiftKey && e.code === 'Digit1') c.set(fitAll());
       else if (e.shiftKey && e.code === 'Digit0') c.set(zoomTo(c.camera, 1, w / 2, h / 2));
       else if (e.key === '+' || e.key === '=') c.set(zoomAt(c.camera, 1.25, w / 2, h / 2));
       else if (e.key === '-') c.set(zoomAt(c.camera, 0.8, w / 2, h / 2));
@@ -188,7 +214,9 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
 
   // the active (scrollable) card is the clicked one while its screen stays selected; another selection ends it
   useEffect(() => {
-    setActive((a) => (a && selected && layoutRef.current.cards.find((c) => c.key === a)?.screenId === selected ? a : null));
+    setActive((a) =>
+      a && selected && layoutRef.current.cards.find((c) => c.key === a)?.screenId === selected ? a : null,
+    );
   }, [selected]);
 
   // a screen picked in the left panel or the search: bring its first card into view
@@ -360,7 +388,11 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
 
       <div ref={world} className="pd-world" style={{ width: layout.w, height: layout.h }}>
         {layout.lanes.map((l) => (
-          <div key={l.key} className={`pd-lane${l.version ? ' pd-lane--version' : ''}`} style={{ top: l.y, width: l.w, height: l.h }}>
+          <div
+            key={l.key}
+            className={`pd-lane${l.version ? ' pd-lane--version' : ''}`}
+            style={{ top: l.y, width: l.w, height: l.h }}
+          >
             <div className="pd-lane__label">
               {l.version ? (
                 <>
@@ -401,7 +433,16 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
         <svg className="pd-svg" width={layout.w} height={layout.h}>
           <defs>
             {['', '-hl', '-tie'].map((v) => (
-              <marker key={v} id={`pd-arrow${v}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <marker
+                key={v}
+                id={`pd-arrow${v}`}
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
                 <path d="M0 0 L10 5 L0 10 z" className={`pd-arrow${v}`} />
               </marker>
             ))}
@@ -415,8 +456,17 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
 
             return (
               <g key={e.id} className={`pd-edge pd-edge--${e.kind}${on ? ' is-on' : ''}${faded ? ' is-faded' : ''}`}>
-                <path d={e.d} className="pd-edge__hit" onPointerEnter={() => setHover({ edge: e.id })} onPointerLeave={() => setHover({})} />
-                <path d={e.d} className="pd-edge__line" markerEnd={`url(#pd-arrow${on ? '-hl' : e.kind === 'outer' ? '-tie' : ''})`} />
+                <path
+                  d={e.d}
+                  className="pd-edge__hit"
+                  onPointerEnter={() => setHover({ edge: e.id })}
+                  onPointerLeave={() => setHover({})}
+                />
+                <path
+                  d={e.d}
+                  className="pd-edge__line"
+                  markerEnd={`url(#pd-arrow${on ? '-hl' : e.kind === 'outer' ? '-tie' : ''})`}
+                />
               </g>
             );
           })}

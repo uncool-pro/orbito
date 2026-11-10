@@ -3,7 +3,17 @@ import type { ReactNode } from 'react';
 import { Text } from '../atoms/Text';
 
 /** Top of a web page: optional breadcrumb, the title, a one-line description and the page's actions on the right. */
-export const PageHeader = ({ title, description, breadcrumb, actions }: { title: string; description?: string; breadcrumb?: ReactNode; actions?: ReactNode }) => (
+export const PageHeader = ({
+  title,
+  description,
+  breadcrumb,
+  actions,
+}: {
+  title: string;
+  description?: string;
+  breadcrumb?: ReactNode;
+  actions?: ReactNode;
+}) => (
   <header style={{ display: 'flex', alignItems: 'flex-end', gap: 'var(--space-4)', flexWrap: 'wrap' }}>
     <div style={{ flex: 1, minWidth: 240, display: 'flex', flexDirection: 'column', gap: 'var(--space-1)' }}>
       {breadcrumb && (

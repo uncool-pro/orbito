@@ -136,7 +136,8 @@ export type Project<C = unknown> = {
 };
 
 /** The name people call a screen by: the last part of its title (`Plants / Plant list` → `Plant list`). */
-export const screenName = (screen: Pick<ScreenMeta, 'title'>): string => screen.title.split(' / ').pop() ?? screen.title;
+export const screenName = (screen: Pick<ScreenMeta, 'title'>): string =>
+  screen.title.split(' / ').pop() ?? screen.title;
 
 /** Typed identity helpers for project files. */
 export const defineConfig = (config: ProjectConfig): ProjectConfig => config;

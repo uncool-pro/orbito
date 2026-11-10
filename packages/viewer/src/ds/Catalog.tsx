@@ -30,7 +30,11 @@ export const Catalog = ({ section }: { section?: string }) => {
   else {
     const c = report.components.find((x) => x.name === section);
 
-    content = c ? <ComponentPage c={c} docs={ds.docs.find((d) => d.component === c.name)} issues={issuesOf(c.name)} /> : <p>{t.notFound}</p>;
+    content = c ? (
+      <ComponentPage c={c} docs={ds.docs.find((d) => d.component === c.name)} issues={issuesOf(c.name)} />
+    ) : (
+      <p>{t.notFound}</p>
+    );
   }
 
   return (
@@ -92,7 +96,10 @@ const Overview = () => {
 
                 return (
                   <a key={c.name} href={dsHash(c.name)} className="pd-gallery__item">
-                    <span className={`pd-gallery__stage pd-gallery__stage--${level}`} style={first ? { background: `var(--${first.background ?? 'color-bg'}, #fff)` } : undefined}>
+                    <span
+                      className={`pd-gallery__stage pd-gallery__stage--${level}`}
+                      style={first ? { background: `var(--${first.background ?? 'color-bg'}, #fff)` } : undefined}
+                    >
                       {first ? (
                         <span className="pd-gallery__live" inert>
                           <Live c={c.name} v={first} />
@@ -226,10 +233,24 @@ const ComponentPage = ({ c, docs, issues }: { c: DsComponent; docs?: ComponentDo
       {docs ? <p className="pd-lead">{docs.description}</p> : <p className="pd-lead pd-muted">{t.noDocs(c.name)}</p>}
       {devMode && <code className="pd-ds-file">{c.file}</code>}
       <nav className="pd-ds-tabs" aria-label={c.name}>
-        {hero && <a href={`${dsHash(c.name)}`} onClick={jumpTo('pd-variants')}>{t.variants}</a>}
-        {usage && <a href={`${dsHash(c.name)}`} onClick={jumpTo('pd-usage')}>{t.usage}</a>}
-        <a href={`${dsHash(c.name)}`} onClick={jumpTo('pd-used')}>{t.relations}</a>
-        {issues.length > 0 && <a href={`${dsHash(c.name)}`} onClick={jumpTo('pd-comp-health')}>{t.health}</a>}
+        {hero && (
+          <a href={`${dsHash(c.name)}`} onClick={jumpTo('pd-variants')}>
+            {t.variants}
+          </a>
+        )}
+        {usage && (
+          <a href={`${dsHash(c.name)}`} onClick={jumpTo('pd-usage')}>
+            {t.usage}
+          </a>
+        )}
+        <a href={`${dsHash(c.name)}`} onClick={jumpTo('pd-used')}>
+          {t.relations}
+        </a>
+        {issues.length > 0 && (
+          <a href={`${dsHash(c.name)}`} onClick={jumpTo('pd-comp-health')}>
+            {t.health}
+          </a>
+        )}
       </nav>
       {hero && (
         <figure className="pd-hero" style={{ background: `var(--${hero.background ?? 'color-bg'}, #fff)` }}>
@@ -285,9 +306,17 @@ const ComponentPage = ({ c, docs, issues }: { c: DsComponent; docs?: ComponentDo
       <h2 id="pd-used">{t.relations}</h2>
       <dl className="pd-relations">
         <dt>{t.builtFrom}</dt>
-        <dd>{c.uses.length ? c.uses.map((n) => <Chip key={n} name={n} />) : <span className="pd-muted">{t.onlyTokens}</span>}</dd>
+        <dd>
+          {c.uses.length ? (
+            c.uses.map((n) => <Chip key={n} name={n} />)
+          ) : (
+            <span className="pd-muted">{t.onlyTokens}</span>
+          )}
+        </dd>
         <dt>{t.usedByComponents}</dt>
-        <dd>{c.usedBy.length ? c.usedBy.map((n) => <Chip key={n} name={n} />) : <span className="pd-muted">—</span>}</dd>
+        <dd>
+          {c.usedBy.length ? c.usedBy.map((n) => <Chip key={n} name={n} />) : <span className="pd-muted">—</span>}
+        </dd>
         <dt>{t.usedOnScreens}</dt>
         <dd>
           {c.screens.length ? (
@@ -333,7 +362,11 @@ const TokenGroup = ({ group }: { group: string }) => {
   const { report } = useViewer().ds;
   const t = useT();
   const list = report.tokens[group] ?? [];
-  const all = new Map(Object.values(report.tokens).flat().map((x) => [x.name, x]));
+  const all = new Map(
+    Object.values(report.tokens)
+      .flat()
+      .map((x) => [x.name, x]),
+  );
   const known = (TOKEN_GROUPS as readonly string[]).includes(group);
 
   return (
@@ -361,7 +394,12 @@ const TokenGroup = ({ group }: { group: string }) => {
                     const min = tok.large ? 3 : 4.5;
 
                     return (
-                      <span key={bg} className={`pd-contrast${ratio !== null && ratio < min ? ' is-fail' : ''}`} style={{ background: b?.value, color: tok.value }} title={`${tok.name} on ${bg}`}>
+                      <span
+                        key={bg}
+                        className={`pd-contrast${ratio !== null && ratio < min ? ' is-fail' : ''}`}
+                        style={{ background: b?.value, color: tok.value }}
+                        title={`${tok.name} on ${bg}`}
+                      >
                         Aa {ratio !== null ? `${ratio.toFixed(1)}:1` : '?'} <small>on {bg}</small>
                       </span>
                     );
@@ -385,9 +423,17 @@ const TokenPreview = ({ group, token }: { group: string; token: Token }) => {
     case 'color':
       return <span className="pd-swatch" style={{ background: v }} />;
     case 'type':
-      return <span className="pd-type-sample" style={{ font: v }}>Water your Monstera today</span>;
+      return (
+        <span className="pd-type-sample" style={{ font: v }}>
+          Water your Monstera today
+        </span>
+      );
     case 'font':
-      return <span className="pd-type-sample" style={{ fontFamily: v, fontSize: 28 }}>Aa Bb 123</span>;
+      return (
+        <span className="pd-type-sample" style={{ fontFamily: v, fontSize: 28 }}>
+          Aa Bb 123
+        </span>
+      );
     case 'space':
       return <span className="pd-space-bar" style={{ width: v }} />;
     case 'radius':

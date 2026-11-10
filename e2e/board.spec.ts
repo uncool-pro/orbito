@@ -85,7 +85,9 @@ test.describe('board', () => {
     expect(new Set(labels).size).toBe(labels.length);
   });
 
-  test('the comment button above a card opens the comments in a bubble next to it; Esc closes only the bubble', async ({ page }) => {
+  test('the comment button above a card opens the comments in a bubble next to it; Esc closes only the bubble', async ({
+    page,
+  }) => {
     await openBoard(page);
     await cardOf(page, 'plant-detail').locator('.pd-card__comment').click();
     const bubble = page.getByRole('dialog', { name: 'Comments on Detail' });
@@ -110,7 +112,10 @@ test.describe('board', () => {
     await openBoard(page);
     try {
       mkdirSync(folder);
-      writeFileSync(join(folder, 'e2e-claude.md'), '---\nstatus: doing\nauthor: Claude\ncreated: 2026-11-04T10:00:00Z\n---\nThe name field comes first\n');
+      writeFileSync(
+        join(folder, 'e2e-claude.md'),
+        '---\nstatus: doing\nauthor: Claude\ncreated: 2026-11-04T10:00:00Z\n---\nThe name field comes first\n',
+      );
       const button = cardOf(page, 'watered').locator('.pd-card__comment');
 
       await expect(button).toHaveText('1');
@@ -169,7 +174,9 @@ test.describe('board', () => {
     await expect(page).toHaveURL(/#\/board\/plants$/);
   });
 
-  test('the left panel highlights one thing at a time: the open feature, or the screen selected in it', async ({ page }) => {
+  test('the left panel highlights one thing at a time: the open feature, or the screen selected in it', async ({
+    page,
+  }) => {
     await openBoard(page, '#/board/plants/P1');
     const feature = page.locator('.pd-tree__flow', { hasText: 'Water a plant' });
 
@@ -185,7 +192,10 @@ test.describe('board', () => {
 
   test('the comment and play buttons above a card keep one colour, selected or not', async ({ page }) => {
     await openBoard(page);
-    const colour = (sel: string) => cardOf(page, 'plant-list').locator(sel).evaluate((el) => getComputedStyle(el).color);
+    const colour = (sel: string) =>
+      cardOf(page, 'plant-list')
+        .locator(sel)
+        .evaluate((el) => getComputedStyle(el).color);
     const before = [await colour('.pd-card__comment'), await colour('.pd-card__play')];
     const { x, y } = await centre(page, 'plant-list');
 
@@ -219,7 +229,9 @@ test.describe('prototype', () => {
     await expect(page).toHaveURL(/#\/s\/plant-list$/);
   });
 
-  test('a mockup with a high z-index stays under the size switch and the island, which keep working', async ({ page }) => {
+  test('a mockup with a high z-index stays under the size switch and the island, which keep working', async ({
+    page,
+  }) => {
     await page.goto('/#/s/plant-list');
     const frame = page.locator('.pd-stage__frame');
 
@@ -260,7 +272,9 @@ test.describe('screen details', () => {
     await bubble.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(comment).toBeVisible();
     expect(readdirSync(folder)).toHaveLength(1);
-    expect(readFileSync(only(), 'utf8')).toMatch(/^---\nstatus: open\nauthor: Test\ncreated: \d{4}-\d{2}-\d{2}T[\d:]+Z\n---\nSay how much water\n$/);
+    expect(readFileSync(only(), 'utf8')).toMatch(
+      /^---\nstatus: open\nauthor: Test\ncreated: \d{4}-\d{2}-\d{2}T[\d:]+Z\n---\nSay how much water\n$/,
+    );
     // the screen in the prototype shows it waits
     await expect(page.locator('.pd-commentstoggle .pd-count')).toHaveText('1');
     await comment.locator('select').selectOption('done');
@@ -296,9 +310,9 @@ test.describe('prototype sizes and dev mode', () => {
     const frame = page.locator('.pd-stage__frame > *').first();
 
     await page.locator('.pd-sizes button', { hasText: 'SE' }).click();
-    await expect.poll(async () => (await frame.evaluate((el) => (el as HTMLElement).offsetWidth))).toBe(375);
+    await expect.poll(async () => await frame.evaluate((el) => (el as HTMLElement).offsetWidth)).toBe(375);
     await page.locator('.pd-sizes button', { hasText: 'Pro Max' }).click();
-    await expect.poll(async () => (await frame.evaluate((el) => (el as HTMLElement).offsetWidth))).toBe(430);
+    await expect.poll(async () => await frame.evaluate((el) => (el as HTMLElement).offsetWidth)).toBe(430);
   });
 
   test('dev mode shows the path, the code and measures without leaving the screen', async ({ page }) => {
@@ -387,13 +401,19 @@ test('the pages list shows five and a half pages, as in Figma, and scrolls for m
   await list.evaluate((ul) => {
     for (let i = 0; i < 6; i++) ul.appendChild(ul.firstElementChild!.cloneNode(true));
   });
-  const { shown, full, row } = await list.evaluate((ul) => ({ shown: ul.clientHeight, full: ul.scrollHeight, row: (ul.firstElementChild as HTMLElement).offsetHeight }));
+  const { shown, full, row } = await list.evaluate((ul) => ({
+    shown: ul.clientHeight,
+    full: ul.scrollHeight,
+    row: (ul.firstElementChild as HTMLElement).offsetHeight,
+  }));
 
   expect(shown).toBe(5.5 * row + 5);
   expect(full).toBeGreaterThan(shown);
 });
 
-test('the pages and the features scroll on their own: scrolling a long feature list keeps the pages in view', async ({ page }) => {
+test('the pages and the features scroll on their own: scrolling a long feature list keeps the pages in view', async ({
+  page,
+}) => {
   await openBoard(page);
   const tree = page.locator('.pd-drawer__body--project > .pd-tree');
 

@@ -11,7 +11,8 @@ export type StatusFile = Record<string, StatusEntry>;
 /** A feature missing from the status file is work in progress. */
 export const DEFAULT_STATUS: Status = 'wip';
 
-export const isStatus = (v: unknown): v is Status => typeof v === 'string' && (STATUSES as readonly string[]).includes(v);
+export const isStatus = (v: unknown): v is Status =>
+  typeof v === 'string' && (STATUSES as readonly string[]).includes(v);
 
 export const statusOf = (file: StatusFile, id: string): StatusEntry => file[id] ?? { status: DEFAULT_STATUS };
 

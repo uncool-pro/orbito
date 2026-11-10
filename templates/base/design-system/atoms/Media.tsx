@@ -2,7 +2,17 @@ import { Icon } from './Icon';
 import type { IconName } from './Icon';
 
 /** Stand-in for an image, video or map. Mockups use placeholders, not real photos: say what goes there with `label`. */
-export const Media = ({ ratio = '16 / 9', icon = 'image', label, rounded = true }: { ratio?: string; icon?: IconName; label?: string; rounded?: boolean }) => (
+export const Media = ({
+  ratio = '16 / 9',
+  icon = 'image',
+  label,
+  rounded = true,
+}: {
+  ratio?: string;
+  icon?: IconName;
+  label?: string;
+  rounded?: boolean;
+}) => (
   <div
     role="img"
     aria-label={label ?? 'Image'}

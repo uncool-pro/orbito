@@ -33,7 +33,11 @@ const ViewOptionsPanel = ({ mode }: { mode: Mode }) => {
         <>
           <label className="pd-field">
             <span>{t.status}</span>
-            <select className="pd-select" value={options.statusFilter} onChange={(e) => setOptions({ statusFilter: e.target.value as Status | '' })}>
+            <select
+              className="pd-select"
+              value={options.statusFilter}
+              onChange={(e) => setOptions({ statusFilter: e.target.value as Status | '' })}
+            >
               <option value="">{t.any}</option>
               {STATUSES.map((st) => (
                 <option key={st} value={st}>
@@ -44,16 +48,31 @@ const ViewOptionsPanel = ({ mode }: { mode: Mode }) => {
           </label>
           {mode === 'board' && (
             <label className="pd-toggle">
-              <input type="checkbox" checked={options.showClosed} onChange={(e) => setOptions({ showClosed: e.target.checked })} /> {t.versions}
+              <input
+                type="checkbox"
+                checked={options.showClosed}
+                onChange={(e) => setOptions({ showClosed: e.target.checked })}
+              />{' '}
+              {t.versions}
             </label>
           )}
           {mode === 'flows' && (
             <label className="pd-toggle">
-              <input type="checkbox" checked={options.showOther} onChange={(e) => setOptions({ showOther: e.target.checked })} /> {t.showOther}
+              <input
+                type="checkbox"
+                checked={options.showOther}
+                onChange={(e) => setOptions({ showOther: e.target.checked })}
+              />{' '}
+              {t.showOther}
             </label>
           )}
           <label className="pd-toggle">
-            <input type="checkbox" checked={options.wheelZooms} onChange={(e) => setOptions({ wheelZooms: e.target.checked })} /> {t.wheelZooms}
+            <input
+              type="checkbox"
+              checked={options.wheelZooms}
+              onChange={(e) => setOptions({ wheelZooms: e.target.checked })}
+            />{' '}
+            {t.wheelZooms}
           </label>
         </>
       )}

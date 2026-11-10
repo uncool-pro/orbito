@@ -13,8 +13,29 @@ export default defineDocs({
     { name: 'Title', render: () => <Text variant="title">My plants</Text> },
     { name: 'Heading', render: () => <Text variant="heading">Care notes</Text> },
     { name: 'Body', width: 320, render: () => <Text>Let the top 3 cm of soil dry out between waterings.</Text> },
-    { name: 'Caption, muted', render: () => <Text variant="caption" tone="muted">Living room · Water today</Text> },
-    { name: 'Primary tone', render: () => <Text variant="heading" tone="primary">Plants</Text> },
-    { name: 'Warning tone', render: () => <Text variant="heading" tone="warning">2 plants need you today</Text> },
+    {
+      name: 'Caption, muted',
+      render: () => (
+        <Text variant="caption" tone="muted">
+          Living room · Water today
+        </Text>
+      ),
+    },
+    {
+      name: 'Primary tone',
+      render: () => (
+        <Text variant="heading" tone="primary">
+          Plants
+        </Text>
+      ),
+    },
+    {
+      name: 'Warning tone',
+      render: () => (
+        <Text variant="heading" tone="warning">
+          2 plants need you today
+        </Text>
+      ),
+    },
   ],
 });

@@ -5,7 +5,12 @@ import { Icon } from '../atoms/Icon';
 import type { IconName } from '../atoms/Icon';
 
 /** A filter or a choice among several; `selected` shows the active one. */
-export const Chip = ({ label, selected, icon, ...link }: LinkTarget & { label: string; selected?: boolean; icon?: IconName }) => {
+export const Chip = ({
+  label,
+  selected,
+  icon,
+  ...link
+}: LinkTarget & { label: string; selected?: boolean; icon?: IconName }) => {
   const linkProps = useLinkProps(link);
 
   return (

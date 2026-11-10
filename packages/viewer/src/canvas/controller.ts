@@ -16,7 +16,15 @@ export type ControllerOptions = {
   prefs: () => { wheelZooms: boolean };
 };
 
-type Drag = { id: number; mode: 'pan' | 'scroll'; lastX: number; lastY: number; startX: number; startY: number; scroller?: Scroller };
+type Drag = {
+  id: number;
+  mode: 'pan' | 'scroll';
+  lastX: number;
+  lastY: number;
+  startX: number;
+  startY: number;
+  scroller?: Scroller;
+};
 
 const DRAG_SLOP = 4;
 
@@ -124,7 +132,12 @@ export class CanvasController {
     if (wheelIntent(e, this.opts.prefs()) === 'zoom') {
       const p = this.local(e);
 
-      this.camera = zoomAt(this.camera, wheelZoomFactor(dy || dx, e.ctrlKey && e.deltaMode === 0 && !Number.isInteger(e.deltaY)), p.x, p.y);
+      this.camera = zoomAt(
+        this.camera,
+        wheelZoomFactor(dy || dx, e.ctrlKey && e.deltaMode === 0 && !Number.isInteger(e.deltaY)),
+        p.x,
+        p.y,
+      );
     } else this.camera = panBy(this.camera, -dx, -dy);
     this.schedule();
   };
@@ -149,7 +162,15 @@ export class CanvasController {
     if (e.button === 1) e.preventDefault(); // no autoscroll
     const sc = e.button === 0 && !this.space ? this.opts.scrollerAt(target) : null;
 
-    this.drag = { id: e.pointerId, mode: sc ? 'scroll' : 'pan', lastX: e.clientX, lastY: e.clientY, startX: e.clientX, startY: e.clientY, scroller: sc ?? undefined };
+    this.drag = {
+      id: e.pointerId,
+      mode: sc ? 'scroll' : 'pan',
+      lastX: e.clientX,
+      lastY: e.clientY,
+      startX: e.clientX,
+      startY: e.clientY,
+      scroller: sc ?? undefined,
+    };
     this.dragged = false;
     // no pointer capture yet: a capture taken on press makes browsers deliver the click to the board instead of the card
     // under the cursor, so a plain click on a screen would never open it; capture starts with the drag (onMove)

@@ -34,7 +34,8 @@ afterEach(() => rmSync(base, { recursive: true, force: true }));
 describe('orbito update', () => {
   it('lets the version it just pulled finish the update, so new migrations work on the first run', () => {
     const remote = join(base, 'remote');
-    const g = (cwd: string, ...args: string[]) => execFileSync('git', ['-C', cwd, ...args], { stdio: 'pipe', encoding: 'utf8' });
+    const g = (cwd: string, ...args: string[]) =>
+      execFileSync('git', ['-C', cwd, ...args], { stdio: 'pipe', encoding: 'utf8' });
 
     put(join(remote, 'package.json'), '{ "version": "0.9.4" }');
     put(join(remote, 'skills/wireframes/SKILL.md'), 'wireframes');
@@ -50,7 +51,10 @@ describe('orbito update', () => {
     g(base, 'clone', '-q', remote, clone);
     // the next version knows something the running code does not
     put(join(remote, 'package.json'), '{ "version": "0.9.5" }');
-    put(join(remote, 'packages/cli/src/bin.ts'), "process.stdout.write(JSON.stringify({ added: ['done by the new version'], updated: [], removed: [], conflicts: [], backedUp: [] }));");
+    put(
+      join(remote, 'packages/cli/src/bin.ts'),
+      "process.stdout.write(JSON.stringify({ added: ['done by the new version'], updated: [], removed: [], conflicts: [], backedUp: [] }));",
+    );
     g(remote, 'add', '-A');
     g(remote, 'commit', '-q', '-m', 'second');
 
@@ -67,7 +71,9 @@ describe('orbito update', () => {
 
     expect(r.added).toEqual(expect.arrayContaining(['skill wireframes', 'agent ux-designer']));
     expect(read(join(root, '.claude/skills/wireframes/SKILL.md'))).toBe('wireframes v1');
-    expect(Object.keys(JSON.parse(read(join(root, MANIFEST))).items)).toEqual(expect.arrayContaining(['.claude/skills/wireframes', '.claude/agents/ux-designer.md']));
+    expect(Object.keys(JSON.parse(read(join(root, MANIFEST))).items)).toEqual(
+      expect.arrayContaining(['.claude/skills/wireframes', '.claude/agents/ux-designer.md']),
+    );
   });
 
   it('updates an untouched Orbito skill without a backup', () => {
@@ -88,7 +94,9 @@ describe('orbito update', () => {
 
     expect(read(join(root, '.claude/skills/wireframes/SKILL.md'))).toBe('wireframes v2');
     expect(r.backedUp).toEqual(['.orbito/backup/2026-10-26/.claude/skills/wireframes']);
-    expect(read(join(root, '.orbito/backup/2026-10-26/.claude/skills/wireframes/SKILL.md'))).toBe('wireframes v1 + my rule');
+    expect(read(join(root, '.orbito/backup/2026-10-26/.claude/skills/wireframes/SKILL.md'))).toBe(
+      'wireframes v1 + my rule',
+    );
   });
 
   it("never overwrites the person's own skill that has a name Orbito starts using", () => {
@@ -144,7 +152,11 @@ describe('a project made by create', () => {
   const make = (title = 'T') => {
     const target = join(base, 'made');
 
-    execFileSync(process.execPath, [create, target, '--title', title, '--platform', 'web', '--locale', 'en', '--no-install'], { stdio: 'ignore' });
+    execFileSync(
+      process.execPath,
+      [create, target, '--title', title, '--platform', 'web', '--locale', 'en', '--no-install'],
+      { stdio: 'ignore' },
+    );
 
     return target;
   };

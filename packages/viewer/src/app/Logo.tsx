@@ -29,7 +29,7 @@ export const setFavicon = () => {
   document.head.appendChild(link);
 };
 
-export const OrbitoWordmark =({ className, title = 'Orbito' }: { className?: string; title?: string }) => (
+export const OrbitoWordmark = ({ className, title = 'Orbito' }: { className?: string; title?: string }) => (
   <svg className={className} viewBox={VIEW_BOX} role="img" aria-label={title}>
     <g fill="none" stroke="currentColor" strokeWidth="21">
       {STROKES.map((d) => (

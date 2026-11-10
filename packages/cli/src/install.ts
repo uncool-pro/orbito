@@ -9,7 +9,17 @@
  * - in a project without that list (made before it existed), a retired item is saved the same way before it goes.
  * Uses Node's own modules only: a new project is made before Orbito's packages are installed.
  */
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
@@ -20,7 +30,15 @@ import type { Manifest } from './manifest.ts';
 const PERSONAL_FILES = [LOCAL_SETTINGS, 'feedback.md'];
 
 /** Skills renamed or removed in Orbito: deleted from projects so two versions do not compete. */
-const RETIRED_SKILLS = ['orbito-lead', 'ux-design', 'requirements', 'rapid-prototyping', 'landing-page', 'sales-copy', 'ux-review'];
+const RETIRED_SKILLS = [
+  'orbito-lead',
+  'ux-design',
+  'requirements',
+  'rapid-prototyping',
+  'landing-page',
+  'sales-copy',
+  'ux-review',
+];
 /** Agents whose work moved to other roles. */
 const RETIRED_AGENTS = ['prototyper', 'copywriter'];
 
@@ -38,11 +56,14 @@ const readManifest = (file: string): Manifest | null => {
   try {
     const manifest = JSON.parse(readFileSync(file, 'utf8')) as Partial<Manifest> | null;
 
-    if (manifest && typeof manifest.items === 'object' && manifest.items) return { version: manifest.version ?? '?', items: manifest.items };
+    if (manifest && typeof manifest.items === 'object' && manifest.items)
+      return { version: manifest.version ?? '?', items: manifest.items };
   } catch {
     /* reported below */
   }
-  throw new Error(`${MANIFEST} cannot be read (is there a merge conflict?): fix the file or restore it from git, then run the update again`);
+  throw new Error(
+    `${MANIFEST} cannot be read (is there a merge conflict?): fix the file or restore it from git, then run the update again`,
+  );
 };
 
 /** Same files with the same content? (folders compared file by file) */
@@ -51,7 +72,11 @@ const same = (a: string, b: string): boolean => {
   if (statSync(a).isDirectory()) {
     const names = readdirSync(a);
 
-    return statSync(b).isDirectory() && names.length === readdirSync(b).length && names.every((n) => same(join(a, n), join(b, n)));
+    return (
+      statSync(b).isDirectory() &&
+      names.length === readdirSync(b).length &&
+      names.every((n) => same(join(a, n), join(b, n)))
+    );
   }
 
   return readFileSync(a).equals(readFileSync(b));
@@ -67,13 +92,25 @@ export type InstallResult = {
   backedUp: string[];
 };
 
-export const installTeam = ({ root, tool, today = new Date().toISOString().slice(0, 10) }: { root: string; tool: string; today?: string }): InstallResult => {
+export const installTeam = ({
+  root,
+  tool,
+  today = new Date().toISOString().slice(0, 10),
+}: {
+  root: string;
+  tool: string;
+  today?: string;
+}): InstallResult => {
   root = resolve(root);
   const result: InstallResult = { added: [], updated: [], removed: [], conflicts: [], backedUp: [] };
   const manifestFile = join(root, MANIFEST);
   const before = readManifest(manifestFile);
   const after: Manifest = { version: toolVersion(tool), items: {} };
-  const rel = (p: string) => p.slice(root.length + 1).split('\\').join('/');
+  const rel = (p: string) =>
+    p
+      .slice(root.length + 1)
+      .split('\\')
+      .join('/');
   const backup = (path: string) => {
     const to = join(root, '.orbito', 'backup', today, rel(path));
 
@@ -133,19 +170,25 @@ export const installTeam = ({ root, tool, today = new Date().toISOString().slice
     const missing = PERSONAL_FILES.filter((p) => !text.split(/\r?\n/).includes(p));
 
     if (missing.length) {
-      writeFileSync(ignore, `${text.replace(/\s*$/, '\n')}\n# personal: each person's own Orbito settings and feedback notes\n${missing.join('\n')}\n`);
+      writeFileSync(
+        ignore,
+        `${text.replace(/\s*$/, '\n')}\n# personal: each person's own Orbito settings and feedback notes\n${missing.join('\n')}\n`,
+      );
       result.added.push(`.gitignore: ${missing.join(', ')}`);
     }
   }
   const commands = join(tool, 'templates/base/.claude/commands');
 
   if (existsSync(commands)) {
-    for (const f of readdirSync(commands)) copy(join(commands, f), join(claude, 'commands', f), `command /${f.replace(/\.md$/, '')}`);
+    for (const f of readdirSync(commands))
+      copy(join(commands, f), join(claude, 'commands', f), `command /${f.replace(/\.md$/, '')}`);
   }
   // the container setup, pinned to this version of Orbito, only where it is used; a project moves to a container by running the update from the image
   const composeTemplate = join(tool, 'templates/base/compose.yaml');
   const runtimeFile = join(root, '.orbito', 'runtime');
-  const inContainer = !!process.env.ORBITO_CONTAINER || (existsSync(runtimeFile) && readFileSync(runtimeFile, 'utf8').trim() === 'docker');
+  const inContainer =
+    !!process.env.ORBITO_CONTAINER ||
+    (existsSync(runtimeFile) && readFileSync(runtimeFile, 'utf8').trim() === 'docker');
 
   if (inContainer && existsSync(composeTemplate)) {
     const dir = mkdtempSync(join(tmpdir(), 'orbito-'));

@@ -3,10 +3,27 @@ import { DeviceScreen, Transition } from '@uncool-pro/orbito-runtime';
 
 import { AppBar, Button, Icon, PlantThumb, Text } from '../../design-system';
 
-export const meta = defineScreen({ code: 'PL-02', title: 'Plants / Detail', back: 'plant-list', requirements: ['REQ-03'] });
+export const meta = defineScreen({
+  code: 'PL-02',
+  title: 'Plants / Detail',
+  back: 'plant-list',
+  requirements: ['REQ-03'],
+});
 
 const Fact = ({ label, value }: { label: string; value: string }) => (
-  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-half)', padding: 'var(--space-3)', borderRadius: 'var(--radius-md)', background: 'var(--color-glass)', border: '1px solid var(--color-glass-line)', boxShadow: 'var(--shadow-card)' }}>
+  <div
+    style={{
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 'var(--space-half)',
+      padding: 'var(--space-3)',
+      borderRadius: 'var(--radius-md)',
+      background: 'var(--color-glass)',
+      border: '1px solid var(--color-glass-line)',
+      boxShadow: 'var(--shadow-card)',
+    }}
+  >
     <Text variant="caption" tone="muted">
       {label}
     </Text>
@@ -20,7 +37,16 @@ export default function PlantDetail() {
       background="var(--color-bg-glow), var(--color-bg)"
       top={<AppBar title="Monstera" back />}
       bottom={
-        <div style={{ display: 'flex', gap: 'var(--space-2)', padding: 'var(--space-3) var(--space-4) var(--space-6)', background: 'var(--color-glass)', backdropFilter: 'blur(18px) saturate(1.4)', borderTop: '1px solid var(--color-glass-line)' }}>
+        <div
+          style={{
+            display: 'flex',
+            gap: 'var(--space-2)',
+            padding: 'var(--space-3) var(--space-4) var(--space-6)',
+            background: 'var(--color-glass)',
+            backdropFilter: 'blur(18px) saturate(1.4)',
+            borderTop: '1px solid var(--color-glass-line)',
+          }}
+        >
           <Button variant="secondary" to="add-plant">
             Edit
           </Button>
@@ -31,15 +57,41 @@ export default function PlantDetail() {
       }
     >
       <Transition to="plant-offline" on="error" label="Watering failed: no connection" />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', padding: 'var(--space-2) var(--space-4) var(--space-5)' }}>
-        <div style={{ display: 'grid', placeItems: 'center', height: 240, borderRadius: 'var(--radius-lg)', background: 'var(--color-hero)', boxShadow: 'var(--shadow-raised)' }}>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--space-4)',
+          padding: 'var(--space-2) var(--space-4) var(--space-5)',
+        }}
+      >
+        <div
+          style={{
+            display: 'grid',
+            placeItems: 'center',
+            height: 240,
+            borderRadius: 'var(--radius-lg)',
+            background: 'var(--color-hero)',
+            boxShadow: 'var(--shadow-raised)',
+          }}
+        >
           <PlantThumb size={120} tone="hero" />
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
           <Fact label="Room" value="Living room" />
           <Fact label="Light" value="Bright, indirect" />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-4)', borderRadius: 'var(--radius-md)', background: 'var(--color-warning-soft)', color: 'var(--color-warning)' }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--space-3)',
+            padding: 'var(--space-4)',
+            borderRadius: 'var(--radius-md)',
+            background: 'var(--color-warning-soft)',
+            color: 'var(--color-warning)',
+          }}
+        >
           <Icon name="drop" />
           <div>
             <Text variant="heading" tone="warning">
@@ -51,7 +103,10 @@ export default function PlantDetail() {
           </div>
         </div>
         <Text variant="heading">Care notes</Text>
-        <Text tone="muted">Let the top 3 cm of soil dry out between waterings. Wipe the leaves once a month. Turn the pot a quarter every week so it grows evenly.</Text>
+        <Text tone="muted">
+          Let the top 3 cm of soil dry out between waterings. Wipe the leaves once a month. Turn the pot a quarter every
+          week so it grows evenly.
+        </Text>
         <Text variant="heading">History</Text>
         {['12 Oct · watered', '5 Oct · watered', '1 Oct · fertilised', '28 Sep · watered'].map((h) => (
           <Text key={h} tone="muted">

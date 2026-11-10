@@ -15,9 +15,11 @@ export type TeamDirs = { skills: string; agents: string };
 
 /** Where the team lives: the project's .claude/ folder, or (in the tool repository, e.g. the demo) the nearest skills/ + agents/ above. */
 export const teamDirs = (root: string): TeamDirs | undefined => {
-  if (existsSync(resolve(root, '.claude/skills'))) return { skills: resolve(root, '.claude/skills'), agents: resolve(root, '.claude/agents') };
+  if (existsSync(resolve(root, '.claude/skills')))
+    return { skills: resolve(root, '.claude/skills'), agents: resolve(root, '.claude/agents') };
   for (let dir = root, i = 0; i < 4; i++, dir = dirname(dir)) {
-    if (existsSync(resolve(dir, 'skills')) && existsSync(resolve(dir, 'agents'))) return { skills: resolve(dir, 'skills'), agents: resolve(dir, 'agents') };
+    if (existsSync(resolve(dir, 'skills')) && existsSync(resolve(dir, 'agents')))
+      return { skills: resolve(dir, 'skills'), agents: resolve(dir, 'agents') };
   }
 
   return undefined;
@@ -31,8 +33,10 @@ export const readTeam = (root: string): Team | null => {
   // the project's own items: neither installed by Orbito (`.orbito/managed.json`) nor shipped with it
   const managed = readJson<{ items?: Record<string, string> }>(resolve(root, '.orbito/managed.json'), {}).items ?? {};
   const inProject = dirs.skills === resolve(root, '.claude/skills');
-  const ownSkill = (name: string) => inProject && !managed[`.claude/skills/${name}`] && !existsSync(resolve(TOOL_ROOT, 'skills', name));
-  const ownAgent = (file: string) => inProject && !managed[`.claude/agents/${file}`] && !existsSync(resolve(TOOL_ROOT, 'agents', file));
+  const ownSkill = (name: string) =>
+    inProject && !managed[`.claude/skills/${name}`] && !existsSync(resolve(TOOL_ROOT, 'skills', name));
+  const ownAgent = (file: string) =>
+    inProject && !managed[`.claude/agents/${file}`] && !existsSync(resolve(TOOL_ROOT, 'agents', file));
   const skills: SkillSource[] = (existsSync(dirs.skills) ? readdirSync(dirs.skills, { withFileTypes: true }) : [])
     .filter((d) => d.isDirectory() && existsSync(resolve(dirs.skills, d.name, 'SKILL.md')))
     .map((d) => {
@@ -45,7 +49,15 @@ export const readTeam = (root: string): Team | null => {
     .map((f) => {
       const { data, body } = parseFrontmatter(readFileSync(resolve(dirs.agents, f), 'utf8'));
 
-      return { name: data.name || f.replace(/\.md$/, ''), description: data.description || '', model: data.model, effort: data.effort, skills: listOf(data.skills), body, own: ownAgent(f) };
+      return {
+        name: data.name || f.replace(/\.md$/, ''),
+        description: data.description || '',
+        model: data.model,
+        effort: data.effort,
+        skills: listOf(data.skills),
+        body,
+        own: ownAgent(f),
+      };
     });
 
   // the model mode of the person running the viewer: environment → personal settings → the team's default
@@ -54,9 +66,15 @@ export const readTeam = (root: string): Team | null => {
     local: readJson<OrbitoSettings>(resolve(root, '.orbito/settings.local.json'), {}),
     team: readJson<OrbitoSettings>(resolve(root, '.orbito/settings.json'), {}),
   });
-  const profiles = readJson<ModelProfiles | undefined>(resolve(root, '.orbito/models.json'), undefined) ?? readJson<ModelProfiles | undefined>(resolve(dirs.agents, 'models.json'), undefined);
+  const profiles =
+    readJson<ModelProfiles | undefined>(resolve(root, '.orbito/models.json'), undefined) ??
+    readJson<ModelProfiles | undefined>(resolve(dirs.agents, 'models.json'), undefined);
   // each agent as Orbito will call it in this mode (the profile wins over the agent file's own values)
-  const inMode = agents.map((a) => ({ ...a, ...(modelFor(profiles, mode, a.name) ?? {}), skillModels: skillModels(profiles, mode, a.name) }));
+  const inMode = agents.map((a) => ({
+    ...a,
+    ...(modelFor(profiles, mode, a.name) ?? {}),
+    skillModels: skillModels(profiles, mode, a.name),
+  }));
 
   return { ...buildTeam(skills, inMode), models: mode, modelsSource: source };
 };

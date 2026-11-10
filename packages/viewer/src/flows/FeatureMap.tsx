@@ -128,7 +128,15 @@ export const FeatureMap = ({ page }: { page: Page }) => {
         <div className="pd-fmap__world" style={{ width, height, zoom: k }}>
           <svg width={width} height={height} className="pd-svg">
             <defs>
-              <marker id="pd-fmap-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <marker
+                id="pd-fmap-arrow"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
                 <path d="M0 0 L10 5 L0 10 z" className="pd-fmap__head" />
               </marker>
             </defs>

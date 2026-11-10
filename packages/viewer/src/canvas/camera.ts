@@ -51,11 +51,19 @@ export const visibleWorld = (c: Camera, view: Size, margin = 0): Rect => {
   return { x: a.x, y: a.y, w: b.x - a.x, h: b.y - a.y };
 };
 
-export const intersects = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+export const intersects = (a: Rect, b: Rect) =>
+  a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 // ---- wheel input
 
-export type WheelLike = { deltaX: number; deltaY: number; deltaMode: number; ctrlKey: boolean; metaKey: boolean; shiftKey: boolean };
+export type WheelLike = {
+  deltaX: number;
+  deltaY: number;
+  deltaMode: number;
+  ctrlKey: boolean;
+  metaKey: boolean;
+  shiftKey: boolean;
+};
 
 const LINE = 16;
 

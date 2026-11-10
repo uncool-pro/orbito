@@ -30,7 +30,13 @@ beforeEach(() => {
   vi.stubGlobal('requestAnimationFrame', (f: () => void) => (f(), 1));
   vi.stubGlobal('cancelAnimationFrame', () => undefined);
   el = board();
-  ctrl = new CanvasController(el, { initial: { x: 0, y: 0, k: 1 }, onChange: () => undefined, scrollerAt: () => null, isUi: () => false, prefs: () => ({ wheelZooms: false }) });
+  ctrl = new CanvasController(el, {
+    initial: { x: 0, y: 0, k: 1 },
+    onChange: () => undefined,
+    scrollerAt: () => null,
+    isUi: () => false,
+    prefs: () => ({ wheelZooms: false }),
+  });
 });
 afterEach(() => {
   ctrl.destroy();

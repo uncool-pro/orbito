@@ -24,7 +24,11 @@ export type ModeSource = 'env' | 'local' | 'team' | 'default';
 export const isModelMode = (v: unknown): v is ModelMode => v === 'optimal' || v === 'high';
 
 /** The mode in use for this person, and where it comes from. */
-export const resolveMode = (sources: { env?: string; local?: OrbitoSettings; team?: OrbitoSettings }): { mode: ModelMode; source: ModeSource } => {
+export const resolveMode = (sources: {
+  env?: string;
+  local?: OrbitoSettings;
+  team?: OrbitoSettings;
+}): { mode: ModelMode; source: ModeSource } => {
   if (isModelMode(sources.env)) return { mode: sources.env, source: 'env' };
   if (isModelMode(sources.local?.models)) return { mode: sources.local!.models!, source: 'local' };
   if (isModelMode(sources.team?.models)) return { mode: sources.team!.models!, source: 'team' };
@@ -36,11 +40,19 @@ export const resolveMode = (sources: { env?: string; local?: OrbitoSettings; tea
  * The model and effort of a role in a mode — for one of its competences when `skill` is given and the profile has an
  * entry for it; roles the profiles do not know (the project's own agents) get `undefined`.
  */
-export const modelFor = (profiles: ModelProfiles | undefined, mode: ModelMode, role: string, skill?: string): ModelChoice | undefined =>
-  (skill ? profiles?.[mode]?.[`${role}/${skill}`] : undefined) ?? profiles?.[mode]?.[role];
+export const modelFor = (
+  profiles: ModelProfiles | undefined,
+  mode: ModelMode,
+  role: string,
+  skill?: string,
+): ModelChoice | undefined => (skill ? profiles?.[mode]?.[`${role}/${skill}`] : undefined) ?? profiles?.[mode]?.[role];
 
 /** The competences of a role that run on their own model and effort in a mode (`<role>/<skill>` entries). */
-export const skillModels = (profiles: ModelProfiles | undefined, mode: ModelMode, role: string): Record<string, ModelChoice> =>
+export const skillModels = (
+  profiles: ModelProfiles | undefined,
+  mode: ModelMode,
+  role: string,
+): Record<string, ModelChoice> =>
   Object.fromEntries(
     Object.entries(profiles?.[mode] ?? {})
       .filter(([key]) => key.startsWith(`${role}/`))

@@ -18,7 +18,8 @@ export const TEAM_SETTINGS = '.orbito/settings.json';
 
 /** The profiles of the project (`.orbito/models.json`, refreshed by `orbito update`), or the tool's own. */
 export const readProfiles = (root: string, toolAgents: string): ModelProfiles | undefined =>
-  readJson<ModelProfiles | undefined>(join(root, PROFILES), undefined) ?? readJson<ModelProfiles | undefined>(join(toolAgents, 'models.json'), undefined);
+  readJson<ModelProfiles | undefined>(join(root, PROFILES), undefined) ??
+  readJson<ModelProfiles | undefined>(join(toolAgents, 'models.json'), undefined);
 
 /** The mode in use for the person running this, and where it comes from. */
 export const currentMode = (root: string): { mode: ModelMode; source: ModeSource } =>
