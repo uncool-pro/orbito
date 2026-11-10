@@ -18,6 +18,7 @@
     "check:ds": "npm run check:ds -w demo"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.3",
     "@playwright/test": "^1.64.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.3.0",
