@@ -15,7 +15,8 @@
     "templates/base/*.ts",
     "templates/base/design-system",
     "templates/base/screens",
-    "templates/base/flows"
+    "templates/base/flows",
+    "scripts"
   ],
   "compilerOptions": {
     "allowJs": true,

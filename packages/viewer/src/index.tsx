@@ -12,7 +12,9 @@ import { setFavicon } from './app/Logo';
 import { ViewerContext } from './app/context';
 import { ShellProvider } from './app/shell/state';
 import type { DsData, ViewerState } from './app/context';
+import { parseRoute } from './app/routes';
 import { probeLinks } from './board/probe';
+import { pageScreens } from './board/probeOrder';
 import { MESSAGES, MessagesContext } from './i18n';
 import { initComments } from './comments';
 import type { CommentsFile } from './comments';
@@ -39,7 +41,20 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
     // a probe that is no longer wanted (the project changed, or React ran this effect twice in dev) stops at once
     const stop = new AbortController();
 
-    probeLinks(loaded.project, stop.signal)
+    // the page on screen first: its arrows show while the rest of the project is still being read
+    const route = parseRoute(window.location.hash);
+    const page =
+      route.view === 'board' || route.view === 'flows'
+        ? (loaded.project.pages.find((p) => p.key === route.page) ?? loaded.project.pages[0])
+        : undefined;
+    const first = page && {
+      ids: pageScreens(page),
+      done: (l: LinkMap) => {
+        if (live) setLinks(l);
+      },
+    };
+
+    probeLinks(loaded.project, stop.signal, first)
       .catch((err: unknown) => {
         // without links the board still shows every screen, only the arrows are missing
         console.error('[orbito] could not read the links of the screens', err);

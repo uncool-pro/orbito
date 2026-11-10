@@ -30,6 +30,19 @@ There is no build step: Node and Vite run the TypeScript sources directly.
 
 Before you open a pull request: `npm run typecheck`, `npm run lint`, `npm test` and `npm run check:ds` pass, and you have looked at the board in the browser.
 
+## Performance
+
+The board has to stay smooth on projects with hundreds of screens. Measure a change that touches it:
+
+```sh
+node scripts/perf/big-project.ts          # the demo copied 24 times: 360 screens in .tmp-perf/big
+node scripts/perf/measure.ts --label before
+# make the change
+node scripts/perf/measure.ts --label after
+```
+
+It prints the time until the arrows are drawn and, for each part of a fixed camera route (fit, pan, zoom out, pan far, zoom in, hover), the main thread's time and the frames: `stutters` are gaps over 50 ms. Runs differ by up to a fifth, so compare runs made one after the other, and keep a change only when the numbers show it. `--dump <part>` lists what the browser spent that part on.
+
 ## Code style
 
 Biome formats the code and checks it with its recommended rules (`biome.json`); your editor can run it on save. A rule is never silenced without a reason: a `// biome-ignore <rule>: <why>` comment says why this place is right as it is. A few rules are switched off on purpose:

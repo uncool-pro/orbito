@@ -2,6 +2,13 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
+## 0.9.69 — not released yet
+The board on a big project: measured on 360 screens, a page of 84 cards.
+- **The arrows show in under 2 seconds instead of more than 4.** The board reads the links of the page you are looking at first and draws its arrows, then the rest of the project in the background, in short slices that leave the page free to move.
+- **Zooming and panning stay smooth with glass in the screens.** Every element with frosted glass (`backdrop-filter`) was a layer of its own that the browser arranged again on every frame the board moved: zoomed out, panning stuttered 40 times in a few seconds. Now none. **Changed:** on the board, glass in your screens is drawn without the blur behind it (the translucent surface stays; at the size of a card the difference is hard to see). The prototype, the screen details and the catalog show it in full. Nothing to change in your screens.
+- **A pan no longer redraws the board when it stops.** The board is redrawn sharp only after the zoom changes.
+- **For developers:** `node scripts/perf/big-project.ts` builds a large project from the demo and `node scripts/perf/measure.ts` measures the board on it in Chrome (time to the arrows, then pan, zoom and hover, each on its own), to compare a change with what came before.
+
 ## 0.9.68 — not released yet
 One code style for the whole tool, checked on every change. Nothing changes in how the board, the flows or the prototype behave.
 - **For developers: Biome formats and checks the code.** `npm run lint` runs in CI next to the type check, `npm run format` formats everything. The rules it found that matter were fixed: hooks on the board and the flows diagram list what they depend on, two styles no longer need `!important`, decorative drawings are hidden from screen readers. A place where a rule does not fit says why in a comment; the rules switched off on purpose are listed in `CONTRIBUTING.md`.

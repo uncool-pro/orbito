@@ -5,29 +5,52 @@ import { createRoot } from 'react-dom/client';
 import type { Hotspot, LinkMap, Project } from '@uncool-pro/orbito-core';
 import { FrameContext } from '@uncool-pro/orbito-runtime';
 
+import { probeOrder } from './probeOrder';
+
 const labelOf = (el: Element) =>
   (el.getAttribute('aria-label') ?? el.getAttribute('title') ?? el.textContent ?? '')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 60);
 
+/** How long the probe renders screens before it lets the page draw a frame and answer input. */
+const SLICE_MS = 8;
+
+/** The screens the person is looking at: probed first, and handed over before the rest of the project is done. */
+export type FirstPass = { ids: ReadonlySet<string>; done: (links: LinkMap) => void };
+
 /**
  * Renders every screen once, offscreen and at its real size, and records each link element with its position.
  * That is how the board knows the arrows (nothing is declared twice) and where on the screen each one starts.
  * `signal` stops it between two screens: what it found so far is returned and is not complete.
+ *
+ * On a big project this takes seconds, so the screens of `first` (the page on screen) go first and `first.done` gets
+ * their links as soon as they are known: the board draws its arrows, and the rest of the project follows. The work is
+ * done in slices of a few milliseconds; yielding after every screen instead left the page idle more than half the time,
+ * because the browser waits at least 4 ms between timers that follow each other.
  */
-export const probeLinks = async (project: Project<ComponentType>, signal?: AbortSignal): Promise<LinkMap> => {
+export const probeLinks = async (
+  project: Project<ComponentType>,
+  signal?: AbortSignal,
+  first?: FirstPass,
+): Promise<LinkMap> => {
   const host = document.createElement('div');
 
   host.setAttribute('aria-hidden', 'true');
   host.style.cssText = 'position:fixed;left:-100000px;top:0;visibility:hidden;pointer-events:none;contain:layout style';
   document.body.appendChild(host);
   const out: LinkMap = {};
+  const { order, firstCount } = probeOrder(project.screens, first?.ids);
+  let sliceStart = Number.NEGATIVE_INFINITY;
 
   try {
-    for (const s of project.screens) {
-      // a fresh task per screen: never flush a root while React is rendering, and keep the page responsive on big projects
-      await new Promise((r) => setTimeout(r, 0));
+    for (const [i, s] of order.entries()) {
+      if (first && firstCount && i === firstCount) first.done({ ...out });
+      // a fresh task for each slice: never flush a root while React is rendering, and let the page draw and answer input
+      if (performance.now() - sliceStart > SLICE_MS) {
+        await new Promise((r) => setTimeout(r, 0));
+        sliceStart = performance.now();
+      }
       if (signal?.aborted) break;
       const vp = project.viewports[s.viewport ?? project.config.defaultViewport]!;
       const box = document.createElement('div');
