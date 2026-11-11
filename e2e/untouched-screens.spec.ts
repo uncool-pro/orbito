@@ -81,6 +81,22 @@ const reached = (page: Page) =>
     return { hosts: hosts.length, found: [...found].sort() };
   });
 
+/** The zoom the island shows, in percent. */
+const zoom = async (page: Page) =>
+  Number(((await page.locator('.pd-island__zoom span').textContent()) ?? '').replace('%', ''));
+/** One zoom step with the keyboard, done once the island shows the new zoom. */
+const step = async (page: Page, key: '-' | '+') => {
+  const before = await zoom(page);
+
+  await page.keyboard.press(key);
+  await expect.poll(() => zoom(page)).not.toBe(before);
+};
+/** Zooms in until the board draws its screens in full (a board often opens further out than that). */
+const near = async (page: Page) => {
+  while ((await zoom(page)) < 57) await step(page, '+');
+  await expect(page.locator('.pd-world')).not.toHaveClass(/is-far/);
+};
+
 test.describe('Orbito never restyles a screen', () => {
   test('on the board and in the screen details', async ({ page }) => {
     await page.goto('/#/board/plants');
@@ -89,6 +105,7 @@ test.describe('Orbito never restyles a screen', () => {
     await expect(card.locator('[data-pd-content]')).toBeVisible();
     await card.click();
     await expect(page.locator('.pd-insp__preview [data-pd-content]')).toBeVisible();
+    await near(page);
     const { hosts, found } = await reached(page);
 
     expect(hosts).toBeGreaterThan(1);
@@ -161,10 +178,12 @@ test('a screen is drawn the same on the board, in the screen details and in the 
   const card = page.locator(`[data-card][data-screen="${id}"]`).first();
 
   await expect(card.locator('[data-pd-content]')).toBeVisible();
-  expect(await drawn(page, `[data-card][data-screen="${id}"] [data-pd-content]`)).toEqual(prototype);
   await card.click();
   await expect(page.locator('.pd-insp__preview [data-pd-content]')).toBeVisible();
+  // the details always show a screen in full; the board does from half the real size up
   expect(await drawn(page, '.pd-insp__preview [data-pd-content]')).toEqual(prototype);
+  await near(page);
+  expect(await drawn(page, `[data-card][data-screen="${id}"] [data-pd-content]`)).toEqual(prototype);
 });
 
 test('a screen starts from the same plain text wherever it is shown, never from the panel around it', async ({
@@ -214,8 +233,8 @@ test('a screen starts from the same plain text wherever it is shown, never from 
   expect(await inherited('[data-pd-content]')).toBe(prototype);
 });
 
-// The one exception, and its limits: far away (under a quarter of the real size) the board leaves out the blur behind
-// frosted glass, which cannot be seen at that size and is the costliest thing to draw. Nothing else, nowhere else.
+// The one exception, and its limits: far away (under half the real size, where a board is for moving around) the board
+// leaves out the blur behind frosted glass, the costliest thing to draw. Nothing else, nowhere else.
 test.describe('far away, the board leaves out only the blur behind glass', () => {
   const id = 'plant-detail';
   const host = `[data-card][data-screen="${id}"] [data-pd-content]`;
@@ -228,24 +247,13 @@ test.describe('far away, the board leaves out only the blur behind glass', () =>
         .join(' | '),
     );
 
-  /** The zoom the island shows, in percent. */
-  const zoom = async (page: Page) =>
-    Number(((await page.locator('.pd-island__zoom span').textContent()) ?? '').replace('%', ''));
-  /** One zoom step with the keyboard, done once the island shows the new zoom. */
-  const step = async (page: Page, key: '-' | '+') => {
-    const before = await zoom(page);
-
-    await page.keyboard.press(key);
-    await expect.poll(() => zoom(page)).not.toBe(before);
-  };
-
-  test('from a quarter of the real size up, a screen on the board is drawn in full', async ({ page }) => {
+  test('from half the real size up, a screen on the board is drawn in full', async ({ page }) => {
     await page.goto('/#/board/plants');
     await expect(page.locator(host)).toBeVisible();
-    await expect(page.locator('.pd-world')).not.toHaveClass(/is-far/);
-    // down to the last step above a quarter (a step is a fifth): still in full
-    while ((await zoom(page)) * 0.8 >= 25) await step(page, '-');
-    expect(await zoom(page)).toBeGreaterThanOrEqual(25);
+    await near(page);
+    // down to the last step above half (a step is a fifth): still in full
+    while ((await zoom(page)) * 0.8 >= 52) await step(page, '-');
+    expect(await zoom(page)).toBeGreaterThanOrEqual(52);
     await expect(page.locator('.pd-world')).not.toHaveClass(/is-far/);
     expect((await drawn(page, host)).some((line) => line.includes('blur('))).toBe(true);
   });
@@ -257,7 +265,7 @@ test.describe('far away, the board leaves out only the blur behind glass', () =>
 
     await page.goto('/#/board/plants');
     await expect(page.locator(host)).toBeVisible();
-    while ((await zoom(page)) >= 25) await step(page, '-');
+    while ((await zoom(page)) >= 49) await step(page, '-');
     await expect(page.locator('.pd-world')).toHaveClass(/is-far/);
     const far = await drawn(page, host);
 
@@ -265,8 +273,7 @@ test.describe('far away, the board leaves out only the blur behind glass', () =>
     expect(withoutBlur(far)).toEqual(withoutBlur(prototype));
     // no other rule of Orbito reaches into a screen, far or near
     expect((await reached(page)).found).toEqual(['.pd-world.is-far [data-pd-content] *']);
-    while ((await zoom(page)) < 28) await step(page, '+');
-    await expect(page.locator('.pd-world')).not.toHaveClass(/is-far/);
+    await near(page);
     expect(await drawn(page, host)).toEqual(prototype);
   });
 });
