@@ -79,6 +79,8 @@ test.describe('board', () => {
     const box = (await page.locator(`[data-card="${key}"]`).boundingBox())!;
 
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    // the highlight comes once the pointer rests on the card, not while it only passes
+    await expect(page.locator('.pd-stub.is-on text').first()).toBeVisible();
     const labels = await page.locator('.pd-stub.is-on text').allTextContents();
 
     expect(labels.length).toBeGreaterThan(0);
@@ -381,7 +383,13 @@ test.describe('the first time', () => {
     const welcome = page.getByRole('dialog', { name: 'Welcome to Orbito' });
 
     await expect(welcome).toContainText('agent first');
-    await welcome.getByRole('textbox').fill('Ola');
+    // git's name may arrive as a suggestion at the very moment the name is typed: type until the field holds the name
+    const name = welcome.getByRole('textbox');
+
+    await expect(async () => {
+      await name.fill('Ola');
+      await expect(name).toHaveValue('Ola', { timeout: 500 });
+    }).toPass();
     await welcome.getByRole('button', { name: 'Start' }).click();
     await expect(welcome).toHaveCount(0);
     await page.reload();

@@ -50,7 +50,8 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
         { w: el.clientWidth, h: el.clientHeight - 64 },
         { inset: 8, pad: 48, maxK: 1.6 },
       );
-    const place = world.current ? placeWorld(world.current) : () => undefined;
+    const placer = world.current ? placeWorld(world.current) : null;
+    const place = placer?.place ?? (() => undefined);
     const controller = new CanvasController(el, {
       initial: fit(),
       onChange: (c) => {
@@ -86,6 +87,7 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
       el.removeEventListener('pointerdown', touch);
       el.removeEventListener('wheel', touch);
       controller.destroy();
+      placer?.release();
       canvas.current = null;
     };
   }, [graph, canvas]);

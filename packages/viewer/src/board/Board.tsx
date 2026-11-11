@@ -7,6 +7,7 @@ import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
 
 import { useViewer } from '../app/context';
 import { useT } from '../i18n';
+import { createIntent } from '../app/intent';
 import { isTextField } from '../dom';
 import { useStatuses } from '../status';
 import { centerOn, fitRect, visibleWorld, zoomAt, zoomTo } from '../canvas/camera';
@@ -121,7 +122,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   useLayoutEffect(() => {
     const el = root.current!;
     let saveTimer = 0;
-    const place = placeWorld(world.current!);
+    const { place, release } = placeWorld(world.current!);
     const controller: CanvasController = new CanvasController(el, {
       initial: readView(viewKey) ?? fitWidth(),
       onChange: (c) => {
@@ -181,6 +182,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
       ro?.disconnect();
       window.clearTimeout(saveTimer);
       controller.destroy();
+      release();
       ctrl.current = null;
       canvas.current = null;
     };
@@ -282,7 +284,11 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   };
 
   // ---- highlight
+  // the highlight follows a pointer that rests, not one that only passes: every change of it repaints the board
   const [hover, setHover] = useState<{ card?: string; edge?: string }>({});
+  const [hoverIntent] = useState(() => createIntent<{ card?: string; edge?: string }>((update) => setHover(update)));
+
+  useEffect(() => hoverIntent.cancel, [hoverIntent]);
   const statusFilter = options.statusFilter;
   const related = useMemo(() => {
     const edge = hover.edge ? layout.edges.find((e) => e.id === hover.edge) : undefined;
@@ -388,9 +394,9 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
       onPointerOver={(e) => {
         const card = (e.target as Element).closest<HTMLElement>('[data-card]')?.dataset.card;
 
-        setHover((h) => (h.edge || h.card === card ? h : { card }));
+        hoverIntent.soon((h) => (h.edge || h.card === card ? h : { card }));
       }}
-      onPointerLeave={() => setHover({})}
+      onPointerLeave={() => hoverIntent.now(() => ({}))}
     >
       {flows.length === 0 && <div className="pd-empty">{t.noFlows}</div>}
       {devMode && <Measure host={root} on="board" />}
@@ -468,8 +474,8 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
                 <path
                   d={e.d}
                   className="pd-edge__hit"
-                  onPointerEnter={() => setHover({ edge: e.id })}
-                  onPointerLeave={() => setHover({})}
+                  onPointerEnter={() => hoverIntent.soon(() => ({ edge: e.id }))}
+                  onPointerLeave={() => hoverIntent.soon(() => ({}))}
                 />
                 <path
                   d={e.d}

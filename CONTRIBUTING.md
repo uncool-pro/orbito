@@ -41,7 +41,7 @@ node scripts/perf/measure.ts --label before
 node scripts/perf/measure.ts --label after
 ```
 
-It prints the time until the arrows are drawn and, for each part of a fixed camera route (fit, pan, zoom out, pan far, zoom in, hover), the main thread's time and the frames: `stutters` are gaps over 50 ms. Runs differ by up to a fifth, so compare runs made one after the other, and keep a change only when the numbers show it. `--dump <part>` lists what the browser spent that part on.
+It prints the time until the arrows are drawn and, for each part of a fixed camera route (fit, the whole page swept left and right, pan, zoom out, pan far, zoom in, hover), the main thread's time and the frames: `stutters` are gaps over 50 ms between frames the page saw, `shownStutters` between pictures the GPU put on the display. A laptop window hides what a big display shows: measure with `--headed --width 2200 --height 1200 --scale 2` too, where far more screens are in view at once. Runs differ by up to a fifth, so compare runs made one after the other, and keep a change only when the numbers show it. `--dump <part>` lists what the browser spent that part on.
 
 ## Code style
 

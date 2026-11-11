@@ -3,8 +3,8 @@
 //   node scripts/perf/measure.ts [--project .tmp-perf/big] [--page big-0] [--label before] [--headed]
 //
 // Starts the project's dev server, opens the page in the Chrome on this computer and plays the same camera route every
-// time: the whole board at once, panning with pauses, zooming out, panning far out, zooming in, then the pointer over
-// the cards. The input goes
+// time: the whole board at once, the whole page swept left and right, panning with pauses, zooming out, panning far
+// out and back, zooming in, then the pointer over the cards. The input goes
 // through the browser (DevTools Protocol), like a mouse wheel, not as events made up in the page. Prints the numbers
 // and saves them to `.tmp-perf/results/<label>.json` to compare a change with what came before it.
 //
@@ -30,6 +30,10 @@ const { values } = parseArgs({
     label: { type: 'string', default: 'run' },
     port: { type: 'string', default: '5299' },
     headed: { type: 'boolean', default: false },
+    // the window and its pixel density: a 5K display has four times the pixels of a laptop's, and the GPU feels it
+    width: { type: 'string', default: '1440' },
+    height: { type: 'string', default: '900' },
+    scale: { type: 'string', default: '1' },
     // the busiest kinds of work in one part of the route, to see what the time goes to
     dump: { type: 'string' },
   },
@@ -90,6 +94,21 @@ const phases = (page: Page): [string, () => Promise<void>][] => {
         await sleep(500);
       },
     ],
+    // the whole page in view, swept left and right fast, as with two fingers on a trackpad: every screen moves at once
+    [
+      'overview',
+      async () => {
+        await page.keyboard.press('Shift+Digit1');
+        await sleep(1500);
+        for (let i = 0; i < 4; i++) {
+          await wheel(-40, 0, 25, 8);
+          await wheel(40, 0, 25, 8);
+        }
+        await sleep(250);
+        await page.keyboard.press('Shift+Digit0');
+        await sleep(500);
+      },
+    ],
     // panning with pauses: the board sharpens when the camera stops
     [
       'pan',
@@ -131,7 +150,8 @@ const main = async () => {
 
   try {
     const context = await browser.newContext({
-      viewport: { width: 1440, height: 900 },
+      viewport: { width: Number(values.width), height: Number(values.height) },
+      deviceScaleFactor: Number(values.scale),
       storageState: { cookies: [], origins: [{ origin: base, localStorage: [{ name: 'pd.welcomed', value: '1' }] }] },
     });
     const page = await context.newPage();
@@ -177,10 +197,12 @@ const main = async () => {
 
         requestAnimationFrame(tick);
       });
-      await browser.startTracing(page, { categories: ['devtools.timeline', 'disabled-by-default-devtools.timeline'] });
+      await browser.startTracing(page, {
+        categories: ['devtools.timeline', 'disabled-by-default-devtools.timeline', 'viz', 'gpu', 'benchmark'],
+      });
       await run();
       const trace = JSON.parse((await browser.stopTracing()).toString('utf8')) as {
-        traceEvents: { name: string; ph: string; dur?: number }[];
+        traceEvents: { name: string; ph: string; dur?: number; ts?: number }[];
       };
       const frames = await page.evaluate(() => {
         const w = window as unknown as { __frames: number[]; __stop: boolean };
@@ -214,6 +236,14 @@ const main = async () => {
         1000;
       const delta = (metric: string) => Math.round(((after[metric] ?? 0) - (before[metric] ?? 0)) * 1000);
 
+      // what reached the display: the GPU process swaps one picture per frame it managed to draw
+      const swaps = trace.traceEvents
+        .filter((e) => e.name === 'Display::DrawAndSwap' && e.ts)
+        .map((e) => (e.ts ?? 0) / 1000)
+        .sort((a, b) => a - b);
+      const shown = swaps.slice(1).map((t, i) => t - swaps[i]!);
+      const shownSorted = [...shown].sort((a, b) => a - b);
+
       measured[name] = {
         script: delta('ScriptDuration'),
         style: delta('RecalcStyleDuration'),
@@ -223,6 +253,9 @@ const main = async () => {
         frameP95: Math.round(sorted[Math.floor(sorted.length * 0.95)] ?? 0),
         frameMax: Math.round(sorted.at(-1) ?? 0),
         stutters: gaps.filter((g) => g > 50).length,
+        gpu: Math.round(traced('GPUTask')),
+        shownP95: Math.round(shownSorted[Math.floor(shownSorted.length * 0.95)] ?? 0),
+        shownStutters: shown.filter((g) => g > 50).length,
       };
     }
     const end = await metrics();
