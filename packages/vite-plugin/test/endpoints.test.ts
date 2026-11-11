@@ -14,6 +14,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { changeComments } from '../src/comments.ts';
 import { devEndpoints, fromOtherSite } from '../src/endpoints.ts';
 
 const HOST = 'localhost:5190';
@@ -210,6 +211,16 @@ describe('statuses', () => {
 
 describe('comments', () => {
   const post = (body: unknown) => call('/__orbito/comments', { method: 'POST', body: JSON.stringify(body) });
+
+  it('keeps the order comments were written in, also when they are written in the same instant', () => {
+    const dir = join(root, 'comments');
+    const now = new Date();
+    const texts = Array.from({ length: 12 }, (_, i) => `comment ${i + 1}`);
+    let list: { text: string }[] = [];
+
+    for (const text of texts) list = changeComments(dir, { action: 'add', screen: 'same-instant', text }, now);
+    expect(list.map((c) => c.text)).toEqual(texts);
+  });
 
   it('adds each comment as its own open file, moves it along and removes it', async () => {
     const added = await post({ action: 'add', screen: 'plant-list', text: '  Too many filters  ', author: 'Ola' });

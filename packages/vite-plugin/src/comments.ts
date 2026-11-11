@@ -28,6 +28,13 @@ export type CommentsByScreen = Record<string, ScreenComment[]>;
 
 const isId = (v: unknown): v is string => typeof v === 'string' && ID.test(v);
 
+/** The time in the name of a comment file Orbito wrote (`<time>-<random>.md`), or 0 for any other file. */
+const stampOf = (file: string) => {
+  const m = /^([0-9a-z]+)-[0-9a-z]+\.md$/.exec(file);
+
+  return m ? Number.parseInt(m[1]!, 36) : 0;
+};
+
 const readScreen = (dir: string): ScreenComment[] =>
   readdirSync(dir)
     .filter((f) => f.endsWith('.md') && ID.test(f.slice(0, -3)))
@@ -73,10 +80,18 @@ export const changeComments = (
     if (typeof text !== 'string' || !text.trim()) throw new RequestError('a comment needs text');
     if (text.length > MAX) throw new RequestError(`a comment is at most ${MAX} characters`);
     const who = oneLine(author, 80, 'author');
-    // the time, then a few random letters: two people commenting in the same millisecond still get two files
-    const fresh = `${now.getTime().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-
     mkdirSync(folder, { recursive: true });
+    // the time, then a few random letters: two people commenting in the same millisecond still get two files. The time
+    // is always later than the newest comment's here, so comments written in the same instant keep the order they were
+    // written in (the names sort the same way the comments are read); a name from the far future is not followed
+    const newest = Math.max(
+      0,
+      ...readdirSync(folder)
+        .map(stampOf)
+        .filter((t) => t <= now.getTime() + 60_000),
+    );
+    const fresh = `${Math.max(now.getTime(), newest + 1).toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
     writeFileSync(
       join(folder, `${fresh}.md`),
       formatComment({
