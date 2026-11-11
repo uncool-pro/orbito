@@ -79,7 +79,7 @@ test.describe('board', () => {
     const box = (await page.locator(`[data-card="${key}"]`).boundingBox())!;
 
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    // the highlight comes once the pointer rests on the card, not while it only passes
+    // the highlight is drawn by the next frame, not within the same call
     await expect(page.locator('.pd-stub.is-on text').first()).toBeVisible();
     const labels = await page.locator('.pd-stub.is-on text').allTextContents();
 

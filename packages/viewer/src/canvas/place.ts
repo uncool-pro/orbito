@@ -25,8 +25,8 @@ export type Placer = {
  *
  * Measured with scripts/perf in a window the size of a 5K display, the whole page in view and swept left and right:
  * 84 cards, 202 stutters with the style, none like this; 336 cards, 213 against 29.
- * The price: any repaint of the board (a highlight, a selection) arranges the layers once, so the board repaints as
- * little as it can while the pointer only passes (see `intent.ts`).
+ * The price: any repaint of the board (a highlight, a selection) arranges the layers once. The highlight of related
+ * screens therefore has no fade (a fade repaints for eight frames); it still answers the pointer at once.
  * Where animations are missing (an old browser, a test) the transform is set through the style.
  */
 export const placeWorld = (world: World): Placer => {

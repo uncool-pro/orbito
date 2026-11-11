@@ -7,7 +7,6 @@ import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
 
 import { useViewer } from '../app/context';
 import { useT } from '../i18n';
-import { createIntent } from '../app/intent';
 import { isTextField } from '../dom';
 import { useStatuses } from '../status';
 import { centerOn, fitRect, visibleWorld, zoomAt, zoomTo } from '../canvas/camera';
@@ -284,11 +283,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   };
 
   // ---- highlight
-  // the highlight follows a pointer that rests, not one that only passes: every change of it repaints the board
   const [hover, setHover] = useState<{ card?: string; edge?: string }>({});
-  const [hoverIntent] = useState(() => createIntent<{ card?: string; edge?: string }>((update) => setHover(update)));
-
-  useEffect(() => hoverIntent.cancel, [hoverIntent]);
   const statusFilter = options.statusFilter;
   const related = useMemo(() => {
     const edge = hover.edge ? layout.edges.find((e) => e.id === hover.edge) : undefined;
@@ -394,9 +389,9 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
       onPointerOver={(e) => {
         const card = (e.target as Element).closest<HTMLElement>('[data-card]')?.dataset.card;
 
-        hoverIntent.soon((h) => (h.edge || h.card === card ? h : { card }));
+        setHover((h) => (h.edge || h.card === card ? h : { card }));
       }}
-      onPointerLeave={() => hoverIntent.now(() => ({}))}
+      onPointerLeave={() => setHover({})}
     >
       {flows.length === 0 && <div className="pd-empty">{t.noFlows}</div>}
       {devMode && <Measure host={root} on="board" />}
@@ -474,8 +469,8 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
                 <path
                   d={e.d}
                   className="pd-edge__hit"
-                  onPointerEnter={() => hoverIntent.soon(() => ({ edge: e.id }))}
-                  onPointerLeave={() => hoverIntent.soon(() => ({}))}
+                  onPointerEnter={() => setHover({ edge: e.id })}
+                  onPointerLeave={() => setHover({})}
                 />
                 <path
                   d={e.d}
