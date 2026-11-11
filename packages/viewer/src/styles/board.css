@@ -91,6 +91,13 @@
   overflow-x: hidden;
   scrollbar-width: none;
 }
+/* Far away (under a quarter of the real size) the screens are drawn without the blur behind frosted glass: at that
+   size it cannot be seen, and each blurred element is a pass of its own for the graphics card on every frame. The one
+   rule of Orbito that reaches into a screen; board/detail.ts says why and e2e/untouched-screens allows only this */
+.pd-world.is-far [data-pd-content] * {
+  /* biome-ignore lint/complexity/noImportantStyles: screens set the glass in inline styles, only !important reaches them */
+  backdrop-filter: none !important;
+}
 .pd-card__placeholder {
   background: repeating-linear-gradient(135deg, var(--pd-surface-2) 0 10px, var(--pd-bg) 10px 20px);
 }

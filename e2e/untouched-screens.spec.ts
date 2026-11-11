@@ -116,34 +116,37 @@ test.describe('Orbito never restyles a screen', () => {
 
 /** How every element of the screen in `host` is drawn: the properties a restyling would change. */
 const drawn = (page: Page, host: string) =>
-  page.locator(host).evaluate((el) =>
-    [...el.querySelectorAll('*')].map((node) => {
-      const s = getComputedStyle(node);
+  page
+    .locator(host)
+    .first()
+    .evaluate((el) =>
+      [...el.querySelectorAll('*')].map((node) => {
+        const s = getComputedStyle(node);
 
-      return [
-        node.tagName.toLowerCase(),
-        s.display,
-        s.visibility,
-        s.opacity,
-        s.color,
-        s.backgroundColor,
-        s.backgroundImage,
-        s.backdropFilter,
-        s.filter,
-        s.mixBlendMode,
-        s.boxShadow,
-        s.borderRadius,
-        s.fontFamily,
-        s.fontSize,
-        s.fontWeight,
-        s.lineHeight,
-        s.letterSpacing,
-        s.textTransform,
-        s.margin,
-        s.padding,
-      ].join(' | ');
-    }),
-  );
+        return [
+          node.tagName.toLowerCase(),
+          s.display,
+          s.visibility,
+          s.opacity,
+          s.color,
+          s.backgroundColor,
+          s.backgroundImage,
+          s.backdropFilter,
+          s.filter,
+          s.mixBlendMode,
+          s.boxShadow,
+          s.borderRadius,
+          s.fontFamily,
+          s.fontSize,
+          s.fontWeight,
+          s.lineHeight,
+          s.letterSpacing,
+          s.textTransform,
+          s.margin,
+          s.padding,
+        ].join(' | ');
+      }),
+    );
 
 test('a screen is drawn the same on the board, in the screen details and in the prototype', async ({ page }) => {
   // a screen with frosted glass, gradients and shadows: the effects a shortcut would be tempted to drop
@@ -209,4 +212,61 @@ test('a screen starts from the same plain text wherever it is shown, never from 
   await page.goto('/#/ds/ListItem');
   await expect(page.locator('[data-pd-content]').first()).toBeVisible();
   expect(await inherited('[data-pd-content]')).toBe(prototype);
+});
+
+// The one exception, and its limits: far away (under a quarter of the real size) the board leaves out the blur behind
+// frosted glass, which cannot be seen at that size and is the costliest thing to draw. Nothing else, nowhere else.
+test.describe('far away, the board leaves out only the blur behind glass', () => {
+  const id = 'plant-detail';
+  const host = `[data-card][data-screen="${id}"] [data-pd-content]`;
+  // the same lines as `drawn`, without the one property the far board may change
+  const withoutBlur = (lines: string[]) =>
+    lines.map((line) =>
+      line
+        .split(' | ')
+        .map((value, i) => (i === 7 ? '' : value))
+        .join(' | '),
+    );
+
+  /** The zoom the island shows, in percent. */
+  const zoom = async (page: Page) =>
+    Number(((await page.locator('.pd-island__zoom span').textContent()) ?? '').replace('%', ''));
+  /** One zoom step with the keyboard, done once the island shows the new zoom. */
+  const step = async (page: Page, key: '-' | '+') => {
+    const before = await zoom(page);
+
+    await page.keyboard.press(key);
+    await expect.poll(() => zoom(page)).not.toBe(before);
+  };
+
+  test('from a quarter of the real size up, a screen on the board is drawn in full', async ({ page }) => {
+    await page.goto('/#/board/plants');
+    await expect(page.locator(host)).toBeVisible();
+    await expect(page.locator('.pd-world')).not.toHaveClass(/is-far/);
+    // down to the last step above a quarter (a step is a fifth): still in full
+    while ((await zoom(page)) * 0.8 >= 25) await step(page, '-');
+    expect(await zoom(page)).toBeGreaterThanOrEqual(25);
+    await expect(page.locator('.pd-world')).not.toHaveClass(/is-far/);
+    expect((await drawn(page, host)).some((line) => line.includes('blur('))).toBe(true);
+  });
+
+  test('below it only the blur is left out, and it comes back when you zoom in', async ({ page }) => {
+    await page.goto(`/#/s/${id}`);
+    await expect(page.locator('.pd-stage__frame[data-pd-content]')).toBeVisible();
+    const prototype = await drawn(page, '.pd-stage__frame[data-pd-content]');
+
+    await page.goto('/#/board/plants');
+    await expect(page.locator(host)).toBeVisible();
+    while ((await zoom(page)) >= 25) await step(page, '-');
+    await expect(page.locator('.pd-world')).toHaveClass(/is-far/);
+    const far = await drawn(page, host);
+
+    expect(far.some((line) => line.includes('blur('))).toBe(false);
+    expect(withoutBlur(far)).toEqual(withoutBlur(prototype));
+    // no other rule of Orbito reaches into a screen, far or near
+    expect((await reached(page)).found).toEqual(['.pd-world.is-far [data-pd-content] *']);
+    while ((await zoom(page)) < 28) await step(page, '+');
+    await expect(page.locator('.pd-world')).not.toHaveClass(/is-far/);
+    expect(await drawn(page, host)).toEqual(prototype);
+  });
 });

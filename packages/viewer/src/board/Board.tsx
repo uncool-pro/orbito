@@ -18,6 +18,7 @@ import { Measure } from '../app/Measure';
 import { StatusChip } from '../app/StatusChip';
 import { canvasHash, openScreen } from '../app/routes';
 import { BoardCard } from './BoardCard';
+import { isFar } from './detail';
 import { useFindingTitles } from './findings';
 import { liveCards, sameKeys } from './live';
 
@@ -122,10 +123,16 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     const el = root.current!;
     let saveTimer = 0;
     const { place, release } = placeWorld(world.current!);
+    let far = false;
     const controller: CanvasController = new CanvasController(el, {
       initial: readView(viewKey) ?? fitWidth(),
       onChange: (c) => {
         place(c);
+        // far away the screens are drawn without the blur behind glass (see detail.ts); a class, not React state
+        if (isFar(c.k, far) !== far) {
+          far = !far;
+          world.current?.classList.toggle('is-far', far);
+        }
         el.style.backgroundSize = `${24 * c.k}px ${24 * c.k}px`;
         el.style.backgroundPosition = `${c.x}px ${c.y}px`;
         setZoom(c.k);
