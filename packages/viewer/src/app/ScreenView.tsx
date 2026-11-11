@@ -40,7 +40,7 @@ const Frame = ({ screen, vp, zoom }: { screen: Screen<ComponentType>; vp: Viewpo
   const S = screen.component;
 
   return (
-    <div className="pd-stage__frame" data-comment-anchor={screen.id} style={{ zoom }}>
+    <div className="pd-stage__frame" data-pd-content data-comment-anchor={screen.id} style={{ zoom }}>
       <FrameContext.Provider value={{ mode: 'screen', viewport: vp }}>
         <ErrorBoundary name={screen.code ?? screen.id}>
           <S />

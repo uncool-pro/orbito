@@ -91,14 +91,6 @@
   overflow-x: hidden;
   scrollbar-width: none;
 }
-/* Frosted glass (`backdrop-filter`) makes every element that uses it a GPU layer of its own, and the browser arranges
-   all of them again on every frame the board moves: with a few dozen glass screens on a board, panning stutters.
-   On the board the screens are previews, so the glass is left out there (the translucent surface stays); the prototype,
-   the screen details and the catalog show it in full. Measured with scripts/perf: 40 stutters to none. */
-.pd-world .pd-card__inner * {
-  /* biome-ignore lint/complexity/noImportantStyles: screens set the glass in inline styles, only !important reaches them */
-  backdrop-filter: none !important;
-}
 .pd-card__placeholder {
   background: repeating-linear-gradient(135deg, var(--pd-surface-2) 0 10px, var(--pd-bg) 10px 20px);
 }

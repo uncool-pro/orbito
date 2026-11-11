@@ -49,7 +49,7 @@ const Live = ({ c, v }: { c: string; v: ComponentDocs<ReactNode>['variants'][num
   const { project } = useViewer();
 
   return (
-    <div style={{ width: v.width }}>
+    <div data-pd-content style={{ width: v.width }}>
       <FrameContext.Provider value={{ mode: 'catalog', viewport: project.viewports[project.config.defaultViewport]! }}>
         <ErrorBoundary name={`${c} / ${v.name}`}>{v.render()}</ErrorBoundary>
       </FrameContext.Provider>

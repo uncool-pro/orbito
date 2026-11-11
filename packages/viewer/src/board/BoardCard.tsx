@@ -23,6 +23,7 @@ export const LiveScreen = memo(
       <div className="pd-card__viewport" style={{ width: card.frame.w, height: card.frame.h }}>
         <div
           className="pd-card__inner"
+          data-pd-content
           inert
           style={{
             width: viewport.width,

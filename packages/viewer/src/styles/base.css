@@ -63,6 +63,26 @@
   /* type */
   --pd-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --pd-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  /* the plain text a project's own content starts from, wherever Orbito shows it. Fixed values of their own, not the
+     tool's font and ink above: a new look of Orbito must never restyle anyone's screens */
+  --pd-content-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --pd-content-ink: #0f1222;
+}
+/* A project's own content (a screen on the board, in the details, in the prototype; a component in the catalog) inherits
+   no text style from the panel it is shown in: it starts from the same plain text everywhere. Before, the screen details
+   handed their 13 px down to every element of a screen that sets no size of its own. e2e/untouched-screens checks it */
+[data-pd-content] {
+  color: var(--pd-content-ink);
+  font: 400 16px / normal var(--pd-content-font);
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-transform: none;
+  text-align: start;
+  text-indent: 0;
+  text-shadow: none;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
 }
 .pd-board,
 .pd-doc,
@@ -70,9 +90,11 @@
   font-family: var(--pd-font);
   color: var(--pd-ink);
 }
-/* one focus ring for everything that can be reached with the keyboard */
-.pd-shell :focus-visible,
-.pd-ds :focus-visible,
+/* one focus ring for everything of Orbito that can be reached with the keyboard. Never inside a project's own content
+   (`data-pd-content`: a screen, a component in the catalog): a design keeps its own focus style. The same guard is on
+   every rule here that names an element by its tag under a panel that also shows a screen; e2e/untouched-screens checks it */
+.pd-shell :focus-visible:not(:where([data-pd-content] *)),
+.pd-ds :focus-visible:not(:where([data-pd-content] *)),
 .pd-team :focus-visible,
 .pd-welcome :focus-visible,
 .pd-bubble :focus-visible {

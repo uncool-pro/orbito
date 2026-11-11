@@ -324,7 +324,7 @@
   padding-top: 16px;
   border-top: 1px solid var(--pd-panel-line);
 }
-.pd-insp h4 {
+.pd-insp h4:not(:where([data-pd-content] *)) {
   margin: 0;
   font-size: 11px;
   text-transform: uppercase;
@@ -334,12 +334,12 @@
   align-items: center;
   gap: 8px;
 }
-.pd-insp section {
+.pd-insp section:not(:where([data-pd-content] *)) {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
-.pd-insp p {
+.pd-insp p:not(:where([data-pd-content] *)) {
   margin: 0;
   line-height: 1.5;
 }

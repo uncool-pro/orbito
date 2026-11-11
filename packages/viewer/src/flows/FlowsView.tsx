@@ -8,7 +8,7 @@ import { useViewer } from '../app/context';
 import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
 import { centerOn, fitRect, zoomAt } from '../canvas/camera';
 import { CanvasController } from '../canvas/controller';
-import { sharpWhenStill } from '../canvas/sharp';
+import { placeWorld } from '../canvas/place';
 import { useT } from '../i18n';
 
 const KINDS: FlowEdgeKind[] = ['happy', 'alternative', 'negative', 'other'];
@@ -50,7 +50,7 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
         { w: el.clientWidth, h: el.clientHeight - 64 },
         { inset: 8, pad: 48, maxK: 1.6 },
       );
-    const place = world.current ? sharpWhenStill(world.current) : () => undefined;
+    const place = world.current ? placeWorld(world.current) : () => undefined;
     const controller = new CanvasController(el, {
       initial: fit(),
       onChange: (c) => {

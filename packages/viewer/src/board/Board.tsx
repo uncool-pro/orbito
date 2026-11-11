@@ -9,19 +9,21 @@ import { useViewer } from '../app/context';
 import { useT } from '../i18n';
 import { isTextField } from '../dom';
 import { useStatuses } from '../status';
-import { centerOn, fitRect, intersects, visibleWorld, zoomAt, zoomTo } from '../canvas/camera';
+import { centerOn, fitRect, visibleWorld, zoomAt, zoomTo } from '../canvas/camera';
 import type { Camera } from '../canvas/camera';
 import { CanvasController } from '../canvas/controller';
-import { sharpWhenStill } from '../canvas/sharp';
+import { placeWorld } from '../canvas/place';
 import type { Scroller } from '../canvas/controller';
 import { Measure } from '../app/Measure';
 import { StatusChip } from '../app/StatusChip';
 import { canvasHash, openScreen } from '../app/routes';
 import { BoardCard } from './BoardCard';
 import { useFindingTitles } from './findings';
+import { liveCards, sameKeys } from './live';
 
 const TOOLBAR_INSET = 16;
 const MOUNT_MARGIN = 400; // screen px around the view in which cards get their live screen
+const KEEP_VIEWS = 1; // …and keep it until they are this many views away
 
 const readView = (key: string): Camera | null => {
   try {
@@ -103,21 +105,23 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     [],
   );
 
-  /** Cards near the view get their live screen; once mounted they stay (no remount churn while panning back and forth). */
+  /** Cards near the view get their live screen and keep it until they are a whole view away (see `liveCards`). */
   const mountVisible = useCallback((c: Camera) => {
-    const view = visibleWorld(c, sizeOf(root.current), MOUNT_MARGIN);
-    const add = layoutRef.current.cards.filter((card) => !mountedRef.current.has(card.key) && intersects(view, card));
+    const size = sizeOf(root.current);
+    const near = visibleWorld(c, size, MOUNT_MARGIN);
+    const far = visibleWorld(c, size, MOUNT_MARGIN + KEEP_VIEWS * Math.max(size.w, size.h));
+    const live = liveCards(layoutRef.current.cards, mountedRef.current, near, far, activeRef.current);
 
-    if (!add.length) return;
-    mountedRef.current = new Set([...mountedRef.current, ...add.map((card) => card.key)]);
-    setMounted(mountedRef.current);
+    if (sameKeys(live, mountedRef.current)) return;
+    mountedRef.current = live;
+    setMounted(live);
   }, []);
 
   // the camera lives outside React: one transform write per animation frame, no re-render while moving
   useLayoutEffect(() => {
     const el = root.current!;
     let saveTimer = 0;
-    const place = sharpWhenStill(world.current!);
+    const place = placeWorld(world.current!);
     const controller: CanvasController = new CanvasController(el, {
       initial: readView(viewKey) ?? fitWidth(),
       onChange: (c) => {

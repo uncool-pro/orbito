@@ -29,18 +29,18 @@
 .pd-ds__hero .pd-lead {
   margin-bottom: 12px;
 }
-.pd-ds h1 {
+.pd-ds h1:not(:where([data-pd-content] *)) {
   font-size: 30px;
   line-height: 1.15;
   letter-spacing: -0.02em;
   margin: 0 0 10px;
 }
-.pd-ds h2 {
+.pd-ds h2:not(:where([data-pd-content] *)) {
   font-size: 18px;
   letter-spacing: -0.01em;
   margin: 48px 0 16px;
 }
-.pd-ds h3 {
+.pd-ds h3:not(:where([data-pd-content] *)) {
   font-size: 12px;
   margin: 0 0 10px;
   color: var(--pd-muted);
@@ -280,7 +280,7 @@
   background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
   background-size: 16px 16px;
 }
-.pd-hero figcaption {
+.pd-hero > figcaption {
   font-size: 12px;
   color: var(--pd-muted);
 }
@@ -296,13 +296,13 @@
   gap: 8px;
   min-width: 0;
 }
-.pd-variant figcaption {
+.pd-variant > figcaption {
   display: flex;
   flex-direction: column;
   gap: 1px;
   font-size: 13px;
 }
-.pd-variant figcaption small {
+.pd-variant > figcaption small {
   color: var(--pd-muted);
   font-size: 12px;
 }

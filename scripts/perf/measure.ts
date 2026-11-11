@@ -106,7 +106,9 @@ const phases = (page: Page): [string, () => Promise<void>][] => {
     [
       'pan far',
       async () => {
+        // out and back the same way, so the next parts happen over the cards again
         await wheel(80, 20, 40);
+        await wheel(-80, -20, 40);
         await sleep(250);
       },
     ],
@@ -235,6 +237,7 @@ const main = async () => {
       domNodes: end.Nodes,
       heapMb: Math.round((end.JSHeapUsedSize ?? 0) / 1e6),
       phases: measured,
+      liveAfterRoute: await page.locator('.pd-card__inner').count(),
       errors,
     };
 
