@@ -1,26 +1,30 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { computeLayout, flowStatusId, groupTargets, sharedTargets, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
+import { computeLayout, flowStatusId, groupTargets, statusOf, STATUSES, targetsOf } from '@uncool-pro/orbito-core';
 import type { Card, Page, Status } from '@uncool-pro/orbito-core';
 
 import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
 
 import { useViewer } from '../app/context';
 import { useT } from '../i18n';
+import { isTextField } from '../dom';
 import { useStatuses } from '../status';
-import { centerOn, fitRect, intersects, visibleWorld, zoomAt, zoomTo } from '../canvas/camera';
+import { centerOn, fitRect, visibleWorld, zoomAt, zoomTo } from '../canvas/camera';
 import type { Camera } from '../canvas/camera';
 import { CanvasController } from '../canvas/controller';
-import { sharpWhenStill } from '../canvas/sharp';
+import { placeWorld } from '../canvas/place';
 import type { Scroller } from '../canvas/controller';
 import { Measure } from '../app/Measure';
 import { StatusChip } from '../app/StatusChip';
 import { canvasHash, openScreen } from '../app/routes';
 import { BoardCard } from './BoardCard';
+import { isFar } from './detail';
 import { useFindingTitles } from './findings';
+import { liveCards, sameKeys } from './live';
 
 const TOOLBAR_INSET = 16;
 const MOUNT_MARGIN = 400; // screen px around the view in which cards get their live screen
+const KEEP_VIEWS = 1; // …and keep it until they are this many views away
 
 const readView = (key: string): Camera | null => {
   try {
@@ -31,17 +35,39 @@ const readView = (key: string): Camera | null => {
     return null;
   }
 };
+/** The size of the board on screen (the window's, before the board is in the page). */
+const sizeOf = (el: HTMLElement | null) => ({
+  w: el?.clientWidth ?? window.innerWidth,
+  h: el?.clientHeight ?? window.innerHeight,
+});
 
 export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
-  const { project, links } = useViewer();
+  const { project, links, sources, shared, screens: byId, nameOf } = useViewer();
   const t = useT();
   const statuses = useStatuses();
   const flows = useMemo(() => (flowKey ? page.flows.filter((f) => f.key === flowKey) : page.flows), [page, flowKey]);
-  const { options, selected, select, focusTick, canvas, inspectorOpen, togglePanel, devMode, commentsOn, openComments } = useShell();
+  const {
+    options,
+    selected,
+    select,
+    focusTick,
+    canvas,
+    inspectorOpen,
+    togglePanel,
+    devMode,
+    commentsOn,
+    openComments,
+  } = useShell();
   const showClosed = options.showClosed;
-  const byId = useMemo(() => new Map(project.screens.map((s) => [s.id, s])), [project]);
   const layout = useMemo(
-    () => computeLayout({ flows, screens: byId, viewports: project.viewports, links: links ?? {}, showClosedVersions: showClosed }),
+    () =>
+      computeLayout({
+        flows,
+        screens: byId,
+        viewports: project.viewports,
+        links: links ?? {},
+        showClosedVersions: showClosed,
+      }),
     [flows, byId, project.viewports, links, showClosed],
   );
   const findingTitles = useFindingTitles(flows);
@@ -61,39 +87,52 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   activeRef.current = active;
   layoutRef.current = layout;
 
-  const viewSize = () => ({ w: root.current?.clientWidth ?? window.innerWidth, h: root.current?.clientHeight ?? window.innerHeight });
   /** First view: the board as wide as the canvas, from the top (fitting a tall board whole makes every screen tiny). */
   const fitWidth = useCallback(() => {
-    const { w, h } = viewSize();
+    const { w, h } = sizeOf(root.current);
     const L = layoutRef.current;
     const k = Math.min(0.9, Math.max(0.2, (w - 48) / Math.max(1, L.w)));
 
-    return L.h * k <= h - 80 ? fitRect({ x: 0, y: 0, w: L.w, h: L.h }, { w, h }, { inset: TOOLBAR_INSET, maxK: 0.9 }) : { k, x: (w - L.w * k) / 2, y: 24 };
+    return L.h * k <= h - 80
+      ? fitRect({ x: 0, y: 0, w: L.w, h: L.h }, { w, h }, { inset: TOOLBAR_INSET, maxK: 0.9 })
+      : { k, x: (w - L.w * k) / 2, y: 24 };
   }, []);
   const fitAll = useCallback(
-    () => fitRect({ x: 0, y: 0, w: layoutRef.current.w, h: layoutRef.current.h }, viewSize(), { inset: TOOLBAR_INSET, maxK: 1 }),
+    () =>
+      fitRect({ x: 0, y: 0, w: layoutRef.current.w, h: layoutRef.current.h }, sizeOf(root.current), {
+        inset: TOOLBAR_INSET,
+        maxK: 1,
+      }),
     [],
   );
 
-  /** Cards near the view get their live screen; once mounted they stay (no remount churn while panning back and forth). */
+  /** Cards near the view get their live screen and keep it until they are a whole view away (see `liveCards`). */
   const mountVisible = useCallback((c: Camera) => {
-    const view = visibleWorld(c, viewSize(), MOUNT_MARGIN);
-    const add = layoutRef.current.cards.filter((card) => !mountedRef.current.has(card.key) && intersects(view, card));
+    const size = sizeOf(root.current);
+    const near = visibleWorld(c, size, MOUNT_MARGIN);
+    const far = visibleWorld(c, size, MOUNT_MARGIN + KEEP_VIEWS * Math.max(size.w, size.h));
+    const live = liveCards(layoutRef.current.cards, mountedRef.current, near, far, activeRef.current);
 
-    if (!add.length) return;
-    mountedRef.current = new Set([...mountedRef.current, ...add.map((card) => card.key)]);
-    setMounted(mountedRef.current);
+    if (sameKeys(live, mountedRef.current)) return;
+    mountedRef.current = live;
+    setMounted(live);
   }, []);
 
   // the camera lives outside React: one transform write per animation frame, no re-render while moving
   useLayoutEffect(() => {
     const el = root.current!;
     let saveTimer = 0;
-    const place = sharpWhenStill(world.current!);
+    const { place, release } = placeWorld(world.current!);
+    let far = false;
     const controller: CanvasController = new CanvasController(el, {
       initial: readView(viewKey) ?? fitWidth(),
       onChange: (c) => {
         place(c);
+        // far away the screens are drawn without the blur behind glass (see detail.ts); a class, not React state
+        if (isFar(c.k, far) !== far) {
+          far = !far;
+          world.current?.classList.toggle('is-far', far);
+        }
         el.style.backgroundSize = `${24 * c.k}px ${24 * c.k}px`;
         el.style.backgroundPosition = `${c.x}px ${c.y}px`;
         setZoom(c.k);
@@ -126,7 +165,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     controller.set(controller.camera);
     canvas.current = {
       zoomBy: (f) => {
-        const { w, h } = viewSize();
+        const { w, h } = sizeOf(root.current);
 
         controller.set(zoomAt(controller.camera, f, w / 2, h / 2));
       },
@@ -149,13 +188,14 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
       ro?.disconnect();
       window.clearTimeout(saveTimer);
       controller.destroy();
+      release();
       ctrl.current = null;
       canvas.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewKey, fitAll, fitWidth, mountVisible]);
+  }, [viewKey, fitAll, fitWidth, mountVisible, canvas]);
 
   // new cards (closed versions shown) may appear in view
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs again when the layout changes; mountVisible reads it from a ref
   useEffect(() => {
     if (ctrl.current) mountVisible(ctrl.current.camera);
   }, [layout, mountVisible]);
@@ -163,19 +203,16 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
   // ---- keyboard
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-
-      if (/^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName)) return;
+      if (isTextField(e.target)) return;
       const c = ctrl.current;
 
       if (!c) return;
-      const { w, h } = viewSize();
+      const { w, h } = sizeOf(root.current);
 
       if (e.key === 'Escape') {
         setActive(null);
         select(null);
-      }
-      else if (e.shiftKey && e.code === 'Digit1') c.set(fitAll());
+      } else if (e.shiftKey && e.code === 'Digit1') c.set(fitAll());
       else if (e.shiftKey && e.code === 'Digit0') c.set(zoomTo(c.camera, 1, w / 2, h / 2));
       else if (e.key === '+' || e.key === '=') c.set(zoomAt(c.camera, 1.25, w / 2, h / 2));
       else if (e.key === '-') c.set(zoomAt(c.camera, 0.8, w / 2, h / 2));
@@ -190,15 +227,17 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
 
   // the active (scrollable) card is the clicked one while its screen stays selected; another selection ends it
   useEffect(() => {
-    setActive((a) => (a && selected && layoutRef.current.cards.find((c) => c.key === a)?.screenId === selected ? a : null));
+    setActive((a) =>
+      a && selected && layoutRef.current.cards.find((c) => c.key === a)?.screenId === selected ? a : null,
+    );
   }, [selected]);
 
   // a screen picked in the left panel or the search: bring its first card into view
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only a focus request moves the camera, a plain selection does not
   useEffect(() => {
     const c = selected ? layoutRef.current.cards.find((x) => x.screenId === selected) : undefined;
 
-    if (c && ctrl.current && focusTick) ctrl.current.set(centerOn(ctrl.current.camera, c, viewSize(), 0.7));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (c && ctrl.current && focusTick) ctrl.current.set(centerOn(ctrl.current.camera, c, sizeOf(root.current), 0.7));
   }, [focusTick]);
 
   // ---- clicks: a click on a screen selects it and shows its details on the right (in dev mode, its code), the same in
@@ -260,20 +299,18 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     const card = hover.card ? layout.cards.find((c) => c.key === hover.card) : undefined;
 
     if (!card || !links) return null;
-    const set = new Set([card.screenId, ...targetsOf(links, card.screenId)]);
 
-    Object.keys(links).forEach((id) => targetsOf(links, id).includes(card.screenId) && set.add(id));
-
-    return set;
-  }, [hover, layout, links]);
+    return new Set([card.screenId, ...targetsOf(links, card.screenId), ...(sources.get(card.screenId) ?? [])]);
+  }, [hover, layout, links, sources]);
   // statuses belong to features (flows); a card takes the status of the flow its lane shows
   const flowOfLane = useMemo(() => new Map(layout.lanes.map((l) => [l.key, l.flowKey])), [layout.lanes]);
-  const flowStatus = (flowKey: string) => statusOf(statuses, flowStatusId(page.key, flowKey));
-  // people read names, not codes: the functional name of a screen, and the feature a way out leads to
-  const nameOf = (id: string) => byId.get(id)?.title.split(' / ').pop() ?? id;
-  // the ways out under a card, sorted as in the screen details: a screen of the same feature by its name, another feature
+  const flowStatus = useCallback(
+    (flowKey: string) => statusOf(statuses, flowStatusId(page.key, flowKey)),
+    [statuses, page.key],
+  );
+  // people read names, not codes: the functional name of a screen, and the feature a way out leads to.
+  // The ways out under a card, sorted as in the screen details: a screen of the same feature by its name, another feature
   // by the feature it opens ("arrow to a section"), and the navigation most screens repeat (a tab bar, a menu) as one line
-  const shared = useMemo(() => (links ? sharedTargets(links) : new Set<string>()), [links]);
   const exits = useMemo(() => {
     const onOtherPage = (id: string) => {
       const hit = project.pages.flatMap((p) => p.flows.map((f) => ({ p, f }))).find(({ f }) => f.screens.includes(id));
@@ -295,8 +332,7 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
         return [s.cardKey, [...new Set(labels)]];
       }),
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layout, page, project, shared, flowOfLane, t]);
+  }, [layout, page, project, shared, flowOfLane, t, nameOf]);
   const cardState = (c: Card): 'idle' | 'hl' | 'dim' => {
     if (statusFilter && flowStatus(flowOfLane.get(c.laneKey) ?? c.laneKey).status !== statusFilter) return 'dim';
     if (related) return related.has(c.screenId) ? 'hl' : 'dim';
@@ -347,9 +383,11 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
     );
 
     return () => setInspectorExtra(null);
-  }, [counts, screensCount, links, t, page, statuses]);
+  }, [counts, screensCount, links, t, page, flowStatus]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: the board is a canvas the pointer works on; its keys are listened to on the window
+    // biome-ignore lint/a11y/useKeyWithClickEvents: the left panel and the search select screens from the keyboard
     <div
       ref={root}
       className="pd-board"
@@ -367,7 +405,11 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
 
       <div ref={world} className="pd-world" style={{ width: layout.w, height: layout.h }}>
         {layout.lanes.map((l) => (
-          <div key={l.key} className={`pd-lane${l.version ? ' pd-lane--version' : ''}`} style={{ top: l.y, width: l.w, height: l.h }}>
+          <div
+            key={l.key}
+            className={`pd-lane${l.version ? ' pd-lane--version' : ''}`}
+            style={{ top: l.y, width: l.w, height: l.h }}
+          >
             <div className="pd-lane__label">
               {l.version ? (
                 <>
@@ -405,10 +447,19 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
             />
           );
         })}
-        <svg className="pd-svg" width={layout.w} height={layout.h}>
+        <svg aria-hidden="true" className="pd-svg" width={layout.w} height={layout.h}>
           <defs>
             {['', '-hl', '-tie'].map((v) => (
-              <marker key={v} id={`pd-arrow${v}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <marker
+                key={v}
+                id={`pd-arrow${v}`}
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
                 <path d="M0 0 L10 5 L0 10 z" className={`pd-arrow${v}`} />
               </marker>
             ))}
@@ -422,8 +473,17 @@ export const Board = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
 
             return (
               <g key={e.id} className={`pd-edge pd-edge--${e.kind}${on ? ' is-on' : ''}${faded ? ' is-faded' : ''}`}>
-                <path d={e.d} className="pd-edge__hit" onPointerEnter={() => setHover({ edge: e.id })} onPointerLeave={() => setHover({})} />
-                <path d={e.d} className="pd-edge__line" markerEnd={`url(#pd-arrow${on ? '-hl' : e.kind === 'outer' ? '-tie' : ''})`} />
+                <path
+                  d={e.d}
+                  className="pd-edge__hit"
+                  onPointerEnter={() => setHover({ edge: e.id })}
+                  onPointerLeave={() => setHover({})}
+                />
+                <path
+                  d={e.d}
+                  className="pd-edge__line"
+                  markerEnd={`url(#pd-arrow${on ? '-hl' : e.kind === 'outer' ? '-tie' : ''})`}
+                />
               </g>
             );
           })}

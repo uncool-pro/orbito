@@ -4,8 +4,12 @@ import { SideNav } from './SideNav';
 
 export default defineDocs({
   component: 'SideNav',
-  description: 'Main navigation of a web app: product name, sections with the current one highlighted, account items at the bottom.',
-  guidelines: { do: ['5–8 sections; group the rest under one section.', 'Counts only where they drive action (unread, to do).'], dont: ["Don't nest more than one level."] },
+  description:
+    'Main navigation of a web app: product name, sections with the current one highlighted, account items at the bottom.',
+  guidelines: {
+    do: ['5–8 sections; group the rest under one section.', 'Counts only where they drive action (unread, to do).'],
+    dont: ["Don't nest more than one level."],
+  },
   variants: [
     {
       name: 'Default',

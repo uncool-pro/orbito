@@ -1,47 +1,283 @@
 /* Comments, as in Figma: a bubble next to the screen (board and prototype), placed by Comments.tsx every frame. */
-.pd-bubble { position: fixed; left: 0; top: 0; z-index: 60; width: 320px; max-height: min(560px, calc(100vh - 72px)); display: flex; flex-direction: column; border-radius: var(--pd-r-lg); overflow: hidden; background: var(--pd-panel); border: 1px solid var(--pd-panel-line); box-shadow: var(--pd-shadow-float); font: 13px/1.45 var(--pd-font); color: var(--pd-ink); }
-.pd-bubble__head { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 14px; border-bottom: 1px solid var(--pd-panel-line); background: var(--pd-surface-2); color: var(--pd-accent); }
-.pd-bubble__head b { color: var(--pd-ink); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pd-bubble__head small { flex: none; font-size: 12px; color: var(--pd-muted); }
-.pd-bubble__close { margin-left: auto; flex: none; display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: var(--pd-r-sm); background: transparent; color: var(--pd-muted); cursor: pointer; }
-.pd-bubble__close:hover { background: var(--pd-hover); color: var(--pd-ink); }
-.pd-bubble__list { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 0; }
-.pd-bubble__empty { margin: 0; padding: 10px 14px; color: var(--pd-muted); }
-.pd-bubble__more { display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 14px; border: 0; background: transparent; font: 600 12px var(--pd-font); color: var(--pd-muted); cursor: pointer; text-align: left; }
-.pd-bubble__more:hover { color: var(--pd-ink); }
+.pd-bubble {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
+  width: 320px;
+  max-height: min(560px, calc(100vh - 72px));
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--pd-r-lg);
+  overflow: hidden;
+  background: var(--pd-panel);
+  border: 1px solid var(--pd-panel-line);
+  box-shadow: var(--pd-shadow-float);
+  font: 13px / 1.45 var(--pd-font);
+  color: var(--pd-ink);
+}
+.pd-bubble__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 14px;
+  border-bottom: 1px solid var(--pd-panel-line);
+  background: var(--pd-surface-2);
+  color: var(--pd-accent);
+}
+.pd-bubble__head b {
+  color: var(--pd-ink);
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pd-bubble__head small {
+  flex: none;
+  font-size: 12px;
+  color: var(--pd-muted);
+}
+.pd-bubble__close {
+  margin-left: auto;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--pd-r-sm);
+  background: transparent;
+  color: var(--pd-muted);
+  cursor: pointer;
+}
+.pd-bubble__close:hover {
+  background: var(--pd-hover);
+  color: var(--pd-ink);
+}
+.pd-bubble__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 0;
+}
+.pd-bubble__empty {
+  margin: 0;
+  padding: 10px 14px;
+  color: var(--pd-muted);
+}
+.pd-bubble__more {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 14px;
+  border: 0;
+  background: transparent;
+  font: 600 12px var(--pd-font);
+  color: var(--pd-muted);
+  cursor: pointer;
+  text-align: left;
+}
+.pd-bubble__more:hover {
+  color: var(--pd-ink);
+}
 
 /* one comment: who and when on one line, the text under it, its status as a small pill */
-.pd-comment { position: relative; padding: 12px 14px; }
-.pd-comment + .pd-comment::before { content: ''; position: absolute; top: 0; left: 14px; right: 14px; border-top: 1px solid var(--pd-panel-line); }
-.pd-comment__top { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.pd-avatar { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--pd-accent); color: #fff; font: 600 11px var(--pd-font); }
-.pd-comment__author { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
-.pd-comment__when { flex: none; font-size: 12px; color: var(--pd-muted); white-space: nowrap; }
-.pd-comment__remove { margin-left: auto; flex: none; display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: var(--pd-r-xs); background: transparent; color: var(--pd-muted); cursor: pointer; opacity: 0; }
-.pd-comment:hover .pd-comment__remove, .pd-comment__remove:focus-visible { opacity: 1; }
-.pd-comment__remove:hover { background: var(--pd-danger-soft); color: var(--pd-danger); }
-.pd-comment__text { margin: 4px 0 0 32px; white-space: pre-wrap; overflow-wrap: anywhere; }
-.pd-comment__note { margin: 4px 0 0 32px; font-size: 12px; color: var(--pd-muted); font-style: italic; }
-.pd-comment__status { display: inline-block; margin: 6px 0 0 32px; font: 600 12px var(--pd-font); padding: 2px 9px; border: 0; border-radius: 999px; cursor: pointer; appearance: none; text-align: center; }
-span.pd-comment__status { cursor: default; }
-.pd-comment__status.is-open { background: var(--pd-warn-soft); color: var(--pd-warn); }
-.pd-comment__status.is-doing { background: var(--pd-info-soft); color: var(--pd-info); }
-.pd-comment__status.is-done { background: var(--pd-ok-soft); color: var(--pd-ok); }
-.pd-comment--done .pd-comment__text { color: var(--pd-muted); }
+.pd-comment {
+  position: relative;
+  padding: 12px 14px;
+}
+.pd-comment + .pd-comment::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 14px;
+  right: 14px;
+  border-top: 1px solid var(--pd-panel-line);
+}
+.pd-comment__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.pd-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--pd-accent);
+  color: #fff;
+  font: 600 11px var(--pd-font);
+}
+.pd-comment__author {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+.pd-comment__when {
+  flex: none;
+  font-size: 12px;
+  color: var(--pd-muted);
+  white-space: nowrap;
+}
+.pd-comment__remove {
+  margin-left: auto;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--pd-r-xs);
+  background: transparent;
+  color: var(--pd-muted);
+  cursor: pointer;
+  opacity: 0;
+}
+.pd-comment:hover .pd-comment__remove,
+.pd-comment__remove:focus-visible {
+  opacity: 1;
+}
+.pd-comment__remove:hover {
+  background: var(--pd-danger-soft);
+  color: var(--pd-danger);
+}
+.pd-comment__text {
+  margin: 4px 0 0 32px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.pd-comment__note {
+  margin: 4px 0 0 32px;
+  font-size: 12px;
+  color: var(--pd-muted);
+  font-style: italic;
+}
+.pd-comment__status {
+  display: inline-block;
+  margin: 6px 0 0 32px;
+  font: 600 12px var(--pd-font);
+  padding: 2px 9px;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  appearance: none;
+  text-align: center;
+}
+span.pd-comment__status {
+  cursor: default;
+}
+.pd-comment__status.is-open {
+  background: var(--pd-warn-soft);
+  color: var(--pd-warn);
+}
+.pd-comment__status.is-doing {
+  background: var(--pd-info-soft);
+  color: var(--pd-info);
+}
+.pd-comment__status.is-done {
+  background: var(--pd-ok-soft);
+  color: var(--pd-ok);
+}
+.pd-comment--done .pd-comment__text {
+  color: var(--pd-muted);
+}
 
 /* writing: the field with a send button inside it, and who signs */
-.pd-bubble__form { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px 12px; border-top: 1px solid var(--pd-panel-line); }
-.pd-bubble__write { position: relative; }
-.pd-bubble__write textarea { display: block; width: 100%; box-sizing: border-box; resize: none; font: inherit; padding: 8px 42px 8px 12px; border: 1px solid var(--pd-line); border-radius: var(--pd-r-md); background: var(--pd-surface); color: var(--pd-ink); }
-.pd-bubble__write textarea:focus { outline: 3px solid var(--pd-accent-ring); outline-offset: 0; border-color: var(--pd-accent); }
-.pd-bubble__send { position: absolute; right: 6px; bottom: 6px; display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 50%; background: var(--pd-accent); color: #fff; cursor: pointer; }
-.pd-bubble__send:hover:not(:disabled) { background: var(--pd-accent-strong); }
-.pd-bubble__send:disabled { background: var(--pd-surface-2); color: var(--pd-faint); cursor: default; }
-.pd-bubble__as { margin: 0; font-size: 12px; color: var(--pd-muted); }
-.pd-bubble__as button { border: 0; padding: 0; background: transparent; font: inherit; color: var(--pd-accent); cursor: pointer; }
-.pd-bubble__as button:hover { text-decoration: underline; }
+.pd-bubble__form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--pd-panel-line);
+}
+.pd-bubble__write {
+  position: relative;
+}
+.pd-bubble__write textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  resize: none;
+  font: inherit;
+  padding: 8px 42px 8px 12px;
+  border: 1px solid var(--pd-line);
+  border-radius: var(--pd-r-md);
+  background: var(--pd-surface);
+  color: var(--pd-ink);
+}
+.pd-bubble__write textarea:focus {
+  outline: 3px solid var(--pd-accent-ring);
+  outline-offset: 0;
+  border-color: var(--pd-accent);
+}
+.pd-bubble__send {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--pd-accent);
+  color: #fff;
+  cursor: pointer;
+}
+.pd-bubble__send:hover:not(:disabled) {
+  background: var(--pd-accent-strong);
+}
+.pd-bubble__send:disabled {
+  background: var(--pd-surface-2);
+  color: var(--pd-faint);
+  cursor: default;
+}
+.pd-bubble__as {
+  margin: 0;
+  font-size: 12px;
+  color: var(--pd-muted);
+}
+.pd-bubble__as button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--pd-accent);
+  cursor: pointer;
+}
+.pd-bubble__as button:hover {
+  text-decoration: underline;
+}
 
 /* in the screen details: one line that opens the bubble */
-.pd-commentsline { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 12px; border: 1px solid var(--pd-panel-line); border-radius: var(--pd-r-sm); background: var(--pd-surface); font: inherit; color: var(--pd-ink); cursor: pointer; text-align: left; }
-.pd-commentsline:hover, .pd-commentsline[aria-expanded='true'] { border-color: var(--pd-accent); background: var(--pd-accent-soft); }
-.pd-commentsline .pd-count { margin-left: auto; background: var(--pd-accent-soft); color: var(--pd-accent); }
+.pd-commentsline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--pd-panel-line);
+  border-radius: var(--pd-r-sm);
+  background: var(--pd-surface);
+  font: inherit;
+  color: var(--pd-ink);
+  cursor: pointer;
+  text-align: left;
+}
+.pd-commentsline:hover,
+.pd-commentsline[aria-expanded="true"] {
+  border-color: var(--pd-accent);
+  background: var(--pd-accent-soft);
+}
+.pd-commentsline .pd-count {
+  margin-left: auto;
+  background: var(--pd-accent-soft);
+  color: var(--pd-accent);
+}

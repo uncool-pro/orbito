@@ -13,7 +13,7 @@ Orbito gets better from what happens in real projects. This skill keeps short, a
 Write one when it is worth it, not for every small correction:
 - the person was clearly unhappy with a result ("that's not it", "no, I wanted…", repeated corrections of the same thing);
 - you did something that went against what they asked or meant;
-- a tool, command or check failed or gave a wrong answer (`npm run check:ds`, the board, the flows view, `npm create orbito`);
+- a tool, command or check failed or gave a wrong answer (`npm run check:ds`, the board, the flows view, creating the project with `packages/create`);
 - a skill's guidance was wrong, missing or confusing for this situation;
 - something the person needed is missing in Orbito;
 - something worked especially well (also useful to know).

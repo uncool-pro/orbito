@@ -48,7 +48,11 @@ export const canComment = () => editable;
 export const readAuthor = () => recall(AUTHOR_KEY) ?? '';
 
 const send = async (body: Record<string, string>) => {
-  const r = await fetch('/__orbito/comments', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const r = await fetch('/__orbito/comments', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   const data = (await r.json()) as { error?: string; screen: string; comments: ScreenComment[] };
 
   if (!r.ok) throw new Error(data.error ?? `HTTP ${r.status}`);
@@ -65,6 +69,7 @@ export const addComment = (screen: string, text: string, author: string) => {
   return send({ action: 'add', screen, text, author });
 };
 
-export const setCommentStatus = (screen: string, id: string, status: CommentStatus) => send({ action: 'status', screen, id, status });
+export const setCommentStatus = (screen: string, id: string, status: CommentStatus) =>
+  send({ action: 'status', screen, id, status });
 
 export const removeComment = (screen: string, id: string) => send({ action: 'remove', screen, id });

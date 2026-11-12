@@ -1,7 +1,7 @@
 {
   "name": "orbito",
   "private": true,
-  "version": "0.9.64",
+  "version": "0.9.69",
   "description": "Mockups as code, reviewed as flows on a board. Built for product designers working with an AI agent in Claude Code.",
   "type": "module",
   "workspaces": [
@@ -15,9 +15,12 @@
     "build": "npm run build -w demo",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "check:ds": "npm run check:ds -w demo"
+    "check:ds": "npm run check:ds -w demo",
+    "lint": "biome check .",
+    "format": "biome format --write ."
   },
   "devDependencies": {
+    "@biomejs/biome": "2.6.3",
     "@playwright/test": "^1.64.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.3.0",

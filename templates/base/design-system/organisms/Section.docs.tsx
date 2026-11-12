@@ -7,10 +7,18 @@ import { Section } from './Section';
 
 export default defineDocs({
   component: 'Section',
-  description: 'One full-width band of a web page or landing page, with its content in a centred column. A landing is a sequence of sections; each answers one question of the visitor and has an `id` the navigation and the buttons can link to.',
+  description:
+    'One full-width band of a web page or landing page, with its content in a centred column. A landing is a sequence of sections; each answers one question of the visitor and has an `id` the navigation and the buttons can link to.',
   guidelines: {
-    do: ['Give every section an `id` named after its content (`pricing`, `faq`) so links can reach it.', 'Alternate tones to separate sections instead of drawing lines.', 'Keep one main action per section, named after what happens ("See pricing").'],
-    dont: ["Don't put two sections with the same layout one after another: vary the composition.", "Don't leave out the title except in the hero, which carries the page's h1."],
+    do: [
+      'Give every section an `id` named after its content (`pricing`, `faq`) so links can reach it.',
+      'Alternate tones to separate sections instead of drawing lines.',
+      'Keep one main action per section, named after what happens ("See pricing").',
+    ],
+    dont: [
+      "Don't put two sections with the same layout one after another: vary the composition.",
+      "Don't leave out the title except in the hero, which carries the page's h1.",
+    ],
   },
   variants: [
     {

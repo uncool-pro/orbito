@@ -22,7 +22,13 @@ export const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowK
 
   return (
     <header className="pd-top" data-pd-ui>
-      <button type="button" className="pd-iconbtn" onClick={() => togglePanel('drawer')} aria-label={t.toggleDrawer} title={t.toggleDrawer}>
+      <button
+        type="button"
+        className="pd-iconbtn"
+        onClick={() => togglePanel('drawer')}
+        aria-label={t.toggleDrawer}
+        title={t.toggleDrawer}
+      >
         <Icon name="panel-left" size={18} />
       </button>
       {/* the tool's logo, always the whole wordmark */}
@@ -71,13 +77,26 @@ export const TopBar = ({ mode, page, flowKey }: { mode: Mode; page?: Page; flowK
       </a>
       {!isPage(mode) && (
         // Dev mode is on or off: a switch, its state readable from its position
-        <button type="button" role="switch" className={`pd-devtoggle${devMode ? ' is-on' : ''}`} aria-checked={devMode} onClick={toggleDev} title={t.devModeTip}>
+        <button
+          type="button"
+          role="switch"
+          className={`pd-devtoggle${devMode ? ' is-on' : ''}`}
+          aria-checked={devMode}
+          onClick={toggleDev}
+          title={t.devModeTip}
+        >
           {t.devMode}
           <span className="pd-devtoggle__track" aria-hidden="true" />
         </button>
       )}
       {!isPage(mode) && (
-        <button type="button" className="pd-iconbtn" onClick={() => togglePanel('inspector')} aria-label={t.toggleInspector} title={t.toggleInspector}>
+        <button
+          type="button"
+          className="pd-iconbtn"
+          onClick={() => togglePanel('inspector')}
+          aria-label={t.toggleInspector}
+          title={t.toggleInspector}
+        >
           <Icon name="panel-right" size={18} />
         </button>
       )}
@@ -119,7 +138,9 @@ const Search = ({ mode }: { mode: Mode }) => {
 
     if (!k) return [];
 
-    return project.screens.filter((s) => s.id.includes(k) || (s.code ?? '').toLowerCase().includes(k) || s.title.toLowerCase().includes(k)).slice(0, 8);
+    return project.screens
+      .filter((s) => s.id.includes(k) || (s.code ?? '').toLowerCase().includes(k) || s.title.toLowerCase().includes(k))
+      .slice(0, 8);
   }, [q, project]);
 
   useEffect(() => {

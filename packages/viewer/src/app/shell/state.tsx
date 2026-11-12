@@ -52,7 +52,12 @@ const narrow = () => typeof window !== 'undefined' && window.innerWidth < 900;
 export const ShellProvider = ({ children }: { children: ReactNode }) => {
   const [selected, setSelected] = useState<string | null>(null);
   const [focusTick, setFocusTick] = useState(0);
-  const [options, setOpts] = useState<ViewOptions>(() => ({ statusFilter: '', showClosed: false, showOther: false, wheelZooms: recall('pd.wheelZooms') === '1' }));
+  const [options, setOpts] = useState<ViewOptions>(() => ({
+    statusFilter: '',
+    showClosed: false,
+    showOther: false,
+    wheelZooms: recall('pd.wheelZooms') === '1',
+  }));
   const [drawerOpen, setDrawer] = useState(() => !narrow());
   const [inspectorOpen, setInspector] = useState(() => !narrow());
   const [devMode, setDev] = useState(() => recall('pd.devMode') === '1');
@@ -86,11 +91,44 @@ export const ShellProvider = ({ children }: { children: ReactNode }) => {
     setWidth(w);
     remember('pd.codeWidth', String(w));
   }, []);
-  const togglePanel = useCallback((which: 'drawer' | 'inspector') => (which === 'drawer' ? setDrawer((v) => !v) : setInspector((v) => !v)), []);
+  const togglePanel = useCallback(
+    (which: 'drawer' | 'inspector') => (which === 'drawer' ? setDrawer((v) => !v) : setInspector((v) => !v)),
+    [],
+  );
 
   const value = useMemo(
-    () => ({ selected, select, focusTick, options, setOptions, canvas, drawerOpen, inspectorOpen, togglePanel, devMode, toggleDev, codeWidth, setCodeWidth, commentsOn, openComments }),
-    [selected, select, focusTick, options, setOptions, drawerOpen, inspectorOpen, togglePanel, devMode, toggleDev, codeWidth, setCodeWidth, commentsOn],
+    () => ({
+      selected,
+      select,
+      focusTick,
+      options,
+      setOptions,
+      canvas,
+      drawerOpen,
+      inspectorOpen,
+      togglePanel,
+      devMode,
+      toggleDev,
+      codeWidth,
+      setCodeWidth,
+      commentsOn,
+      openComments,
+    }),
+    [
+      selected,
+      select,
+      focusTick,
+      options,
+      setOptions,
+      drawerOpen,
+      inspectorOpen,
+      togglePanel,
+      devMode,
+      toggleDev,
+      codeWidth,
+      setCodeWidth,
+      commentsOn,
+    ],
   );
 
   return <ShellContext.Provider value={value}>{children}</ShellContext.Provider>;

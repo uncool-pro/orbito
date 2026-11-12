@@ -1,8 +1,26 @@
 import { describe, expect, it } from 'vitest';
 
-import { centerOn, fitRect, panBy, screenToWorld, visibleWorld, wheelIntent, wheelPixels, zoomAt, ZOOM } from '../src/canvas/camera';
+import {
+  centerOn,
+  fitRect,
+  panBy,
+  screenToWorld,
+  visibleWorld,
+  wheelIntent,
+  wheelPixels,
+  zoomAt,
+  ZOOM,
+} from '../src/canvas/camera';
 
-const wheel = (p: Partial<Parameters<typeof wheelIntent>[0]>) => ({ deltaX: 0, deltaY: 0, deltaMode: 0, ctrlKey: false, metaKey: false, shiftKey: false, ...p });
+const wheel = (p: Partial<Parameters<typeof wheelIntent>[0]>) => ({
+  deltaX: 0,
+  deltaY: 0,
+  deltaMode: 0,
+  ctrlKey: false,
+  metaKey: false,
+  shiftKey: false,
+  ...p,
+});
 
 describe('zoomAt', () => {
   it('keeps the world point under the cursor fixed', () => {

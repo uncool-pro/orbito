@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import type { ComponentType } from 'react';
 
+import { screenName } from '@uncool-pro/orbito-core';
 import type { Card, Screen, Viewport } from '@uncool-pro/orbito-core';
 import { FrameContext } from '@uncool-pro/orbito-runtime';
 
@@ -14,26 +15,33 @@ import { useT } from '../i18n';
  * The live screen inside a card. It is `inert`: the board never lets a screen react to the pointer (no hover states,
  * no focus, no navigation), so a click on a card is always a click on the board. Memoised: panning never re-renders it.
  */
-export const LiveScreen = memo(({ screen, viewport, card }: { screen: Screen<ComponentType>; viewport: Viewport; card: Pick<Card, 'frame'> }) => {
-  const S = screen.component;
+export const LiveScreen = memo(
+  ({ screen, viewport, card }: { screen: Screen<ComponentType>; viewport: Viewport; card: Pick<Card, 'frame'> }) => {
+    const S = screen.component;
 
-  return (
-    <div className="pd-card__viewport" style={{ width: card.frame.w, height: card.frame.h }}>
-      <div
-        className="pd-card__inner"
-        inert
-        
-        style={{ width: viewport.width, height: viewport.height, transform: `scale(${card.frame.scale})`, overflow: 'hidden' }}
-      >
-        <FrameContext.Provider value={{ mode: 'board', viewport }}>
-          <ErrorBoundary name={screen.code ?? screen.id}>
-            <S />
-          </ErrorBoundary>
-        </FrameContext.Provider>
+    return (
+      <div className="pd-card__viewport" style={{ width: card.frame.w, height: card.frame.h }}>
+        <div
+          className="pd-card__inner"
+          data-pd-content
+          inert
+          style={{
+            width: viewport.width,
+            height: viewport.height,
+            transform: `scale(${card.frame.scale})`,
+            overflow: 'hidden',
+          }}
+        >
+          <FrameContext.Provider value={{ mode: 'board', viewport }}>
+            <ErrorBoundary name={screen.code ?? screen.id}>
+              <S />
+            </ErrorBoundary>
+          </FrameContext.Provider>
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  },
+);
 
 type Props = {
   card: Card;
@@ -71,7 +79,7 @@ export const BoardCard = memo(({ card, screen, viewport, live, state, active, fi
             ))}
           </div>
         )}
-        <span className="pd-card__name">{screen.title.split(' / ').pop()}</span>
+        <span className="pd-card__name">{screenName(screen)}</span>
         {/* the comments on this screen, in a bubble next to it; the number says how many still wait to be made */}
         {(canComment() || comments.length > 0) && (
           <button
@@ -88,12 +96,26 @@ export const BoardCard = memo(({ card, screen, viewport, live, state, active, fi
           </button>
         )}
         {/* the prototype starts here, as Play in a design tool; a click elsewhere on the card only selects it */}
-        <a className="pd-card__play" href={screenHash(screen.id)} data-pd-ui title={t.playPrototype} aria-label={t.playPrototype}>
+        <a
+          className="pd-card__play"
+          href={screenHash(screen.id)}
+          data-pd-ui
+          title={t.playPrototype}
+          aria-label={t.playPrototype}
+        >
           <Icon name="play" size={13} fill />
         </a>
       </div>
-      <div className="pd-card__frame" data-comment-anchor={card.screenId} style={{ left: card.frame.x - card.x, top: card.frame.y - card.y }}>
-        {live ? <LiveScreen screen={screen} viewport={viewport} card={card} /> : <div className="pd-card__placeholder" style={{ width: card.frame.w, height: card.frame.h }} />}
+      <div
+        className="pd-card__frame"
+        data-comment-anchor={card.screenId}
+        style={{ left: card.frame.x - card.x, top: card.frame.y - card.y }}
+      >
+        {live ? (
+          <LiveScreen screen={screen} viewport={viewport} card={card} />
+        ) : (
+          <div className="pd-card__placeholder" style={{ width: card.frame.w, height: card.frame.h }} />
+        )}
       </div>
     </div>
   );

@@ -12,7 +12,8 @@ const boxOf = (el: Element, origin: DOMRect): Box => {
   return { x: r.left - origin.left, y: r.top - origin.top, w: r.width, h: r.height };
 };
 
-const contains = (a: Box, b: Box) => a.x <= b.x + 0.5 && a.y <= b.y + 0.5 && a.x + a.w >= b.x + b.w - 0.5 && a.y + a.h >= b.y + b.h - 0.5;
+const contains = (a: Box, b: Box) =>
+  a.x <= b.x + 0.5 && a.y <= b.y + 0.5 && a.x + a.w >= b.x + b.w - 0.5 && a.y + a.h >= b.y + b.h - 0.5;
 
 /**
  * The distances a developer reads in Figma, between two boxes on screen: from an inner box to each edge of the outer one,
@@ -79,7 +80,7 @@ const deepestAt = (root: Element, x: number, y: number): Element | null => {
 const scaleOf = (el: Element) => {
   const screen = el.closest<HTMLElement>('.pd-card__inner, .pd-stage__frame');
 
-  return screen && screen.offsetWidth ? screen.getBoundingClientRect().width / screen.offsetWidth : 1;
+  return screen?.offsetWidth ? screen.getBoundingClientRect().width / screen.offsetWidth : 1;
 };
 
 /**
@@ -137,7 +138,8 @@ export const Measure = ({ host, on }: { host: RefObject<HTMLElement | null>; on:
     const root = on === 'prototype' ? host.current?.querySelector<HTMLElement>('.pd-stage__frame') : null;
 
     if (!root) return;
-    const inside = (e: Event) => (e.target instanceof Element && root.contains(e.target) && e.target !== root ? e.target : null);
+    const inside = (e: Event) =>
+      e.target instanceof Element && root.contains(e.target) && e.target !== root ? e.target : null;
     const move = (e: PointerEvent) => setHovered(inside(e));
     const leave = () => setHovered(null);
     const click = (e: MouseEvent) => {
@@ -173,7 +175,12 @@ export const Measure = ({ host, on }: { host: RefObject<HTMLElement | null>; on:
 
   if (!origin || !hovered) return <svg ref={layer} className="pd-measure" aria-hidden="true" />;
   const h = boxOf(hovered, origin);
-  const ref = picked && picked !== hovered ? boxOf(picked, origin) : hovered.parentElement ? boxOf(hovered.parentElement, origin) : null;
+  const ref =
+    picked && picked !== hovered
+      ? boxOf(picked, origin)
+      : hovered.parentElement
+        ? boxOf(hovered.parentElement, origin)
+        : null;
   const lines = ref ? distances(ref, h) : [];
   // on-screen pixels back to the design's own
   const zoom = scaleOf(hovered);
@@ -187,7 +194,9 @@ export const Measure = ({ host, on }: { host: RefObject<HTMLElement | null>; on:
 
   return (
     <svg ref={layer} className="pd-measure" aria-hidden="true">
-      {picked && picked !== hovered && ref && <rect className="pd-measure__picked" x={ref.x} y={ref.y} width={ref.w} height={ref.h} />}
+      {picked && picked !== hovered && ref && (
+        <rect className="pd-measure__picked" x={ref.x} y={ref.y} width={ref.w} height={ref.h} />
+      )}
       <rect className="pd-measure__box" x={h.x} y={h.y} width={h.w} height={h.h} />
       {lines.map((l, i) => {
         const text = label(l.value);
@@ -196,6 +205,7 @@ export const Measure = ({ host, on }: { host: RefObject<HTMLElement | null>; on:
         const w = text.length * 6.4 + 10;
 
         return (
+          // biome-ignore lint/suspicious/noArrayIndexKey: the lines are measured again on every move, never reordered
           <g key={i}>
             <line className="pd-measure__line" x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} />
             <rect className="pd-measure__tag" x={mx - w / 2} y={my - 9} width={w} height={18} rx={4} />

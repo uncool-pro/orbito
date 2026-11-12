@@ -1,4 +1,5 @@
 # Builds the Orbito image for a release tag (v0.9.6) and publishes it, for Windows/Intel and for Apple Silicon.
+# Only a release tag publishes: a run started by hand from a branch would otherwise replace `latest` with work in progress.
 name: Image
 on:
   push:
@@ -11,9 +12,24 @@ permissions:
 
 jobs:
   image:
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # the tag names the version people pull; it must be the version the code says it is
+      - id: version
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$TAG" ]; then
+            echo "::error::tag $TAG does not match package.json version $version"
+            exit 1
+          fi
+          echo "value=$version" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/login-action@81c6f93d4bc991e510b342a00b419b3bb4efc5c6 # v4.7.0
@@ -21,13 +37,14 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - id: version
-        run: echo "value=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      # with a record of where the image comes from (provenance) and of what is inside it (SBOM), both attached to it
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
+          provenance: mode=max
+          sbom: true
           tags: |
             ghcr.io/uncool-pro/orbito:${{ steps.version.outputs.value }}
             ghcr.io/uncool-pro/orbito:latest

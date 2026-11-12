@@ -22,12 +22,27 @@ export const Card = ({ title, subtitle, media, aside, bare, children, ...link }:
 
   return (
     <section
-      style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', border: '1px solid var(--color-line)', cursor: link.to ? 'pointer' : undefined }}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        borderRadius: 'var(--radius-md)',
+        background: 'var(--color-surface)',
+        border: '1px solid var(--color-line)',
+        cursor: link.to ? 'pointer' : undefined,
+      }}
       {...linkProps}
     >
       {media}
       {(title || aside) && (
-        <header style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-2)', padding: 'var(--space-4) var(--space-4) 0' }}>
+        <header
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 'var(--space-2)',
+            padding: 'var(--space-4) var(--space-4) 0',
+          }}
+        >
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-half)' }}>
             {title && <Text variant="heading">{title}</Text>}
             {subtitle && (
@@ -39,7 +54,11 @@ export const Card = ({ title, subtitle, media, aside, bare, children, ...link }:
           {aside}
         </header>
       )}
-      {children && <div style={{ padding: bare ? 'var(--space-2) 0' : 'var(--space-3) var(--space-4) var(--space-4)' }}>{children}</div>}
+      {children && (
+        <div style={{ padding: bare ? 'var(--space-2) 0' : 'var(--space-3) var(--space-4) var(--space-4)' }}>
+          {children}
+        </div>
+      )}
     </section>
   );
 };

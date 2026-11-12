@@ -15,5 +15,14 @@ type GridProps = {
  * Pages use it instead of media queries, so the same markup works on the board, in the prototype and in a static export.
  */
 export const Grid = ({ min = 280, gap = 5, align = 'stretch', children }: GridProps) => (
-  <div style={{ display: 'grid', gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${min}px), 1fr))`, gap: `var(--space-${gap})`, alignItems: align }}>{children}</div>
+  <div
+    style={{
+      display: 'grid',
+      gridTemplateColumns: `repeat(auto-fit, minmax(min(100%, ${min}px), 1fr))`,
+      gap: `var(--space-${gap})`,
+      alignItems: align,
+    }}
+  >
+    {children}
+  </div>
 );

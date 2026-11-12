@@ -106,7 +106,17 @@ const SHAPES = {
 export type IconName = keyof typeof SHAPES;
 
 /** One icon, `size` px square; `fill` fills the shape too (the ▶ that starts the prototype). */
-export const Icon = ({ name, size = 16, fill = false, className }: { name: IconName; size?: number; fill?: boolean; className?: string }) => (
+export const Icon = ({
+  name,
+  size = 16,
+  fill = false,
+  className,
+}: {
+  name: IconName;
+  size?: number;
+  fill?: boolean;
+  className?: string;
+}) => (
   <svg
     className={className}
     width={size}

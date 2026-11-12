@@ -19,12 +19,52 @@ type DeviceScreenProps = {
   children?: ReactNode;
 };
 
+/** Signal, Wi-Fi and battery drawn as vectors in the text colour (characters render differently on every system). */
+const StatusIcons = () => (
+  <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+    <svg aria-hidden="true" width="17" height="11" viewBox="0 0 17 11" fill="currentColor">
+      <rect x="0" y="7" width="3" height="4" rx="1" />
+      <rect x="4.5" y="5" width="3" height="6" rx="1" />
+      <rect x="9" y="2.5" width="3" height="8.5" rx="1" />
+      <rect x="13.5" y="0" width="3" height="11" rx="1" />
+    </svg>
+    <svg
+      aria-hidden="true"
+      width="15"
+      height="11"
+      viewBox="0 0 15 11"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+    >
+      <path d="M1 3.6a9.4 9.4 0 0 1 13 0" />
+      <path d="M3.3 6a6 6 0 0 1 8.4 0" />
+      <path d="M5.6 8.3a2.7 2.7 0 0 1 3.8 0" />
+      <circle cx="7.5" cy="10" r="0.9" fill="currentColor" stroke="none" />
+    </svg>
+    <svg aria-hidden="true" width="26" height="12" viewBox="0 0 26 12" fill="none">
+      <rect x="0.5" y="0.5" width="22" height="11" rx="3.2" stroke="currentColor" strokeOpacity="0.4" />
+      <rect x="2" y="2" width="19" height="8" rx="1.8" fill="currentColor" />
+      <rect x="23.8" y="4" width="1.7" height="4" rx="0.85" fill="currentColor" fillOpacity="0.4" />
+    </svg>
+  </span>
+);
+
 const StatusBar = () => (
-  <div style={{ height: 44, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', font: '600 15px/1 system-ui, sans-serif' }}>
+  <div
+    style={{
+      height: 44,
+      flex: 'none',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: '0 24px 0 28px',
+      font: '600 15px/1 system-ui, sans-serif',
+    }}
+  >
     <span>9:41</span>
-    <span aria-hidden="true" style={{ letterSpacing: 2 }}>
-      ▂▄▆ ▮
-    </span>
+    <StatusIcons />
   </div>
 );
 
@@ -33,12 +73,22 @@ const StatusBar = () => (
  * content area in between (`data-pd-scroll`). The same layout everywhere, so a screen looks the same on the board
  * and on its own page, and the board knows what to scroll.
  */
-export const DeviceScreen = ({ top, bottom, overlay, modal, statusBar = true, background, className, children }: DeviceScreenProps) => {
+export const DeviceScreen = ({
+  top,
+  bottom,
+  overlay,
+  modal,
+  statusBar = true,
+  background,
+  className,
+  children,
+}: DeviceScreenProps) => {
   const { viewport } = useFrame();
   const overlayRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // the floating layer's height becomes end padding of the content, so the last item can always scroll above it
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs again when the floating layer appears or goes, its element changes then
   useLayoutEffect(() => {
     const o = overlayRef.current;
     const s = scrollRef.current;
@@ -54,14 +104,33 @@ export const DeviceScreen = ({ top, bottom, overlay, modal, statusBar = true, ba
     return () => ro.disconnect();
   }, [overlay]);
 
-  const root: CSSProperties = { position: 'relative', width: viewport.width, height: viewport.height, display: 'flex', flexDirection: 'column', overflow: 'hidden', background };
+  const root: CSSProperties = {
+    position: 'relative',
+    width: viewport.width,
+    height: viewport.height,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+    background,
+  };
 
   return (
     <div className={className} style={root} data-pd-frame="device">
       {statusBar === true ? <StatusBar /> : statusBar || null}
       {top && <div style={{ flex: 'none', position: 'relative', zIndex: 1 }}>{top}</div>}
       <div style={{ flex: '1 1 auto', minHeight: 0, position: 'relative', display: 'flex', flexDirection: 'column' }}>
-        <div ref={scrollRef} data-pd-scroll style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', paddingBottom: 'var(--pd-overlay-h, 0px)', scrollbarWidth: 'none' }}>
+        <div
+          ref={scrollRef}
+          data-pd-scroll
+          style={{
+            flex: '1 1 auto',
+            minHeight: 0,
+            overflowY: 'auto',
+            overflowX: 'hidden',
+            paddingBottom: 'var(--pd-overlay-h, 0px)',
+            scrollbarWidth: 'none',
+          }}
+        >
           {children}
         </div>
         {overlay && (
@@ -102,16 +171,51 @@ type PageScreenProps = {
  * adapts to every width it is shown at (`@container page (max-width: 600px)`).
  * In a static export it is a real page instead: the browser scrolls, the bars are sticky.
  */
-export const PageScreen = ({ top, side, sideAt = 'left', bottom, overlay, modal, background, className, children }: PageScreenProps) => {
+export const PageScreen = ({
+  top,
+  side,
+  sideAt = 'left',
+  bottom,
+  overlay,
+  modal,
+  background,
+  className,
+  children,
+}: PageScreenProps) => {
   const { mode, viewport } = useFrame();
   const exported = mode === 'export';
   const container: CSSProperties = { containerType: 'inline-size', containerName: 'page' };
 
   if (exported) {
-    const sidePanel = side && <div style={{ flex: 'none', position: 'sticky', top: 0, alignSelf: 'flex-start', maxHeight: '100vh', overflowY: 'auto' }}>{side}</div>;
+    const sidePanel = side && (
+      <div
+        style={{
+          flex: 'none',
+          position: 'sticky',
+          top: 0,
+          alignSelf: 'flex-start',
+          maxHeight: '100vh',
+          overflowY: 'auto',
+        }}
+      >
+        {side}
+      </div>
+    );
 
     return (
-      <div className={className} data-pd-frame="page" style={{ ...container, position: 'relative', width: '100%', minHeight: '100vh', display: 'flex', flexDirection: 'column', background }}>
+      <div
+        className={className}
+        data-pd-frame="page"
+        style={{
+          ...container,
+          position: 'relative',
+          width: '100%',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          background,
+        }}
+      >
         {top && <div style={{ position: 'sticky', top: 0, zIndex: 3 }}>{top}</div>}
         <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: sideAt === 'left' ? 'row' : 'row-reverse' }}>
           {sidePanel}
@@ -129,11 +233,29 @@ export const PageScreen = ({ top, side, sideAt = 'left', bottom, overlay, modal,
     <div
       className={className}
       data-pd-frame="page"
-      style={{ ...container, position: 'relative', width: viewport.width, height: viewport.height, display: 'flex', flexDirection: 'column', overflow: 'hidden', background }}
+      style={{
+        ...container,
+        position: 'relative',
+        width: viewport.width,
+        height: viewport.height,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        background,
+      }}
     >
       {top && <div style={{ flex: 'none', position: 'relative', zIndex: 3 }}>{top}</div>}
-      <div style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: sideAt === 'left' ? 'row' : 'row-reverse' }}>
-        {side && <div style={{ flex: 'none', minHeight: 0, overflowY: 'auto', position: 'relative', zIndex: 2 }}>{side}</div>}
+      <div
+        style={{
+          flex: '1 1 auto',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: sideAt === 'left' ? 'row' : 'row-reverse',
+        }}
+      >
+        {side && (
+          <div style={{ flex: 'none', minHeight: 0, overflowY: 'auto', position: 'relative', zIndex: 2 }}>{side}</div>
+        )}
         <div style={{ flex: '1 1 auto', minWidth: 0, position: 'relative' }}>
           <div data-pd-scroll style={{ position: 'absolute', inset: 0, overflowY: 'auto', overflowX: 'hidden' }}>
             {children}

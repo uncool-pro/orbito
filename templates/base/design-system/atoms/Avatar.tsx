@@ -11,6 +11,7 @@ export const Avatar = ({ name, size = 40 }: { name?: string; size?: number }) =>
 
   return (
     <span
+      role={name ? 'img' : undefined}
       aria-label={name}
       style={{
         width: size,

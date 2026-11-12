@@ -10,6 +10,17 @@ export default defineDocs({
     dont: ["Don't use badges as buttons or filters (use Chip)."],
   },
   variants: [
-    { name: 'Tones', render: () => <div style={{ display: 'flex', gap: 'var(--space-2)' }}><Badge>Draft</Badge><Badge tone="accent">New</Badge><Badge tone="success">Paid</Badge><Badge tone="warning">Due soon</Badge><Badge tone="danger">Overdue</Badge></div> },
+    {
+      name: 'Tones',
+      render: () => (
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <Badge>Draft</Badge>
+          <Badge tone="accent">New</Badge>
+          <Badge tone="success">Paid</Badge>
+          <Badge tone="warning">Due soon</Badge>
+          <Badge tone="danger">Overdue</Badge>
+        </div>
+      ),
+    },
   ],
 });

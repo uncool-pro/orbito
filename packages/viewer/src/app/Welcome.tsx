@@ -45,7 +45,14 @@ export const Welcome = () => {
         <p>{t.welcomeText}</p>
         <label className="pd-field">
           <span>{t.welcomeName}</span>
-          <input className="pd-input" value={name} maxLength={80} autoFocus placeholder={t.yourName} onChange={(e) => {
+          <input
+            className="pd-input"
+            value={name}
+            maxLength={80}
+            // biome-ignore lint/a11y/noAutofocus: the welcome asks one thing, the name, the moment Orbito opens for the first time
+            autoFocus
+            placeholder={t.yourName}
+            onChange={(e) => {
               setTyped(true);
               setName(e.target.value);
             }}

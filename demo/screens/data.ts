@@ -16,3 +16,19 @@ export const tasks = [
   { day: 'Thursday', items: ['Water Ficus lyrata', 'Rotate Snake plant'] },
   { day: 'Saturday', items: ['Water Golden pothos'] },
 ];
+
+export const rooms = [
+  { name: 'Living room', plants: 3, light: 'Bright, indirect' },
+  { name: 'Bedroom', plants: 1, light: 'Morning sun' },
+  { name: 'Kitchen', plants: 1, light: 'Bright' },
+  { name: 'Bathroom', plants: 1, light: 'Low, humid' },
+  { name: 'Office', plants: 2, light: 'Shade' },
+  { name: 'Balcony', plants: 1, light: 'Full sun' },
+];
+
+export const reminders = [
+  { title: 'Watering', when: 'Every morning at 8:00' },
+  { title: 'Misting', when: 'Tuesdays and Fridays' },
+  { title: 'Fertilising', when: 'First Sunday of the month' },
+  { title: 'Weekly check', when: 'Saturdays at 10:00' },
+];

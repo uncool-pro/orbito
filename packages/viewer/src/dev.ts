@@ -54,7 +54,9 @@ export const pathOnComputer = (env: DevEnv | null, file: string): string | null 
   if (!env.container) return absolutePath(env, file);
   if (!env.hostRoot) return null;
   // Git Bash on Windows passes its own notation (/c/Users/...): back to the drive letter Windows tools understand
-  const root = env.hostRoot.replace(/^\/([A-Za-z])(?=\/)/, (_, drive: string) => `${drive.toUpperCase()}:`).replace(/[\\/]+$/, '');
+  const root = env.hostRoot
+    .replace(/^\/([A-Za-z])(?=\/)/, (_, drive: string) => `${drive.toUpperCase()}:`)
+    .replace(/[\\/]+$/, '');
   const sep = /^[A-Za-z]:|\\/.test(root) ? '\\' : '/';
 
   return [root.split(/[\\/]/).join(sep), ...file.split('/')].join(sep);
@@ -64,7 +66,9 @@ export const pathOnComputer = (env: DevEnv | null, file: string): string | null 
 export const vscodeLink = (path: string) => `vscode://file/${path.split('\\').join('/')}`;
 
 /** Shows the file in the system's file manager, selected. */
-export const revealFile = (file: string) => fetch(`/__orbito/reveal?path=${encodeURIComponent(file)}`, { method: 'POST' });
+export const revealFile = (file: string) =>
+  fetch(`/__orbito/reveal?path=${encodeURIComponent(file)}`, { method: 'POST' });
 
 /** Opens the file in the code editor (Vite's own endpoint: it finds the running editor, or uses $EDITOR). */
-export const openInEditor = (env: DevEnv, file: string) => fetch(`/__open-in-editor?file=${encodeURIComponent(absolutePath(env, file))}`);
+export const openInEditor = (env: DevEnv, file: string) =>
+  fetch(`/__open-in-editor?file=${encodeURIComponent(absolutePath(env, file))}`);

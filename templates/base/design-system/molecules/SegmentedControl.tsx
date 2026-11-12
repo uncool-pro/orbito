@@ -32,7 +32,16 @@ const SegmentItem = ({ s, current }: { s: Segment; current: boolean }) => {
 
 /** Switches between 2–4 views of the same content. Each segment can be its own screen (`to`). */
 export const SegmentedControl = ({ segments, current }: { segments: Segment[]; current: number }) => (
-  <div role="tablist" style={{ display: 'flex', gap: 'var(--space-half)', padding: 'var(--space-half)', borderRadius: 'var(--radius-pill)', background: 'var(--color-surface-muted)' }}>
+  <div
+    role="tablist"
+    style={{
+      display: 'flex',
+      gap: 'var(--space-half)',
+      padding: 'var(--space-half)',
+      borderRadius: 'var(--radius-pill)',
+      background: 'var(--color-surface-muted)',
+    }}
+  >
     {segments.map((s, i) => (
       <SegmentItem key={s.label} s={s} current={i === current} />
     ))}

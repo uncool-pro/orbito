@@ -3,6 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 
 import type { Page } from '@uncool-pro/orbito-core';
 
+import { isTextField } from '../../dom';
 import { useT } from '../../i18n';
 import { go, lastCanvasHash, parseRoute } from '../routes';
 import type { Mode } from '../routes';
@@ -26,10 +27,14 @@ type ShellProps = { mode: Mode; page?: Page; flowKey?: string; dsSection?: strin
 export const Shell = ({ mode, page, flowKey, dsSection, children }: ShellProps) => {
   const { drawerOpen, inspectorOpen, devMode, selected, codeWidth } = useShell();
   // in dev mode the right panel shows the selected screen's code, as wide as the person dragged it
-  const width = devMode && selected && !isPage(mode) ? ({ '--pd-insp-w': `${codeWidth}px` } as CSSProperties) : undefined;
+  const width =
+    devMode && selected && !isPage(mode) ? ({ '--pd-insp-w': `${codeWidth}px` } as CSSProperties) : undefined;
 
   return (
-    <div className={`pd-shell${drawerOpen ? '' : ' no-drawer'}${inspectorOpen && !isPage(mode) ? '' : ' no-inspector'}`} style={width}>
+    <div
+      className={`pd-shell${drawerOpen ? '' : ' no-drawer'}${inspectorOpen && !isPage(mode) ? '' : ' no-inspector'}`}
+      style={width}
+    >
       <TopBar mode={mode} page={page} flowKey={flowKey} />
       <Welcome />
       <CommentBubble />
@@ -54,7 +59,7 @@ const BackBar = () => {
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || /^(INPUT|TEXTAREA|SELECT)$/.test((e.target as HTMLElement).tagName)) return;
+      if (e.key !== 'Escape' || isTextField(e.target)) return;
       go(lastCanvasHash());
     };
 

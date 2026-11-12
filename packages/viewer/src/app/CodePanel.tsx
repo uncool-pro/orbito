@@ -4,6 +4,7 @@ import type { ComponentType } from 'react';
 import type { Screen } from '@uncool-pro/orbito-core';
 
 import { useT } from '../i18n';
+import { useCopy } from './useCopy';
 import { useViewer } from './context';
 import { useShell } from './shell/state';
 
@@ -17,11 +18,16 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
   const { codeWidth, setCodeWidth } = useShell();
   const t = useT();
   const parts = ds.report.screens[screen.id] ?? [];
-  const files = [{ label: screen.file.split('/').pop()!, file: screen.file }, ...parts.flatMap((name) => ds.report.components.filter((c) => c.name === name).map((c) => ({ label: c.name, file: c.file })))];
+  const files = [
+    { label: screen.file.split('/').pop()!, file: screen.file },
+    ...parts.flatMap((name) =>
+      ds.report.components.filter((c) => c.name === name).map((c) => ({ label: c.name, file: c.file })),
+    ),
+  ];
   const [file, setFile] = useState(screen.file);
   const [code, setCode] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   const drag = useRef<{ x: number; w: number } | null>(null);
 
   useEffect(() => setFile(screen.file), [screen.file]);
@@ -42,14 +48,9 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
     };
   }, [file]);
 
-  const copy = () =>
-    void navigator.clipboard?.writeText(code ?? '').then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1400);
-    });
-
   return (
     <section className="pd-code">
+      {/* biome-ignore lint/a11y/useSemanticElements: a drag handle, not a line between parts of the content */}
       <div
         className="pd-code__grip"
         role="separator"
@@ -61,7 +62,8 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
           drag.current = { x: e.clientX, w: codeWidth };
         }}
         onPointerMove={(e) => {
-          if (drag.current) setCodeWidth(Math.round(Math.min(900, Math.max(300, drag.current.w + drag.current.x - e.clientX))));
+          if (drag.current)
+            setCodeWidth(Math.round(Math.min(900, Math.max(300, drag.current.w + drag.current.x - e.clientX))));
         }}
         onPointerUp={() => {
           drag.current = null;
@@ -69,13 +71,21 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
       />
       <div className="pd-code__head">
         <b>{t.code}</b>
-        <button type="button" className="pd-btn pd-btn--sm" disabled={!code} onClick={copy}>
+        <button type="button" className="pd-btn pd-btn--sm" disabled={!code} onClick={() => copy('code', code ?? '')}>
           {copied ? `✓ ${t.copied}` : t.copyCode}
         </button>
       </div>
       <div className="pd-code__files" role="tablist">
         {files.map((f) => (
-          <button key={f.file} type="button" role="tab" aria-selected={f.file === file} className={f.file === file ? 'is-on' : ''} onClick={() => setFile(f.file)} title={f.file}>
+          <button
+            key={f.file}
+            type="button"
+            role="tab"
+            aria-selected={f.file === file}
+            className={f.file === file ? 'is-on' : ''}
+            onClick={() => setFile(f.file)}
+            title={f.file}
+          >
             {f.label}
           </button>
         ))}
@@ -86,6 +96,7 @@ export const CodePanel = ({ screen }: { screen: Screen<ComponentType> }) => {
       ) : (
         <pre className="pd-code__text">
           {(code ?? '').split('\n').map((line, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: a line of code is its number
             <span key={i}>
               <i>{i + 1}</i>
               {line}

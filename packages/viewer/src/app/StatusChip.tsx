@@ -13,7 +13,11 @@ export const StatusChip = ({ id, entry }: { id: string; entry: StatusEntry }) =>
   const editable = canEditStatuses();
 
   return (
-    <label className={`pd-status pd-status--${entry.status}`} data-pd-ui title={entry.note ? `${t.statusLabels[entry.status]} — ${entry.note}` : t.statusLabels[entry.status]}>
+    <label
+      className={`pd-status pd-status--${entry.status}`}
+      data-pd-ui
+      title={entry.note ? `${t.statusLabels[entry.status]} — ${entry.note}` : t.statusLabels[entry.status]}
+    >
       <i />
       <select
         aria-label={t.status}

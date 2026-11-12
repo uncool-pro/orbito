@@ -3,8 +3,24 @@ import { describe, expect, it } from 'vitest';
 import { BUILT_IN_VIEWPORTS, cardSize, computeLayout, G, loadProject } from '../src';
 import type { Hotspot, LinkMap, Screen } from '../src';
 
-const spot = (to: string, y = 100): Hotspot => ({ to, label: to, trigger: 'tap', x: 10, y, w: 100, h: 40, belowFold: false });
-const screen = (id: string, viewport = 'mobile'): Screen => ({ id, title: id, code: id.toUpperCase(), viewport, file: `screens/${id}.screen.tsx`, component: null });
+const spot = (to: string, y = 100): Hotspot => ({
+  to,
+  label: to,
+  trigger: 'tap',
+  x: 10,
+  y,
+  w: 100,
+  h: 40,
+  belowFold: false,
+});
+const screen = (id: string, viewport = 'mobile'): Screen => ({
+  id,
+  title: id,
+  code: id.toUpperCase(),
+  viewport,
+  file: `screens/${id}.screen.tsx`,
+  component: null,
+});
 const ids = ['a', 'b', 'c', 'd'];
 const screens = new Map(ids.map((id) => [id, screen(id)]));
 const base = { screens, viewports: BUILT_IN_VIEWPORTS };
@@ -14,7 +30,11 @@ describe('computeLayout', () => {
     const l = computeLayout({ ...base, flows: [{ key: 'F1', name: 'f', screens: ['a', 'b', 'c'] }], links: {} });
     const w = cardSize(BUILT_IN_VIEWPORTS.mobile).w;
 
-    expect(l.cards.map((c) => c.x)).toEqual([G.laneLabelW, G.laneLabelW + w + G.colGap, G.laneLabelW + 2 * (w + G.colGap)]);
+    expect(l.cards.map((c) => c.x)).toEqual([
+      G.laneLabelW,
+      G.laneLabelW + w + G.colGap,
+      G.laneLabelW + 2 * (w + G.colGap),
+    ]);
   });
 
   it('classifies arrows: neighbour, skip forward, back, outside the lane', () => {
@@ -26,7 +46,11 @@ describe('computeLayout', () => {
   });
 
   it('starts a neighbour arrow at the height of the element that triggers it', () => {
-    const l = computeLayout({ ...base, flows: [{ key: 'F1', name: 'f', screens: ['a', 'b'] }], links: { a: [spot('b', 400)] } });
+    const l = computeLayout({
+      ...base,
+      flows: [{ key: 'F1', name: 'f', screens: ['a', 'b'] }],
+      links: { a: [spot('b', 400)] },
+    });
     const a = l.cards[0]!;
     const edge = l.edges[0]!;
     const y = Number(/^M\S+ (\S+)/.exec(edge.d)![1]);
@@ -48,7 +72,24 @@ describe('computeLayout', () => {
       ...base,
       screens: all,
       links: {},
-      flows: [{ key: 'F1', name: 'f', screens: ['a', 'b', 'c'], versions: [{ key: 'v', name: 'v', state: 'open', screens: [{ id: 'b2', replaces: 'b' }, { id: 'n', after: 'a' }] }] }],
+      flows: [
+        {
+          key: 'F1',
+          name: 'f',
+          screens: ['a', 'b', 'c'],
+          versions: [
+            {
+              key: 'v',
+              name: 'v',
+              state: 'open',
+              screens: [
+                { id: 'b2', replaces: 'b' },
+                { id: 'n', after: 'a' },
+              ],
+            },
+          ],
+        },
+      ],
     });
     const at = (key: string) => l.cards.find((c) => c.key.startsWith(key))!;
 
@@ -58,7 +99,14 @@ describe('computeLayout', () => {
   });
 
   it('hides closed versions unless asked', () => {
-    const flows = [{ key: 'F1', name: 'f', screens: ['a'], versions: [{ key: 'v', name: 'v', state: 'merged' as const, screens: [{ id: 'b', replaces: 'a' }] }] }];
+    const flows = [
+      {
+        key: 'F1',
+        name: 'f',
+        screens: ['a'],
+        versions: [{ key: 'v', name: 'v', state: 'merged' as const, screens: [{ id: 'b', replaces: 'a' }] }],
+      },
+    ];
 
     expect(computeLayout({ ...base, flows, links: {} }).lanes).toHaveLength(1);
     expect(computeLayout({ ...base, flows, links: {}, showClosedVersions: true }).lanes).toHaveLength(2);
@@ -81,7 +129,11 @@ describe('loadProject', () => {
         '/screens/z/odd.screen.tsx': { default: C, meta: { code: 'l-01', title: 'Same code', viewport: 'watch' } },
         '/screens/z/nometa.screen.tsx': { default: C },
       },
-      { '/flows/a.flow.ts': { default: { key: 'p', name: 'P', flows: [{ key: 'F', name: 'F', screens: ['list', 'ghost'] }] } } },
+      {
+        '/flows/a.flow.ts': {
+          default: { key: 'p', name: 'P', flows: [{ key: 'F', name: 'F', screens: ['list', 'ghost'] }] },
+        },
+      },
     );
 
     expect(project.screens.map((s) => s.id)).toEqual(['list', 'odd']);
@@ -101,7 +153,10 @@ describe('loadProject', () => {
     const { project, problems } = loadProject(
       { title: 'T' },
       {
-        '/screens/home.screen.tsx': { default: C, meta: { title: 'Home', viewports: ['desktop', 'tablet-web', 'mobile-web'] } },
+        '/screens/home.screen.tsx': {
+          default: C,
+          meta: { title: 'Home', viewports: ['desktop', 'tablet-web', 'mobile-web'] },
+        },
         '/screens/odd.screen.tsx': { default: C, meta: { title: 'Odd', viewports: ['desktop', 'fridge'] } },
       },
       {},

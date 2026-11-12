@@ -14,8 +14,28 @@ const look: Record<BannerTone, { bg: string; tone: 'accent' | 'success' | 'warni
 };
 
 /** A message about the whole screen or section: what happened and, optionally, what to do (`action`, usually a small Button). */
-export const Banner = ({ tone = 'info', title, children, action }: { tone?: BannerTone; title: string; children?: ReactNode; action?: ReactNode }) => (
-  <div role={tone === 'danger' ? 'alert' : 'status'} style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-start', padding: 'var(--space-3) var(--space-4)', borderRadius: 'var(--radius-md)', background: look[tone].bg }}>
+export const Banner = ({
+  tone = 'info',
+  title,
+  children,
+  action,
+}: {
+  tone?: BannerTone;
+  title: string;
+  children?: ReactNode;
+  action?: ReactNode;
+}) => (
+  <div
+    role={tone === 'danger' ? 'alert' : 'status'}
+    style={{
+      display: 'flex',
+      gap: 'var(--space-3)',
+      alignItems: 'flex-start',
+      padding: 'var(--space-3) var(--space-4)',
+      borderRadius: 'var(--radius-md)',
+      background: look[tone].bg,
+    }}
+  >
     <Text tone={look[tone].tone} as="span" style={{ display: 'flex' }}>
       <Icon name={look[tone].icon} size={20} />
     </Text>

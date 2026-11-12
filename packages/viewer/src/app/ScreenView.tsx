@@ -11,6 +11,7 @@ import { useOpenCount } from '../comments';
 import { Icon } from './icons';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Measure } from './Measure';
+import { useCopy } from './useCopy';
 import { useViewer } from './context';
 import { useShell } from './shell/state';
 
@@ -39,7 +40,7 @@ const Frame = ({ screen, vp, zoom }: { screen: Screen<ComponentType>; vp: Viewpo
   const S = screen.component;
 
   return (
-    <div className="pd-stage__frame" data-comment-anchor={screen.id} style={{ zoom }}>
+    <div className="pd-stage__frame" data-pd-content data-comment-anchor={screen.id} style={{ zoom }}>
       <FrameContext.Provider value={{ mode: 'screen', viewport: vp }}>
         <ErrorBoundary name={screen.code ?? screen.id}>
           <S />
@@ -50,7 +51,9 @@ const Frame = ({ screen, vp, zoom }: { screen: Screen<ComponentType>; vp: Viewpo
 };
 
 // a monitor, a tablet or a phone, by the size's width
-const SizeIcon = ({ width }: { width: number }) => <Icon name={width >= 1024 ? 'monitor' : width >= 600 ? 'tablet' : 'smartphone'} size={15} />;
+const SizeIcon = ({ width }: { width: number }) => (
+  <Icon name={width >= 1024 ? 'monitor' : width >= 600 ? 'tablet' : 'smartphone'} size={15} />
+);
 
 type Size = { vp: Viewport; label: string; key: string };
 
@@ -58,14 +61,25 @@ type Size = { vp: Viewport; label: string; key: string };
  * The sizes the prototype offers for a screen: the sizes of a responsive page, or a phone screen on a small, its own and a
  * large phone. Anything else has one size and no switch.
  */
-const sizesOf = (screen: Screen<ComponentType>, viewports: Record<string, Viewport>, phoneLabel: Record<string, string>): { sizes: Size[]; store: string } => {
+const sizesOf = (
+  screen: Screen<ComponentType>,
+  viewports: Record<string, Viewport>,
+  phoneLabel: Record<string, string>,
+): { sizes: Size[]; store: string } => {
   if (screen.viewports?.length)
-    return { sizes: screen.viewports.map((k) => viewports[k]!).filter(Boolean).map((vp) => ({ vp, key: vp.key, label: vp.label.replace(/ web$/i, '') })), store: SIZE_KEY };
+    return {
+      sizes: screen.viewports
+        .map((k) => viewports[k]!)
+        .filter(Boolean)
+        .map((vp) => ({ vp, key: vp.key, label: vp.label.replace(/ web$/i, '') })),
+      store: SIZE_KEY,
+    };
   const own = viewports[screen.viewport!]!;
   const small = viewports[PHONES.small];
   const large = viewports[PHONES.large];
 
-  if (own.kind !== 'device' || own.width >= 600 || !small || !large) return { sizes: [{ vp: own, key: own.key, label: own.label }], store: SIZE_KEY };
+  if (own.kind !== 'device' || own.width >= 600 || !small || !large)
+    return { sizes: [{ vp: own, key: own.key, label: own.label }], store: SIZE_KEY };
 
   return {
     sizes: [
@@ -96,9 +110,9 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
   const commentsOpen = !!commentsOn;
 
   // the bubble stays open while you click through the prototype: it moves on to the screen you reach
+  // biome-ignore lint/correctness/useExhaustiveDependencies: follows the screen only; opening or closing the bubble must not move it
   useEffect(() => {
     if (commentsOn && commentsOn !== screen.id) openComments(screen.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen.id]);
 
   useEffect(() => select(screen.id), [screen.id, select]);
@@ -118,11 +132,22 @@ export const ScreenView = ({ screen }: { screen: Screen<ComponentType> }) => {
       <div className="pd-sizebar">
         {devMode && <DevPath file={screen.file} />}
         <div className="pd-sizebar__end">
-          <CommentsToggle open={commentsOpen} onClick={() => openComments(commentsOpen ? null : screen.id)} screen={screen.id} />
+          <CommentsToggle
+            open={commentsOpen}
+            onClick={() => openComments(commentsOpen ? null : screen.id)}
+            screen={screen.id}
+          />
           {sizes.length > 1 && (
+            // biome-ignore lint/a11y/useSemanticElements: a row of buttons; <fieldset> belongs to forms
             <div className="pd-sizes" role="group" aria-label={t.responsive}>
               {sizes.map((s) => (
-                <button key={s.key} type="button" aria-pressed={s.key === size.key} title={`${s.vp.label} · ${s.vp.width}×${s.vp.height}`} onClick={() => pick(s.key)}>
+                <button
+                  key={s.key}
+                  type="button"
+                  aria-pressed={s.key === size.key}
+                  title={`${s.vp.label} · ${s.vp.width}×${s.vp.height}`}
+                  onClick={() => pick(s.key)}
+                >
                   <SizeIcon width={s.vp.width} />
                   {s.label}
                 </button>
@@ -158,7 +183,7 @@ const CommentsToggle = ({ open, onClick, screen }: { open: boolean; onClick: () 
 const DevPath = ({ file }: { file: string }) => {
   const dev = useDevEnv();
   const t = useT();
-  const [copied, setCopied] = useState(false);
+  const { copied, copy } = useCopy();
   const full = pathOnComputer(dev, file);
 
   return (
@@ -169,12 +194,7 @@ const DevPath = ({ file }: { file: string }) => {
         className="pd-iconbtn pd-iconbtn--sm"
         aria-label={t.copyPath}
         title={t.copyPath}
-        onClick={() =>
-          void navigator.clipboard?.writeText(full ?? file).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 1400);
-          })
-        }
+        onClick={() => copy('path', full ?? file)}
       >
         <Icon name={copied ? 'check' : 'copy'} size={14} />
       </button>

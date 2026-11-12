@@ -39,8 +39,30 @@ const Item = ({ item, current }: { item: NavItem; current: boolean }) => {
 };
 
 /** Main navigation of a web app: product name, sections, the current one highlighted. */
-export const SideNav = ({ product, items, current, footer }: { product: string; items: NavItem[]; current: string; footer?: NavItem[] }) => (
-  <aside style={{ width: 248, flex: 'none', alignSelf: 'stretch', display: 'flex', flexDirection: 'column', gap: 'var(--space-1)', padding: 'var(--space-5) var(--space-3)', background: 'var(--color-surface)', borderRight: '1px solid var(--color-line)' }}>
+export const SideNav = ({
+  product,
+  items,
+  current,
+  footer,
+}: {
+  product: string;
+  items: NavItem[];
+  current: string;
+  footer?: NavItem[];
+}) => (
+  <aside
+    style={{
+      width: 248,
+      flex: 'none',
+      alignSelf: 'stretch',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 'var(--space-1)',
+      padding: 'var(--space-5) var(--space-3)',
+      background: 'var(--color-surface)',
+      borderRight: '1px solid var(--color-line)',
+    }}
+  >
     <div style={{ padding: '0 var(--space-3) var(--space-5)' }}>
       <Text variant="heading" tone="accent">
         {product}

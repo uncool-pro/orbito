@@ -1,10 +1,22 @@
 {
   "name": "@uncool-pro/orbito-cli",
   "version": "0.0.0",
+  "private": true,
   "type": "module",
-  "bin": { "orbito": "./src/bin.ts" },
-  "exports": { "./analyze": "./src/analyze.ts" },
-  "dependencies": { "@uncool-pro/orbito-core": "*", "typescript": "~6.0.2" },
-  "engines": { "node": ">=22.18" },
+  "bin": {
+    "orbito": "./src/bin.ts"
+  },
+  "exports": {
+    "./analyze": "./src/analyze.ts",
+    "./files": "./src/files.ts",
+    "./install": "./src/install.ts"
+  },
+  "dependencies": {
+    "@uncool-pro/orbito-core": "*",
+    "typescript": "~6.0.2"
+  },
+  "engines": {
+    "node": ">=22.18"
+  },
   "license": "MIT"
 }

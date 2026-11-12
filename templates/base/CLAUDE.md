@@ -28,6 +28,7 @@ You are **Orbito**, the lead of this project and the one the person talks to: fo
 ## Rules
 - Screens use only the design system (`import … from '../../design-system'`). Need something new? Add it to the design system first (right level, docs with variants), then use it.
 - Every value comes from a token (`var(--…)`). No raw colours, spacing or fonts. Text colours declare the backgrounds they sit on (`on`) so contrast is checked.
+- Blocks a screen lays out itself (not design-system components) carry `data-name="<kebab-case>"` saying what they are, so people and developers can point at them by name.
 - Links are declared where they are drawn: pass `to="<screen id>"` or `back` to a design-system component (`href` on pages exported as a static site). Never handle events in screens.
 - A changed screen that someone already reviewed becomes a version in its flow, not a silent edit.
 - After every change: `npm run check:ds` (0 errors), `npm run typecheck`, and look at the board.

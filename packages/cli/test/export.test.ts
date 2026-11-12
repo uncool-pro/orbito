@@ -11,7 +11,9 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '.tmp-export');
 
 const files: Record<string, string> = {
   'orbito.config.ts': `export default { title: 'Fixture', locale: 'pl', site: { screen: 'landing', title: 'Week planner', description: 'Plan your week & more.' } };`,
-  'design-system/tokens.json': JSON.stringify({ color: [{ name: 'color-bg', value: '#ffffff', usage: 'Background.' }] }),
+  'design-system/tokens.json': JSON.stringify({
+    color: [{ name: 'color-bg', value: '#ffffff', usage: 'Background.' }],
+  }),
   'design-system/fonts.css': `@font-face { font-family: 'Brand'; src: url('./fonts/brand.woff2') format('woff2'); }`,
   'public/fonts/brand.woff2': 'not a real font',
   'screens/landing.screen.tsx': `

@@ -8,7 +8,7 @@ description: Starts the design process of an Orbito project (/orbito-init) — s
 ## Welcome (say it once, at the start)
 In a few friendly sentences: welcome to Orbito; we will set up the project together and you make the decisions — I will ask when something needs your call. Then: Orbito is developed in the open and gets better from real projects, so while we work I will keep short, anonymous notes about the tool itself (not about your product) in `feedback.md`; you can review them, add your own and send them to orbito@uncool.pro whenever it feels right — nothing is ever sent automatically.
 
-The kickoff is the start of the design process, not an installation (that is `npm create orbito`). Its job: know enough to start the right first step, and write it down so every later session knows where the project stands.
+The kickoff is the start of the design process, not an installation (that is `packages/create` in the Orbito folder, see its README). Its job: know enough to start the right first step, and write it down so every later session knows where the project stands.
 
 ## Start from what the person brought: `raw/`
 People bring material the way they have it: a folder of files, a zip of an old site, screenshots, exports, notes. They put it all into `raw/` (or tell you where it is) without sorting it. Sorting it is your job, and it comes before any question the material can answer.

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { featureLinks, flowStatusId, sharedTargets, statusOf } from '@uncool-pro/orbito-core';
+import { featureLinks, flowStatusId, statusOf } from '@uncool-pro/orbito-core';
 import type { Flow, Page } from '@uncool-pro/orbito-core';
 
 import { useViewer } from '../app/context';
@@ -64,19 +64,18 @@ const place = (page: Page, links: { from: string; to: string }[]): Map<string, P
  * map" from the UX analysis; screens open with a click on a feature.
  */
 export const FeatureMap = ({ page }: { page: Page }) => {
-  const { project, links } = useViewer();
+  const { links, shared, nameOf } = useViewer();
   const { canvas } = useShell();
   const statuses = useStatuses();
   const t = useT();
   const [hover, setHover] = useState<string | null>(null);
   const [k, setK] = useState(1);
   const box = useRef<HTMLDivElement>(null);
-  const shared = useMemo(() => (links ? sharedTargets(links) : new Set<string>()), [links]);
   const edges = useMemo(() => (links ? featureLinks(page, links, shared) : []), [page, links, shared]);
   const placed = useMemo(() => place(page, edges), [page, edges]);
-  const width = Math.max(...[...placed.values()].map((p) => p.x + W)) + PAD + GX;
-  const height = Math.max(...[...placed.values()].map((p) => p.y + H)) + PAD;
-  const byId = useMemo(() => new Map(project.screens.map((s) => [s.id, s])), [project]);
+  // a page with no features yet has nothing to place: the drawing still gets a size of its own
+  const width = Math.max(0, ...[...placed.values()].map((p) => p.x + W)) + PAD + GX;
+  const height = Math.max(0, ...[...placed.values()].map((p) => p.y + H)) + PAD;
 
   // the island's zoom works here too
   useEffect(() => {
@@ -101,14 +100,14 @@ export const FeatureMap = ({ page }: { page: Page }) => {
         <p className="pd-muted">{t.featureMapNote}</p>
         {shared.size > 0 && (
           <p className="pd-insp__shared">
-            {t.menuLeftOut}: {[...shared].map((id) => byId.get(id)?.title.split(' / ').pop() ?? id).join(' · ')}
+            {t.menuLeftOut}: {[...shared].map(nameOf).join(' · ')}
           </p>
         )}
       </section>,
     );
 
     return () => setInspectorExtra(null);
-  }, [shared, byId, t]);
+  }, [shared, nameOf, t]);
 
   const lane = new Map<string, number>();
   const nextLane = (key: string) => {
@@ -123,11 +122,21 @@ export const FeatureMap = ({ page }: { page: Page }) => {
     <div ref={box} className="pd-fmap">
       {!links ? (
         <div className="pd-empty">{t.detecting}</div>
+      ) : page.flows.length === 0 ? (
+        <div className="pd-empty">{t.noFlows}</div>
       ) : (
         <div className="pd-fmap__world" style={{ width, height, zoom: k }}>
-          <svg width={width} height={height} className="pd-svg">
+          <svg aria-hidden="true" width={width} height={height} className="pd-svg">
             <defs>
-              <marker id="pd-fmap-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <marker
+                id="pd-fmap-arrow"
+                viewBox="0 0 10 10"
+                refX="9"
+                refY="5"
+                markerWidth="7"
+                markerHeight="7"
+                orient="auto-start-reverse"
+              >
                 <path d="M0 0 L10 5 L0 10 z" className="pd-fmap__head" />
               </marker>
             </defs>
@@ -205,6 +214,7 @@ export const FlowsPage = ({ page, flowKey }: { page: Page; flowKey?: string }) =
   return (
     <>
       {mode === 'features' ? <FeatureMap page={page} /> : <FlowsView page={page} />}
+      {/* biome-ignore lint/a11y/useSemanticElements: a row of buttons; <fieldset> belongs to forms */}
       <div className="pd-mapswitch pd-sizes" role="group" data-pd-ui>
         {(['screens', 'features'] as const).map((m) => (
           <button key={m} type="button" aria-pressed={mode === m} onClick={() => pick(m)}>

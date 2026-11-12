@@ -17,7 +17,16 @@ type DisclosureProps = {
  */
 export const Disclosure = ({ title, open, children }: DisclosureProps) => (
   <details open={open} style={{ borderBottom: '1px solid var(--color-line)' }}>
-    <summary style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-4) 0', cursor: 'pointer', listStyle: 'none' }}>
+    <summary
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 'var(--space-3)',
+        padding: 'var(--space-4) 0',
+        cursor: 'pointer',
+        listStyle: 'none',
+      }}
+    >
       <span style={{ flex: '1 1 auto' }}>
         <Text variant="heading" as="span">
           {title}

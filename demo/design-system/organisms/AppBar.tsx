@@ -6,7 +6,16 @@ import { Text } from '../atoms/Text';
 
 /** Top bar of a screen: optional back button, title, optional action on the right. */
 export const AppBar = ({ title, back, action }: { title: string; back?: boolean; action?: ReactNode }) => (
-  <header style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-1)', minHeight: 56, padding: '0 var(--space-2)', background: 'var(--color-bg)' }}>
+  <header
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 'var(--space-1)',
+      minHeight: 64,
+      padding: '0 var(--space-2)',
+      background: 'transparent',
+    }}
+  >
     {back && (
       <Button variant="ghost" back label="Back">
         <Icon name="back" />

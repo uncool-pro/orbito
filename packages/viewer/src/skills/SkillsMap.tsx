@@ -19,18 +19,29 @@ const label = (name: string) =>
 const ROLE_ORDER = ['business-analyst', 'ux-designer', 'ui-designer', 'design-auditor', 'synthetic-user'];
 const PROCESS_ORDER = ['process-new-product', 'process-redesign', 'process-rapid-prototype', 'process-landing-page'];
 const byOrder = (order: string[]) => (a: { name: string }, b: { name: string }) => {
-  const ia = order.indexOf(a.name), ib = order.indexOf(b.name);
+  const ia = order.indexOf(a.name),
+    ib = order.indexOf(b.name);
 
   return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.name.localeCompare(b.name);
 };
 
 /** Model tier of an agent, as the skills README names them. */
-const tier = (model?: string) => (model === 'opus' ? 'strongest' : model === 'haiku' ? 'light' : model ? 'build' : 'inherit');
+const tier = (model?: string) =>
+  model === 'opus' ? 'strongest' : model === 'haiku' ? 'light' : model ? 'build' : 'inherit';
 
 /** Scrolls to a role's card on the map (the hash is the viewer's route, so no anchors). */
-const showRole = (role: string) => document.getElementById(`role-${role}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+const showRole = (role: string) =>
+  document.getElementById(`role-${role}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-const SkillList = ({ names, byName, models }: { names: string[]; byName: Map<string, SkillInfo>; models?: Record<string, { model: string; effort?: string }> }) => (
+const SkillList = ({
+  names,
+  byName,
+  models,
+}: {
+  names: string[];
+  byName: Map<string, SkillInfo>;
+  models?: Record<string, { model: string; effort?: string }>;
+}) => (
   <ul className="pd-team__skills">
     {names.map((n) => (
       <li key={n}>
@@ -41,7 +52,9 @@ const SkillList = ({ names, byName, models }: { names: string[]; byName: Map<str
             {models[n].effort ? ` · ${models[n].effort}` : ''}
           </span>
         )}
-        <span title={byName.get(n)?.description}>{byName.get(n)?.description ? purposeOf(byName.get(n)!.description) : ''}</span>
+        <span title={byName.get(n)?.description}>
+          {byName.get(n)?.description ? purposeOf(byName.get(n)!.description) : ''}
+        </span>
       </li>
     ))}
   </ul>
@@ -105,7 +118,8 @@ export const SkillsMap = () => {
         <h1>{t.skillsTitle}</h1>
         <p>{t.skillsLead}</p>
         <p className="pd-team__mode">
-          <b>{t.modelsBadge[team.models ?? 'optimal']}</b> — {t.modelsTip[team.models ?? 'optimal']} {t.modelsSource[team.modelsSource ?? 'default']} {t.modelsSwitch[team.models ?? 'optimal']}
+          <b>{t.modelsBadge[team.models ?? 'optimal']}</b> — {t.modelsTip[team.models ?? 'optimal']}{' '}
+          {t.modelsSource[team.modelsSource ?? 'default']} {t.modelsSwitch[team.models ?? 'optimal']}
         </p>
       </header>
 
@@ -127,7 +141,14 @@ export const SkillsMap = () => {
           <p className="pd-team__layer-lead">{t.processesLead}</p>
           <div className="pd-team__tabs" role="tablist">
             {processes.map((p) => (
-              <button key={p.name} type="button" role="tab" aria-selected={p === shown} className={p === shown ? 'is-on' : ''} onClick={() => setOpen(p.name)}>
+              <button
+                key={p.name}
+                type="button"
+                role="tab"
+                aria-selected={p === shown}
+                className={p === shown ? 'is-on' : ''}
+                onClick={() => setOpen(p.name)}
+              >
                 {label(p.name)}
                 <small>{t.stepsCount(p.steps.length)}</small>
               </button>

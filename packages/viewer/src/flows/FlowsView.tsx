@@ -1,6 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import { computeFlowGraph } from '@uncool-pro/orbito-core';
+import { computeFlowGraph, screenName } from '@uncool-pro/orbito-core';
 import type { FlowEdgeKind, FlowNode, Page } from '@uncool-pro/orbito-core';
 import { openScreen } from '../app/routes';
 
@@ -8,7 +8,7 @@ import { useViewer } from '../app/context';
 import { setInspectorExtra, setZoom, useShell } from '../app/shell/state';
 import { centerOn, fitRect, zoomAt } from '../canvas/camera';
 import { CanvasController } from '../canvas/controller';
-import { sharpWhenStill } from '../canvas/sharp';
+import { placeWorld } from '../canvas/place';
 import { useT } from '../i18n';
 
 const KINDS: FlowEdgeKind[] = ['happy', 'alternative', 'negative', 'other'];
@@ -19,13 +19,13 @@ const KINDS: FlowEdgeKind[] = ['happy', 'alternative', 'negative', 'other'];
  * and it lists what to look at first: dead ends, unreachable screens, flow steps with no link.
  */
 export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) => {
-  const { project, links } = useViewer();
+  const { project, links, screens: byId, nameOf: name } = useViewer();
   const t = useT();
-  const byId = useMemo(() => new Map(project.screens.map((s) => [s.id, s])), [project]);
   const flow = page.flows.find((f) => f.key === flowKey);
   const scope = useMemo(() => [...new Set((flow ? [flow] : page.flows).flatMap((f) => f.screens))], [page, flow]);
   const graph = useMemo(
-    () => (links ? computeFlowGraph({ scope, flows: page.flows, links, screens: byId, viewports: project.viewports }) : null),
+    () =>
+      links ? computeFlowGraph({ scope, flows: page.flows, links, screens: byId, viewports: project.viewports }) : null,
     [links, scope, page, byId, project.viewports],
   );
   const [hover, setHover] = useState<string | null>(null);
@@ -38,15 +38,20 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
   const root = useRef<HTMLDivElement>(null);
   const world = useRef<HTMLDivElement>(null);
   const ctrl = useRef<CanvasController | null>(null);
-  const code = (id: string) => byId.get(id)?.code ?? id;
-  const name = (id: string) => byId.get(id)?.title.split(' / ').pop() ?? id;
+  const code = useCallback((id: string) => byId.get(id)?.code ?? id, [byId]);
 
   useLayoutEffect(() => {
     const el = root.current;
 
     if (!el || !graph) return;
-    const fit = () => fitRect({ x: 0, y: 0, w: graph.w, h: graph.h }, { w: el.clientWidth, h: el.clientHeight - 64 }, { inset: 8, pad: 48, maxK: 1.6 });
-    const place = world.current ? sharpWhenStill(world.current) : () => undefined;
+    const fit = () =>
+      fitRect(
+        { x: 0, y: 0, w: graph.w, h: graph.h },
+        { w: el.clientWidth, h: el.clientHeight - 64 },
+        { inset: 8, pad: 48, maxK: 1.6 },
+      );
+    const placer = world.current ? placeWorld(world.current) : null;
+    const place = placer?.place ?? (() => undefined);
     const controller = new CanvasController(el, {
       initial: fit(),
       onChange: (c) => {
@@ -82,20 +87,21 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
       el.removeEventListener('pointerdown', touch);
       el.removeEventListener('wheel', touch);
       controller.destroy();
+      placer?.release();
       canvas.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph]);
+  }, [graph, canvas]);
 
-  const focus = (id: string) => select(id, { focus: true });
+  const focus = useCallback((id: string) => select(id, { focus: true }), [select]);
 
   // a step picked in the left panel, the search or the findings: bring it into view
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only a focus request moves the camera, a plain selection does not
   useEffect(() => {
     const n = selected ? graph?.nodes.find((x) => x.id === selected) : undefined;
     const el = root.current;
 
-    if (n && el && ctrl.current && focusTick) ctrl.current.set(centerOn(ctrl.current.camera, n, { w: el.clientWidth, h: el.clientHeight }, 0.9));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (n && el && ctrl.current && focusTick)
+      ctrl.current.set(centerOn(ctrl.current.camera, n, { w: el.clientWidth, h: el.clientHeight }, 0.9));
   }, [focusTick, graph]);
   const focusId = hover ?? selected;
   const related = useMemo(() => {
@@ -154,10 +160,11 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
     );
 
     return () => setInspectorExtra(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [graph, findings, t]);
+  }, [graph, findings, t, code, focus]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: the diagram is a canvas the pointer works on; its keys are listened to on the window
+    // biome-ignore lint/a11y/useKeyWithClickEvents: the left panel and the search select steps from the keyboard
     <div
       ref={root}
       className="pd-board pd-flows"
@@ -175,32 +182,47 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
         <div className="pd-empty">{t.detecting}</div>
       ) : (
         <div ref={world} className="pd-world" style={{ width: graph.w, height: graph.h }}>
-          <svg className="pd-svg" width={graph.w} height={graph.h}>
+          <svg aria-hidden="true" className="pd-svg" width={graph.w} height={graph.h}>
             <defs>
               {KINDS.map((k) => (
-                <marker key={k} id={`pd-fa-${k}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <marker
+                  key={k}
+                  id={`pd-fa-${k}`}
+                  viewBox="0 0 10 10"
+                  refX="9"
+                  refY="5"
+                  markerWidth="7"
+                  markerHeight="7"
+                  orient="auto-start-reverse"
+                >
                   <path d="M0 0 L10 5 L0 10 z" className={`pd-fa pd-fa--${k}`} />
                 </marker>
               ))}
             </defs>
-            {graph.edges.filter((e) => showOther || e.kind !== 'other').map((e) => {
-              const on = focusId && (e.from === focusId || e.to === focusId);
+            {graph.edges
+              .filter((e) => showOther || e.kind !== 'other')
+              .map((e) => {
+                const on = focusId && (e.from === focusId || e.to === focusId);
 
-              return (
-                <path
-                  key={e.id}
-                  d={e.d}
-                  className={`pd-fedge pd-fedge--${e.kind}${on ? ' is-on' : focusId ? ' is-faded' : ''}`}
-                  markerEnd={`url(#pd-fa-${e.kind})`}
-                >
-                  <title>{`${name(e.from)} → ${name(e.to)}${e.label ? ` · „${e.label}”` : ''}${e.flows.length ? ` · ${e.flows.join(', ')}` : ''}`}</title>
-                </path>
-              );
-            })}
+                return (
+                  <path
+                    key={e.id}
+                    d={e.d}
+                    className={`pd-fedge pd-fedge--${e.kind}${on ? ' is-on' : focusId ? ' is-faded' : ''}`}
+                    markerEnd={`url(#pd-fa-${e.kind})`}
+                  >
+                    <title>{`${name(e.from)} → ${name(e.to)}${e.label ? ` · „${e.label}”` : ''}${e.flows.length ? ` · ${e.flows.join(', ')}` : ''}`}</title>
+                  </path>
+                );
+              })}
             {graph.edges
               .filter((e) => e.trigger !== 'tap' && (showOther || e.kind !== 'other'))
               .map((e) => (
-                <g key={`l${e.id}`} className={`pd-flabel pd-flabel--${e.kind}`} transform={`translate(${e.mid.x} ${e.mid.y})`}>
+                <g
+                  key={`l${e.id}`}
+                  className={`pd-flabel pd-flabel--${e.kind}`}
+                  transform={`translate(${e.mid.x} ${e.mid.y})`}
+                >
                   <text textAnchor="middle" y={-8}>
                     {t.triggers[e.trigger] ?? e.trigger}: {e.label}
                   </text>
@@ -209,7 +231,12 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
             {graph.nodes
               .filter((n) => n.entry)
               .map((n) => (
-                <path key={`sl${n.id}`} d={`M${n.x - 42} ${n.y + n.h / 2} L${n.x - 1} ${n.y + n.h / 2}`} className="pd-fedge pd-fedge--happy" markerEnd="url(#pd-fa-happy)" />
+                <path
+                  key={`sl${n.id}`}
+                  d={`M${n.x - 42} ${n.y + n.h / 2} L${n.x - 1} ${n.y + n.h / 2}`}
+                  className="pd-fedge pd-fedge--happy"
+                  markerEnd="url(#pd-fa-happy)"
+                />
               ))}
           </svg>
           {graph.nodes.map((n) => {
@@ -218,6 +245,7 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
             const exits = graph.exits[n.id] ?? [];
 
             return (
+              // biome-ignore lint/a11y/noStaticElementInteractions: a double click opens the prototype; the left panel does it from the keyboard
               <div
                 key={n.id}
                 data-step={n.id}
@@ -226,22 +254,30 @@ export const FlowsView = ({ page, flowKey }: { page: Page; flowKey?: string }) =
                 onPointerEnter={() => setHover(n.id)}
                 onDoubleClick={() => openScreen(n.id)}
               >
-                <span>{s.title.split(' / ').pop()}</span>
+                <span>{screenName(s)}</span>
                 <b>{code(n.id)}</b>
-                {exits.length > 0 && <small className="pd-fbox__exits" title={exits.map((id) => byId.get(id)?.title ?? id).join('\n')}>→ {exits.length === 1 ? (byId.get(exits[0]!)?.title.split(' / ').pop() ?? exits[0]) : t.exitsCount(exits.length)}</small>}
+                {exits.length > 0 && (
+                  <small className="pd-fbox__exits" title={exits.map((id) => byId.get(id)?.title ?? id).join('\n')}>
+                    → {exits.length === 1 ? name(exits[0]!) : t.exitsCount(exits.length)}
+                  </small>
+                )}
               </div>
             );
           })}
           {graph.nodes
             .filter((n) => n.entry)
             .map((n) => (
-              <div key={`s${n.id}`} className="pd-fstart" style={{ left: n.x - 64, top: n.y + n.h / 2 - 11 }} title={t.start}>
+              <div
+                key={`s${n.id}`}
+                className="pd-fstart"
+                style={{ left: n.x - 64, top: n.y + n.h / 2 - 11 }}
+                title={t.start}
+              >
                 <i />
               </div>
             ))}
         </div>
       )}
-
     </div>
   );
 };

@@ -61,41 +61,215 @@
   --pd-shadow-float: 0 1px 2px rgba(15, 18, 34, 0.06), 0 14px 40px rgba(15, 18, 34, 0.16);
   --pd-shadow-dialog: 0 24px 64px rgba(15, 18, 34, 0.28);
   /* type */
-  --pd-font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --pd-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --pd-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+  /* the plain text a project's own content starts from, wherever Orbito shows it. Fixed values of their own, not the
+     tool's font and ink above: a new look of Orbito must never restyle anyone's screens */
+  --pd-content-font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --pd-content-ink: #0f1222;
 }
-.pd-board, .pd-doc, .pd-screen-page { font-family: var(--pd-font); color: var(--pd-ink); }
-/* one focus ring for everything that can be reached with the keyboard */
-.pd-shell :focus-visible, .pd-ds :focus-visible, .pd-team :focus-visible, .pd-welcome :focus-visible, .pd-bubble :focus-visible { outline: 2px solid var(--pd-accent); outline-offset: 2px; }
-.pd-crash { padding: 24px; font: 13px/1.45 var(--pd-font); color: var(--pd-danger); background: var(--pd-danger-soft); height: 100%; }
-.pd-crash pre { white-space: pre-wrap; }
-.pd-select { font: inherit; font-size: 13px; padding: 6px 8px; border: 1px solid var(--pd-line); border-radius: var(--pd-r-sm); background: var(--pd-surface); color: var(--pd-ink); }
-.pd-toggle { display: flex; gap: 4px; align-items: center; color: var(--pd-muted); white-space: nowrap; }
-.pd-toggle input { accent-color: var(--pd-accent); }
-.pd-btn { font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border: 1px solid var(--pd-line); background: var(--pd-surface); border-radius: var(--pd-r-sm); cursor: pointer; color: var(--pd-ink); }
-.pd-btn:hover { background: var(--pd-surface-2); }
-.pd-btn--primary { background: var(--pd-accent); border-color: var(--pd-accent); color: #fff; box-shadow: var(--pd-shadow-card); }
-.pd-btn--primary:hover { background: var(--pd-accent-strong); border-color: var(--pd-accent-strong); }
-.pd-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--pd-muted); font-family: var(--pd-font); }
-.pd-status:disabled { cursor: default; }
-.pd-status i, .pd-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--st, var(--pd-faint)); display: inline-block; }
+/* A project's own content (a screen on the board, in the details, in the prototype; a component in the catalog) inherits
+   no text style from the panel it is shown in: it starts from the same plain text everywhere. Before, the screen details
+   handed their 13 px down to every element of a screen that sets no size of its own. e2e/untouched-screens checks it */
+[data-pd-content] {
+  color: var(--pd-content-ink);
+  font: 400 16px / normal var(--pd-content-font);
+  letter-spacing: normal;
+  word-spacing: normal;
+  text-transform: none;
+  text-align: start;
+  text-indent: 0;
+  text-shadow: none;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+.pd-board,
+.pd-doc,
+.pd-screen-page {
+  font-family: var(--pd-font);
+  color: var(--pd-ink);
+}
+/* one focus ring for everything of Orbito that can be reached with the keyboard. Never inside a project's own content
+   (`data-pd-content`: a screen, a component in the catalog): a design keeps its own focus style. The same guard is on
+   every rule here that names an element by its tag under a panel that also shows a screen; e2e/untouched-screens checks it */
+.pd-shell :focus-visible:not(:where([data-pd-content] *)),
+.pd-ds :focus-visible:not(:where([data-pd-content] *)),
+.pd-team :focus-visible,
+.pd-welcome :focus-visible,
+.pd-bubble :focus-visible {
+  outline: 2px solid var(--pd-accent);
+  outline-offset: 2px;
+}
+.pd-crash {
+  padding: 24px;
+  font: 13px / 1.45 var(--pd-font);
+  color: var(--pd-danger);
+  background: var(--pd-danger-soft);
+  height: 100%;
+}
+.pd-crash pre {
+  white-space: pre-wrap;
+}
+.pd-select {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid var(--pd-line);
+  border-radius: var(--pd-r-sm);
+  background: var(--pd-surface);
+  color: var(--pd-ink);
+}
+.pd-toggle {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  color: var(--pd-muted);
+  white-space: nowrap;
+}
+.pd-toggle input {
+  accent-color: var(--pd-accent);
+}
+.pd-btn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border: 1px solid var(--pd-line);
+  background: var(--pd-surface);
+  border-radius: var(--pd-r-sm);
+  cursor: pointer;
+  color: var(--pd-ink);
+}
+.pd-btn:hover {
+  background: var(--pd-surface-2);
+}
+.pd-btn--primary {
+  background: var(--pd-accent);
+  border-color: var(--pd-accent);
+  color: #fff;
+  box-shadow: var(--pd-shadow-card);
+}
+.pd-btn--primary:hover {
+  background: var(--pd-accent-strong);
+  border-color: var(--pd-accent-strong);
+}
+.pd-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--pd-muted);
+  font-family: var(--pd-font);
+}
+.pd-status:disabled {
+  cursor: default;
+}
+.pd-status i,
+.pd-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--st, var(--pd-faint));
+  display: inline-block;
+}
 /* each status: its dot, and the tint of its chip */
-.pd-status--todo { --st: var(--pd-faint); --st-bg: var(--pd-surface-2); --st-fg: var(--pd-muted); }
-.pd-status--wip { --st: var(--pd-dot-warn); --st-bg: var(--pd-warn-soft); --st-fg: var(--pd-warn); }
-.pd-status--review { --st: var(--pd-info); --st-bg: var(--pd-info-soft); --st-fg: var(--pd-info); }
-.pd-status--changes { --st: var(--pd-danger); --st-bg: var(--pd-danger-soft); --st-fg: var(--pd-danger); }
-.pd-status--approved { --st: var(--pd-dot-ok); --st-bg: var(--pd-ok-soft); --st-fg: var(--pd-ok); }
-.pd-status--onHold { --st: var(--pd-dot-hold); --st-bg: var(--pd-accent-soft); --st-fg: var(--pd-dot-hold); }
-.pd-status--dropped { --st: var(--pd-ink); --st-bg: var(--pd-surface-2); --st-fg: var(--pd-muted); }
-.pd-doc { max-width: 1040px; margin: 0 auto; padding: 40px 24px 80px; }
-.pd-doc h1 { font-size: 30px; margin: 0 0 24px; }
-.pd-doc h2 { font-size: 18px; margin: 32px 0 12px; }
-.pd-muted { color: var(--pd-muted); }
-.pd-warn { color: var(--pd-warn); }
+.pd-status--todo {
+  --st: var(--pd-faint);
+  --st-bg: var(--pd-surface-2);
+  --st-fg: var(--pd-muted);
+}
+.pd-status--wip {
+  --st: var(--pd-dot-warn);
+  --st-bg: var(--pd-warn-soft);
+  --st-fg: var(--pd-warn);
+}
+.pd-status--review {
+  --st: var(--pd-info);
+  --st-bg: var(--pd-info-soft);
+  --st-fg: var(--pd-info);
+}
+.pd-status--changes {
+  --st: var(--pd-danger);
+  --st-bg: var(--pd-danger-soft);
+  --st-fg: var(--pd-danger);
+}
+.pd-status--approved {
+  --st: var(--pd-dot-ok);
+  --st-bg: var(--pd-ok-soft);
+  --st-fg: var(--pd-ok);
+}
+.pd-status--onHold {
+  --st: var(--pd-dot-hold);
+  --st-bg: var(--pd-accent-soft);
+  --st-fg: var(--pd-dot-hold);
+}
+.pd-status--dropped {
+  --st: var(--pd-ink);
+  --st-bg: var(--pd-surface-2);
+  --st-fg: var(--pd-muted);
+}
+.pd-doc {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+.pd-doc h1 {
+  font-size: 30px;
+  margin: 0 0 24px;
+}
+.pd-doc h2 {
+  font-size: 18px;
+  margin: 32px 0 12px;
+}
+.pd-muted {
+  color: var(--pd-muted);
+}
+.pd-warn {
+  color: var(--pd-warn);
+}
 /* status of a feature: a native dropdown that looks like a tinted chip; the colour carries the meaning */
-.pd-status { display: inline-flex; align-items: center; gap: 5px; font: 600 12px var(--pd-font); border-radius: 999px; border: 0; background: var(--st-bg, var(--pd-surface-2)); color: var(--st-fg, var(--pd-ink)); cursor: pointer; white-space: nowrap; position: relative; padding: 3px 9px; }
-.pd-status select { appearance: none; -webkit-appearance: none; border: 0; background: transparent; font: inherit; color: inherit; padding: 0 12px 0 0; cursor: pointer; }
-.pd-status select:disabled { cursor: default; }
-.pd-status::after { content: '▾'; position: absolute; right: 8px; font-size: 11px; color: currentColor; opacity: 0.6; pointer-events: none; }
-.pd-status:focus-within { outline: 2px solid var(--pd-accent); outline-offset: 1px; }
-.pd-btn--sm { font-size: 12px; padding: 4px 9px; }
+.pd-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font: 600 12px var(--pd-font);
+  border-radius: 999px;
+  border: 0;
+  background: var(--st-bg, var(--pd-surface-2));
+  color: var(--st-fg, var(--pd-ink));
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  padding: 3px 9px;
+}
+.pd-status select {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  padding: 0 12px 0 0;
+  cursor: pointer;
+}
+.pd-status select:disabled {
+  cursor: default;
+}
+.pd-status::after {
+  content: "▾";
+  position: absolute;
+  right: 8px;
+  font-size: 11px;
+  color: currentColor;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.pd-status:focus-within {
+  outline: 2px solid var(--pd-accent);
+  outline-offset: 1px;
+}
+.pd-btn--sm {
+  font-size: 12px;
+  padding: 4px 9px;
+}

@@ -1,11 +1,21 @@
 import { EventEmitter } from 'node:events';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { devEndpoints, fromOtherSite } from '../endpoints.mjs';
+import { changeComments } from '../src/comments.ts';
+import { devEndpoints, fromOtherSite } from '../src/endpoints.ts';
 
 const HOST = 'localhost:5190';
 let root: string;
@@ -27,7 +37,15 @@ afterEach(() => {
   rmSync(join(root, '..', 'orbito-outside.md'), { force: true });
 });
 
-const call = (url: string, { method = 'GET', headers = {}, body }: { method?: string; headers?: Record<string, string>; body?: string } = {}) =>
+/** `body` as a list is sent chunk by chunk, the way a long request arrives. */
+const call = (
+  url: string,
+  {
+    method = 'GET',
+    headers = {},
+    body,
+  }: { method?: string; headers?: Record<string, string>; body?: string | Buffer[] } = {},
+) =>
   new Promise<{ code: number; text: string; passed?: boolean }>((done) => {
     const req = Object.assign(new EventEmitter(), { url, method, headers: { host: HOST, ...headers } });
     const res = {
@@ -39,7 +57,7 @@ const call = (url: string, { method = 'GET', headers = {}, body }: { method?: st
     };
 
     devEndpoints(root, statusFile)(req, res, () => done({ code: 0, text: '', passed: true }));
-    req.emit('data', body ?? '');
+    for (const chunk of Array.isArray(body) ? body : [body ?? '']) req.emit('data', chunk);
     req.emit('end');
   });
 
@@ -55,12 +73,18 @@ describe('requests from other sites', () => {
   });
 
   it('lets the board and the terminal through', () => {
-    expect(fromOtherSite({ headers: { host: HOST, 'sec-fetch-site': 'same-origin', origin: `http://${HOST}` } })).toBe(false);
+    expect(fromOtherSite({ headers: { host: HOST, 'sec-fetch-site': 'same-origin', origin: `http://${HOST}` } })).toBe(
+      false,
+    );
     expect(fromOtherSite({ headers: { host: HOST } })).toBe(false);
   });
 
   it('stops a write before it touches the file', async () => {
-    const r = await call('/__orbito/status', { method: 'POST', headers: { origin: 'https://evil.example' }, body: JSON.stringify({ id: 'x', status: 'wip' }) });
+    const r = await call('/__orbito/status', {
+      method: 'POST',
+      headers: { origin: 'https://evil.example' },
+      body: JSON.stringify({ id: 'x', status: 'wip' }),
+    });
 
     expect(r.code).toBe(403);
     expect(() => readFileSync(statusFile)).toThrow();
@@ -76,6 +100,58 @@ describe('reading a file', () => {
     expect((await call('/__orbito/file?path=secret.env')).code).toBe(404);
     expect((await call('/__orbito/file?path=../orbito-outside.md')).code).toBe(404);
     expect((await call('/__orbito/file?path=reviews/missing.md')).code).toBe(404);
+  });
+
+  it('refuses a file reached through a link that leaves the project', async () => {
+    const outside = mkdtempSync(join(tmpdir(), 'orbito-outside-'));
+
+    writeFileSync(join(outside, 'notes.md'), 'not of this project');
+    // a junction on Windows (no special rights needed), a symbolic link elsewhere
+    symlinkSync(outside, join(root, 'reviews/elsewhere'), 'junction');
+    try {
+      expect((await call('/__orbito/file?path=reviews/elsewhere/notes.md')).code).toBe(404);
+      expect((await call('/__orbito/reveal?path=reviews/elsewhere/notes.md', { method: 'POST' })).code).toBe(404);
+    } finally {
+      rmSync(join(root, 'reviews/elsewhere'), { recursive: true, force: true });
+      rmSync(outside, { recursive: true, force: true });
+    }
+  });
+
+  it('takes GET only', async () => {
+    expect((await call('/__orbito/file?path=reviews/report.md', { method: 'POST' })).code).toBe(405);
+  });
+});
+
+describe('opening a file in the code editor, an address of Vite itself', () => {
+  it('lets the board through and stops other sites', async () => {
+    expect((await call('/__open-in-editor?file=screens/a.screen.tsx')).passed).toBe(true);
+    expect(
+      (await call('/__open-in-editor?file=screens/a.screen.tsx', { headers: { 'sec-fetch-site': 'cross-site' } })).code,
+    ).toBe(403);
+    expect(
+      (await call('/__open-in-editor?file=screens/a.screen.tsx', { headers: { origin: 'https://evil.example' } })).code,
+    ).toBe(403);
+  });
+});
+
+describe('the body of a request', () => {
+  const post = (body: string | Buffer[]) => call('/__orbito/comments', { method: 'POST', body });
+
+  it('keeps a letter whole when it arrives cut in two', async () => {
+    const bytes = Buffer.from(JSON.stringify({ action: 'add', screen: 'a', text: 'Zażółć gęślą jaźń' }));
+    // cut inside the two bytes of "ż"
+    const cut = bytes.indexOf(Buffer.from('ż')) + 1;
+    const saved = await post([bytes.subarray(0, cut), bytes.subarray(cut)]);
+
+    expect(saved.code).toBe(200);
+    expect(JSON.parse(saved.text).comments[0].text).toBe('Zażółć gęślą jaźń');
+  });
+
+  it('refuses one that is too large or is not an object', async () => {
+    expect((await post([Buffer.alloc(1024 * 1024 + 1, 0x20)])).code).toBe(413);
+    expect((await post('null')).code).toBe(400);
+    expect((await post('[]')).code).toBe(400);
+    expect(existsSync(join(root, 'comments'))).toBe(false);
   });
 });
 
@@ -97,27 +173,54 @@ describe('showing a file in the system', () => {
 
 describe('statuses', () => {
   it('saves one entry and reads it back', async () => {
-    const saved = await call('/__orbito/status', { method: 'POST', body: JSON.stringify({ id: 'flow:a/b', status: 'review' }) });
+    const saved = await call('/__orbito/status', {
+      method: 'POST',
+      body: JSON.stringify({ id: 'flow:a/b', status: 'review' }),
+    });
 
     expect(saved.code).toBe(200);
     expect(JSON.parse((await call('/__orbito/status')).text)['flow:a/b'].status).toBe('review');
   });
 
   it('answers 400 to a wrong request and 409 to a damaged file', async () => {
-    expect((await call('/__orbito/status', { method: 'POST', body: JSON.stringify({ id: 'x', status: 'nope' }) })).code).toBe(400);
+    expect(
+      (await call('/__orbito/status', { method: 'POST', body: JSON.stringify({ id: 'x', status: 'nope' }) })).code,
+    ).toBe(400);
     expect((await call('/__orbito/status', { method: 'POST', body: 'not json' })).code).toBe(400);
     writeFileSync(statusFile, '<<<<<<< HEAD');
-    expect((await call('/__orbito/status', { method: 'POST', body: JSON.stringify({ id: 'x', status: 'wip' }) })).code).toBe(409);
+    expect(
+      (await call('/__orbito/status', { method: 'POST', body: JSON.stringify({ id: 'x', status: 'wip' }) })).code,
+    ).toBe(409);
     expect(readFileSync(statusFile, 'utf8')).toBe('<<<<<<< HEAD');
   });
 
   it('takes GET and POST only', async () => {
     expect((await call('/__orbito/status', { method: 'DELETE' })).code).toBe(405);
   });
+
+  it('keeps an id that is also a built-in name of JavaScript as an ordinary entry', async () => {
+    expect(
+      (await call('/__orbito/status', { method: 'POST', body: JSON.stringify({ id: '__proto__', status: 'review' }) }))
+        .code,
+    ).toBe(200);
+    await call('/__orbito/status', { method: 'POST', body: JSON.stringify({ id: 'flow:a/b', status: 'wip' }) });
+    expect(readFileSync(statusFile, 'utf8')).toContain('"__proto__": {');
+    expect(Object.keys(JSON.parse(readFileSync(statusFile, 'utf8'))).sort()).toEqual(['__proto__', 'flow:a/b']);
+  });
 });
 
 describe('comments', () => {
   const post = (body: unknown) => call('/__orbito/comments', { method: 'POST', body: JSON.stringify(body) });
+
+  it('keeps the order comments were written in, also when they are written in the same instant', () => {
+    const dir = join(root, 'comments');
+    const now = new Date();
+    const texts = Array.from({ length: 12 }, (_, i) => `comment ${i + 1}`);
+    let list: { text: string }[] = [];
+
+    for (const text of texts) list = changeComments(dir, { action: 'add', screen: 'same-instant', text }, now);
+    expect(list.map((c) => c.text)).toEqual(texts);
+  });
 
   it('adds each comment as its own open file, moves it along and removes it', async () => {
     const added = await post({ action: 'add', screen: 'plant-list', text: '  Too many filters  ', author: 'Ola' });
@@ -133,11 +236,24 @@ describe('comments', () => {
     const file = join(root, `comments/plant-list/${c.id}.md`);
 
     expect(c).toMatchObject({ author: 'Ola', status: 'open' });
-    expect(readFileSync(file, 'utf8')).toMatch(/^---\nstatus: open\nauthor: Ola\ncreated: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\n---\nToo many filters\n$/);
-    expect((await post({ action: 'status', screen: 'plant-list', id: c.id, status: 'done', note: 'moved the filters into a sheet' })).code).toBe(200);
+    expect(readFileSync(file, 'utf8')).toMatch(
+      /^---\nstatus: open\nauthor: Ola\ncreated: \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\n---\nToo many filters\n$/,
+    );
+    expect(
+      (
+        await post({
+          action: 'status',
+          screen: 'plant-list',
+          id: c.id,
+          status: 'done',
+          note: 'moved the filters into a sheet',
+        })
+      ).code,
+    ).toBe(200);
     expect(readFileSync(file, 'utf8')).toContain('status: done\n');
     expect(readFileSync(file, 'utf8')).toContain('note: moved the filters into a sheet\n');
-    for (const x of JSON.parse((await call('/__orbito/comments')).text)['plant-list']) await post({ action: 'remove', screen: 'plant-list', id: x.id });
+    for (const x of JSON.parse((await call('/__orbito/comments')).text)['plant-list'])
+      await post({ action: 'remove', screen: 'plant-list', id: x.id });
     // a screen with no comments left has no folder
     expect(existsSync(join(root, 'comments/plant-list'))).toBe(false);
   });
@@ -157,8 +273,25 @@ describe('comments', () => {
     expect(readFileSync(join(root, `comments/a/${id}.md`), 'utf8')).toContain('<<<<<<< HEAD');
   });
 
+  it('never leaves the comments folder: no screen or comment called "." or ".."', async () => {
+    writeFileSync(join(root, 'README.md'), '# the project');
+    for (const screen of ['..', '.', '.hidden']) {
+      expect((await post({ action: 'add', screen, text: 'a' })).code).toBe(400);
+      expect((await post({ action: 'remove', screen, id: 'README' })).code).toBe(400);
+      expect((await post({ action: 'status', screen, id: 'README', status: 'done' })).code).toBe(400);
+    }
+    await post({ action: 'add', screen: 'a', text: 'b' });
+    expect((await post({ action: 'remove', screen: 'a', id: '..' })).code).toBe(404);
+    // nothing written next to the project's own files, nothing removed
+    expect(readdirSync(root).sort()).toEqual(['.orbito', 'README.md', 'comments', 'reviews', 'secret.env']);
+    expect(readFileSync(join(root, 'README.md'), 'utf8')).toBe('# the project');
+  });
+
   it('stops a comment from another site', async () => {
-    expect((await call('/__orbito/comments', { method: 'POST', headers: { 'sec-fetch-site': 'cross-site' }, body: '{}' })).code).toBe(403);
+    expect(
+      (await call('/__orbito/comments', { method: 'POST', headers: { 'sec-fetch-site': 'cross-site' }, body: '{}' }))
+        .code,
+    ).toBe(403);
   });
 });
 
@@ -166,7 +299,10 @@ describe('source code for dev mode', () => {
   it('gives the code of screens and components only', async () => {
     mkdirSync(join(root, 'screens'));
     writeFileSync(join(root, 'screens/start.screen.tsx'), 'export default 1');
-    expect(await call('/__orbito/source?path=screens/start.screen.tsx')).toMatchObject({ code: 200, text: 'export default 1' });
+    expect(await call('/__orbito/source?path=screens/start.screen.tsx')).toMatchObject({
+      code: 200,
+      text: 'export default 1',
+    });
     expect((await call('/__orbito/source?path=reviews/report.md')).code).toBe(404);
     expect((await call('/__orbito/source?path=secret.env')).code).toBe(404);
     expect((await call('/__orbito/source?path=screens/../secret.env')).code).toBe(404);

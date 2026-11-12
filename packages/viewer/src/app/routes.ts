@@ -46,7 +46,8 @@ export const canvasHash = (canvas: Canvas, page?: string, flow?: string) => {
   return [`#/${canvas}`, ...parts.map(encodeURIComponent)].join('/');
 };
 
-export const dsHash = (section?: string) => ['#/ds', ...(section ? section.split('/').map(encodeURIComponent) : [])].join('/');
+export const dsHash = (section?: string) =>
+  ['#/ds', ...(section ? section.split('/').map(encodeURIComponent) : [])].join('/');
 
 export const SKILLS_HASH = '#/skills';
 

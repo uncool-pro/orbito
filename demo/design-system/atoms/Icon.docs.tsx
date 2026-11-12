@@ -23,6 +23,15 @@ export default defineDocs({
         </div>
       ),
     },
-    { name: 'Sizes 16 · 24 · 48', render: () => <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'end', color: 'var(--color-primary)' }}><Icon name="leaf" size={16} /><Icon name="leaf" /><Icon name="leaf" size={48} /></div> },
+    {
+      name: 'Sizes 16 · 24 · 48',
+      render: () => (
+        <div style={{ display: 'flex', gap: 'var(--space-4)', alignItems: 'end', color: 'var(--color-primary)' }}>
+          <Icon name="leaf" size={16} />
+          <Icon name="leaf" />
+          <Icon name="leaf" size={48} />
+        </div>
+      ),
+    },
   ],
 });

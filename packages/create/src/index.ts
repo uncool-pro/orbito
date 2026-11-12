@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * npm create orbito <folder> [--title "My product"] [--platform mobile|web|both] [--locale <language of the product, e.g. en, pl>] [--local] [--no-install]
+ * node orbito/packages/create/src/index.ts <folder> [--title "My product"] [--platform mobile|web|both] [--locale <language of the product, e.g. en, pl>] [--no-install]
  *
  * The technical start of a project: copies the template (base design-system kit, conventions, CLAUDE.md, process file),
  * fills in the name, platform and language, installs and checks it. No design questions: those belong to the project
@@ -12,7 +12,7 @@ import { basename, dirname, join, relative, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
-import { installTeam } from '../../cli/src/install.ts';
+import { installTeam } from '@uncool-pro/orbito-cli/install';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const TOOL = resolve(here, '../../..');
@@ -32,7 +32,9 @@ const opt = (name: string) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const flag = (name: string) => args.includes(`--${name}`);
-const positional = args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1]!.startsWith('--') && !['--local', '--no-install'].includes(args[i - 1]!)));
+const positional = args.filter(
+  (a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1]!.startsWith('--') && args[i - 1] !== '--no-install'),
+);
 
 const fail = (msg: string): never => {
   console.error(`\n✗ ${msg}\n`);
@@ -65,12 +67,12 @@ const main = async () => {
   if (existsSync(target) && readdirSync(target).length) fail(`${target} is not empty. Choose a new folder.`);
   const title = opt('title') ?? (await ask('Product name', basename(target)));
   const platform = (opt('platform') ?? (await ask('Platform: mobile, web or both', 'mobile'))) as Platform;
-  const locale = opt('locale') ?? (await ask('Language of the product (the mockups are written in it), e.g. en, pl, de', 'en'));
+  const locale =
+    opt('locale') ?? (await ask('Language of the product (the mockups are written in it), e.g. en, pl, de', 'en'));
 
   if (!(platform in PLATFORMS)) fail(`--platform must be mobile, web or both (got "${platform}")`);
-  if (!/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(locale)) fail(`--locale must be a language tag such as en, pl or pt-BR (got "${locale}")`);
-  // a local checkout of the tool (or an explicit --local) links the packages instead of downloading them
-  const local = flag('local') || existsSync(join(PACKAGES, 'core', 'src', 'index.ts'));
+  if (!/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(locale))
+    fail(`--locale must be a language tag such as en, pl or pt-BR (got "${locale}")`);
 
   console.log(`\nCreating ${title} in ${target}`);
   cpSync(TEMPLATE, target, { recursive: true, filter: (src) => !/[\\/](node_modules|dist)([\\/]|$)/.test(src) });
@@ -87,23 +89,45 @@ const main = async () => {
   };
   const platforms = platform === 'both' ? 'mobile + web' : platform;
 
-  const version = (JSON.parse(readFileSync(join(PACKAGES, '../package.json'), 'utf8')) as { version?: string }).version ?? 'latest';
+  const version =
+    (JSON.parse(readFileSync(join(PACKAGES, '../package.json'), 'utf8')) as { version?: string }).version ?? 'latest';
 
-  ['CLAUDE.md', 'README.md', 'index.html', '.orbito/process.md', 'compose.yaml'].forEach((f) => fill(f, { '{{title}}': title, '{{viewport}}': platforms, '{{date}}': new Date().toISOString().slice(0, 10), '{{version}}': version }));
+  const values = {
+    '{{title}}': title,
+    '{{viewport}}': platforms,
+    '{{date}}': new Date().toISOString().slice(0, 10),
+    '{{version}}': version,
+  };
+
+  ['CLAUDE.md', 'README.md', '.orbito/process.md', 'compose.yaml'].forEach((f) => fill(f, values));
+  // the name is the person's text: in a page it goes in as text, in code as a string, whatever characters it has
+  fill('index.html', {
+    ...values,
+    '{{title}}': title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+  });
   writeFileSync(join(target, '.orbito', 'runtime'), DOCKER ? 'docker\n' : 'local\n');
   if (!DOCKER) rmSync(join(target, 'compose.yaml'), { force: true });
   // what Orbito installed is recorded from the first moment: later updates must be able to tell the person's own items from Orbito's
   installTeam({ root: target, tool: TOOL });
-  fill('orbito.config.ts', { "title: 'My product'": `title: ${JSON.stringify(title).replace(/^"|"$/g, "'")}`, "locale: 'en'": `locale: '${locale}'`, "defaultViewport: 'mobile'": `defaultViewport: '${PLATFORMS[platform]}'` });
+  fill('orbito.config.ts', {
+    "title: 'My product'": `title: ${JSON.stringify(title)}`,
+    "locale: 'en'": `locale: '${locale}'`,
+    "defaultViewport: 'mobile'": `defaultViewport: '${PLATFORMS[platform]}'`,
+  });
 
   const pkgPath = join(target, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
 
   pkg.name = slug(basename(target));
+  // the tool's packages are linked from the Orbito folder, never downloaded: nothing with these names comes from the npm
+  // registry. In Docker the engine stays in the image, so the project lists none of them: an `npm install` run there by
+  // mistake has nothing of Orbito's to look for.
   PD_PACKAGES.forEach((p) => {
-    if (!DOCKER) pkg.dependencies[`@uncool-pro/orbito-${p}`] = local ? `file:${relative(target, join(PACKAGES, p)).split('\\').join('/')}` : '^0.1.0';
+    if (DOCKER) delete pkg.dependencies[`@uncool-pro/orbito-${p}`];
+    else
+      pkg.dependencies[`@uncool-pro/orbito-${p}`] = `file:${relative(target, join(PACKAGES, p)).split('\\').join('/')}`;
   });
-  writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+  writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
 
   if (!flag('no-install') && !DOCKER) {
     console.log('Installing…');

@@ -33,3 +33,22 @@ export const targetsOf = (links: LinkMap, id: string): string[] => {
 
   return out;
 };
+
+/**
+ * The screens that lead to each screen: the link map read the other way round, each list in the order of the map.
+ * Computed once for a project; asking "what leads here?" per screen would walk every link every time.
+ */
+export const linkSources = (links: LinkMap): Map<string, string[]> => {
+  const sources = new Map<string, string[]>();
+
+  for (const from of Object.keys(links)) {
+    for (const to of targetsOf(links, from)) {
+      const list = sources.get(to);
+
+      if (list) list.push(from);
+      else sources.set(to, [from]);
+    }
+  }
+
+  return sources;
+};

@@ -6,7 +6,8 @@ import { Sheet } from './Sheet';
 
 export default defineDocs({
   component: 'Sheet',
-  description: 'A bottom sheet over a dimmed screen: a short task or a set of options without leaving the screen. Used as `DeviceScreen modal={<Sheet …/>}`, usually on its own screen in the flow.',
+  description:
+    'A bottom sheet over a dimmed screen: a short task or a set of options without leaving the screen. Used as `DeviceScreen modal={<Sheet …/>}`, usually on its own screen in the flow.',
   guidelines: {
     do: ['Keep it short: if it scrolls a lot, it should be a screen.', 'One primary action at the bottom.'],
     dont: ["Don't stack a sheet on a sheet."],

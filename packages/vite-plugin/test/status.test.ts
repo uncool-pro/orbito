@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { saveStatus } from '../status.mjs';
+import { saveStatus } from '../src/status.ts';
 
 let dir: string;
 let file: string;

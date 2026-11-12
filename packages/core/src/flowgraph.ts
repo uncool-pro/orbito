@@ -76,6 +76,14 @@ const PRIORITY: FlowEdgeKind[] = ['happy', 'alternative', 'negative', 'other'];
 
 type Pt = [number, number];
 
+/** Adds a value to the list under a key, starting the list on first use. */
+const pushTo = <K extends string | number, T>(lists: Partial<Record<K, T[]>>, key: K, value: T) => {
+  const list = lists[key] ?? [];
+
+  list.push(value);
+  lists[key] = list;
+};
+
 /** Right-angled path through the points, corners slightly rounded (never curves between them). */
 export const orthoPath = (pts: Pt[], r: number = FG.radius): string => {
   const clean = pts.filter((p, i) => i === 0 || p[0] !== pts[i - 1]![0] || p[1] !== pts[i - 1]![1]);
@@ -105,8 +113,17 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
   const ids = [...inScope];
 
   // ---- checks on the whole project graph
-  const deadEnds = ids.filter((id) => targetsOf(links, id).length === 0 && !(links[id] ?? []).some((h) => h.to === null));
-  const entries = [...new Set(flows.filter((f) => (f.path ?? 'happy') === 'happy').map((f) => f.screens[0]).filter((s): s is string => !!s && inScope.has(s)))];
+  const deadEnds = ids.filter(
+    (id) => targetsOf(links, id).length === 0 && !(links[id] ?? []).some((h) => h.to === null),
+  );
+  const entries = [
+    ...new Set(
+      flows
+        .filter((f) => (f.path ?? 'happy') === 'happy')
+        .map((f) => f.screens[0])
+        .filter((s): s is string => !!s && inScope.has(s)),
+    ),
+  ];
 
   if (!entries.length && ids[0]) entries.push(flows[0]?.screens.find((s) => inScope.has(s)) ?? ids[0]);
   const reached = new Set(entries);
@@ -129,7 +146,8 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
     f.screens.forEach((s, i) => {
       const next = f.screens[i + 1];
 
-      if (next && inScope.has(s) && inScope.has(next) && !targetsOf(links, s).includes(next)) missingSteps.push({ flow: f.key, from: s, to: next });
+      if (next && inScope.has(s) && inScope.has(next) && !targetsOf(links, s).includes(next))
+        missingSteps.push({ flow: f.key, from: s, to: next });
     }),
   );
 
@@ -153,7 +171,7 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
 
   ids.forEach((from) =>
     targetsOf(links, from).forEach((to) => {
-      if (!inScope.has(to)) return void (exits[from] ??= []).push(to);
+      if (!inScope.has(to)) return pushTo(exits, from, to);
       const info = kindsOf.get(`${from}>${to}`);
       const kind = info ? PRIORITY.find((p) => info.kinds.has(p))! : 'other';
       const spot = (links[from] ?? []).find((h) => h.to === to);
@@ -172,18 +190,30 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
     while (q.length) {
       const id = q.shift()!;
 
-      raw.filter((e) => e.from === id && usable(e)).forEach((e) => {
-        if (!level.has(e.to)) {
-          level.set(e.to, level.get(id)! + 1);
-          q.push(e.to);
-        }
-      });
+      raw
+        .filter((e) => e.from === id && usable(e))
+        .forEach((e) => {
+          if (!level.has(e.to)) {
+            level.set(e.to, level.get(id)! + 1);
+            q.push(e.to);
+          }
+        });
     }
   };
   const flowRoots = [...flows]
     .sort((a, b) => PRIORITY.indexOf(a.path ?? 'happy') - PRIORITY.indexOf(b.path ?? 'happy'))
     .map((f) => f.screens.find((id) => inScope.has(id)))
-    .filter((id): id is string => !!id && !raw.some((e) => e.to === id && e.kind !== 'other' && e.from !== id && flows.some((f) => (f.path ?? 'happy') === 'happy' && f.screens[0] === e.from)));
+    .filter(
+      (id): id is string =>
+        !!id &&
+        !raw.some(
+          (e) =>
+            e.to === id &&
+            e.kind !== 'other' &&
+            e.from !== id &&
+            flows.some((f) => (f.path ?? 'happy') === 'happy' && f.screens[0] === e.from),
+        ),
+    );
 
   spread([...new Set([...entries, ...flowRoots])], (e) => e.kind !== 'other');
   spread([...level.keys()], () => true);
@@ -193,14 +223,16 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
   const columns: string[][] = [];
 
   // keep the order the flows list screens in (happy path first), so the main path reads as the top row
-  const order = [...flows].sort((a, b) => PRIORITY.indexOf(a.path ?? 'happy') - PRIORITY.indexOf(b.path ?? 'happy')).flatMap((f) => f.screens);
+  const order = [...flows]
+    .sort((a, b) => PRIORITY.indexOf(a.path ?? 'happy') - PRIORITY.indexOf(b.path ?? 'happy'))
+    .flatMap((f) => f.screens);
   const rank = (id: string) => {
     const i = order.indexOf(id);
 
     return i < 0 ? order.length + ids.indexOf(id) : i;
   };
 
-  ids.forEach((id) => (columns[level.get(id)!] ??= []).push(id));
+  ids.forEach((id) => pushTo(columns, level.get(id)!, id));
   columns.forEach((col) => col.sort((a, b) => rank(a) - rank(b)));
   // one barycentre pass: place screens near the screens that lead to them
   for (let c = 1; c < columns.length; c++) {
@@ -215,7 +247,9 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
   }
 
   // ---- geometry: the main happy path is the top row, read left to right; every other step sits below it in its column
-  const mainPath = new Set(flows.find((f) => (f.path ?? 'happy') === 'happy' && f.screens.some((id) => inScope.has(id)))?.screens ?? []);
+  const mainPath = new Set(
+    flows.find((f) => (f.path ?? 'happy') === 'happy' && f.screens.some((id) => inScope.has(id)))?.screens ?? [],
+  );
   const rowOf = new Map<string, number>();
 
   columns.forEach((col) => {
@@ -250,7 +284,10 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
   // ports: an arrow to a step in the same row leaves from the middle and runs straight; the others are spread above
   // or below the middle, depending on where their other end is, so lines never cross at the box
   const portY = new Map<string, number>();
-  const spreadPorts = (key: (e: (typeof raw)[number]) => string | null, other: (e: (typeof raw)[number]) => FlowNode) => {
+  const spreadPorts = (
+    key: (e: (typeof raw)[number]) => string | null,
+    other: (e: (typeof raw)[number]) => FlowNode,
+  ) => {
     const groups = new Map<string, number[]>();
 
     raw.forEach((e, i) => {
@@ -264,7 +301,9 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
       const above = list.filter((i) => other(raw[i]!).y < node.y).sort((x, y) => other(raw[x]!).y - other(raw[y]!).y);
       const below = list.filter((i) => other(raw[i]!).y > node.y).sort((x, y) => other(raw[x]!).y - other(raw[y]!).y);
       const place = (ids: number[], from: number, to: number) =>
-        ids.forEach((i, j) => portY.set(`${k}|${i}`, node.y + node.h * (from + ((to - from) * (j + 1)) / (ids.length + 1))));
+        ids.forEach((i, j) =>
+          portY.set(`${k}|${i}`, node.y + node.h * (from + ((to - from) * (j + 1)) / (ids.length + 1))),
+        );
 
       place(level, level.length > 1 ? 0.3 : 0, level.length > 1 ? 0.7 : 1);
       place(above, 0, level.length ? 0.45 : 1);
@@ -273,8 +312,14 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
   };
   const fwd = (e: (typeof raw)[number]) => at.get(e.to)!.level > at.get(e.from)!.level;
 
-  spreadPorts((e) => (fwd(e) ? `${e.from}|out` : null), (e) => at.get(e.to)!);
-  spreadPorts((e) => (fwd(e) ? `${e.to}|in` : null), (e) => at.get(e.from)!);
+  spreadPorts(
+    (e) => (fwd(e) ? `${e.from}|out` : null),
+    (e) => at.get(e.to)!,
+  );
+  spreadPorts(
+    (e) => (fwd(e) ? `${e.to}|in` : null),
+    (e) => at.get(e.from)!,
+  );
 
   const edges: FlowEdge[] = raw.map((e, i) => {
     const a = at.get(e.from)!;
@@ -289,13 +334,23 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
       const y2 = portY.get(`${e.to}|in|${i}`) ?? b.y + b.h / 2;
       const xm = b.x - FG.colGap / 2 + lane;
 
-      pts = [[a.x + a.w, y1], [xm, y1], [xm, y2], [b.x, y2]];
+      pts = [
+        [a.x + a.w, y1],
+        [xm, y1],
+        [xm, y2],
+        [b.x, y2],
+      ];
       mid = Math.abs(y1 - y2) < 1 ? { x: (a.x + a.w + b.x) / 2, y: y1 } : { x: xm, y: (y1 + y2) / 2 };
     } else if (b.level === a.level) {
       // same column: out of the right side, down or up beside the boxes, back into the right side
       const xs = a.x + a.w + 26 + lane;
 
-      pts = [[a.x + a.w, a.y + a.h * 0.65], [xs, a.y + a.h * 0.65], [xs, b.y + b.h * 0.35], [b.x + b.w, b.y + b.h * 0.35]];
+      pts = [
+        [a.x + a.w, a.y + a.h * 0.65],
+        [xs, a.y + a.h * 0.65],
+        [xs, b.y + b.h * 0.35],
+        [b.x + b.w, b.y + b.h * 0.35],
+      ];
       mid = { x: xs, y: (a.y + b.y + a.h) / 2 };
     } else if (rowOf.get(e.from) === 0) {
       // going back from the top row: over the top, where nothing else is drawn
@@ -303,7 +358,12 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
       const x1 = a.x + a.w * 0.5;
       const x2 = b.x + b.w * 0.5 + lane;
 
-      pts = [[x1, a.y], [x1, arc], [x2, arc], [x2, b.y]];
+      pts = [
+        [x1, a.y],
+        [x1, arc],
+        [x2, arc],
+        [x2, b.y],
+      ];
       mid = { x: (x1 + x2) / 2, y: arc };
     } else {
       // going back from a lower row: out of the left side, along the gap right of the target, into its right side
@@ -311,11 +371,27 @@ export const computeFlowGraph = ({ scope, flows, links, screens }: FlowGraphInpu
       const y1 = a.y + a.h / 2;
       const y2 = b.y + b.h * 0.7;
 
-      pts = [[a.x, y1], [xm, y1], [xm, y2], [b.x + b.w, y2]];
+      pts = [
+        [a.x, y1],
+        [xm, y1],
+        [xm, y2],
+        [b.x + b.w, y2],
+      ];
       mid = { x: xm, y: (y1 + y2) / 2 };
     }
 
-    return { id: `e${i}`, from: e.from, to: e.to, kind: e.kind, flows: e.flows, back, d: orthoPath(pts), label: e.label, trigger: e.trigger, mid };
+    return {
+      id: `e${i}`,
+      from: e.from,
+      to: e.to,
+      kind: e.kind,
+      flows: e.flows,
+      back,
+      d: orthoPath(pts),
+      label: e.label,
+      trigger: e.trigger,
+      mid,
+    };
   });
   const width = FG.pad * 2 + (Math.max(0, ...nodes.map((n) => n.level)) + 1) * (FG.boxW + FG.colGap) - FG.colGap;
   const tallest = rows * (FG.boxH + FG.rowGap) - FG.rowGap;

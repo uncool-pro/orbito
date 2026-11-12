@@ -11,7 +11,13 @@ const tones: Record<TextTone, string> = {
 };
 const tags: Record<TextVariant, ElementType> = { title: 'h1', heading: 'h2', body: 'p', caption: 'span' };
 
-type TextProps = { variant?: TextVariant; tone?: TextTone; as?: ElementType; style?: CSSProperties; children: ReactNode };
+type TextProps = {
+  variant?: TextVariant;
+  tone?: TextTone;
+  as?: ElementType;
+  style?: CSSProperties;
+  children: ReactNode;
+};
 
 /** All text in the product. Variants map 1:1 to the type tokens. */
 export const Text = ({ variant = 'body', tone = 'default', as, style, children }: TextProps) => {

@@ -21,7 +21,17 @@ export default definePage({
       ],
     },
     { key: 'P2', name: 'Add a plant', path: 'happy', screens: ['plant-list', 'add-plant', 'plant-list'] },
-    { key: 'P3', name: 'Water from the weekly schedule', path: 'alternative', screens: ['schedule', 'plant-detail', 'watered'] },
-    { key: 'P4', name: 'Watering fails offline', path: 'negative', screens: ['plant-detail', 'plant-offline', 'watered'] },
+    {
+      key: 'P3',
+      name: 'Water from the weekly schedule',
+      path: 'alternative',
+      screens: ['schedule', 'plant-detail', 'watered'],
+    },
+    {
+      key: 'P4',
+      name: 'Watering fails offline',
+      path: 'negative',
+      screens: ['plant-detail', 'plant-offline', 'watered'],
+    },
   ],
 });

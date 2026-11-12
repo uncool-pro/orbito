@@ -12,7 +12,10 @@ export const parseFindings = (md: string): Record<number, string> => {
 
   md.split(/\r?\n/).forEach((line) => {
     if (!line.trim().startsWith('|')) return;
-    const cells = line.split('|').slice(1, -1).map((c) => c.trim().replace(/\*\*|`/g, ''));
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((c) => c.trim().replace(/\*\*|`/g, ''));
 
     if (titleCol < 0 && !/^\d+$/.test(cells[0] ?? '')) {
       const i = cells.findIndex((c) => /^(finding|problem|title|uwaga|problem)$/i.test(c));

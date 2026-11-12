@@ -1,6 +1,6 @@
 # Orbito skills and agents
 
-Skills package the product design process of Orbito: what good work looks like at each stage, how to check it, and when to hand over. They are written as principles, criteria and examples, not as step-by-step scripts, so they work with any capable model. `npm create orbito` copies them into a project's `.claude/skills/` and the agents into `.claude/agents/`; `orbito update` refreshes them. The skills map in Orbito (`#/skills`) shows the same structure.
+Skills package the product design process of Orbito: what good work looks like at each stage, how to check it, and when to hand over. They are written as principles, criteria and examples, not as step-by-step scripts, so they work with any capable model. creating a project (`packages/create`) copies them into a project's `.claude/skills/` and the agents into `.claude/agents/`; `orbito update` refreshes them. The skills map in Orbito (`#/skills`) shows the same structure.
 
 ## Three layers
 

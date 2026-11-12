@@ -2,6 +2,7 @@ import { StrictMode, useEffect, useMemo, useState } from 'react';
 import type { ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import { linkSources, screenName, sharedTargets } from '@uncool-pro/orbito-core';
 import type { LinkMap, Project, ProjectProblem, Requirement, StatusFile, Team } from '@uncool-pro/orbito-core';
 import { registerParents } from '@uncool-pro/orbito-runtime';
 
@@ -10,15 +11,26 @@ import { ErrorBoundary } from './app/ErrorBoundary';
 import { setFavicon } from './app/Logo';
 import { ViewerContext } from './app/context';
 import { ShellProvider } from './app/shell/state';
-import type { DsData } from './app/context';
+import type { DsData, ViewerState } from './app/context';
+import { parseRoute } from './app/routes';
 import { probeLinks } from './board/probe';
+import { pageScreens } from './board/probeOrder';
 import { MESSAGES, MessagesContext } from './i18n';
 import { initComments } from './comments';
 import type { CommentsFile } from './comments';
 import { initStatuses } from './status';
 import './viewer.css';
 
-export type LoadedProject = { project: Project<ComponentType>; problems: ProjectProblem[]; statuses: StatusFile; comments?: CommentsFile; dev: boolean; ds: DsData; team?: Team | null; requirements?: Requirement[] };
+export type LoadedProject = {
+  project: Project<ComponentType>;
+  problems: ProjectProblem[];
+  statuses: StatusFile;
+  comments?: CommentsFile;
+  dev: boolean;
+  ds: DsData;
+  team?: Team | null;
+  requirements?: Requirement[];
+};
 
 const Root = ({ loaded }: { loaded: LoadedProject }) => {
   const [links, setLinks] = useState<LinkMap | null>(null);
@@ -26,8 +38,23 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
 
   useEffect(() => {
     let live = true;
+    // a probe that is no longer wanted (the project changed, or React ran this effect twice in dev) stops at once
+    const stop = new AbortController();
 
-    probeLinks(loaded.project)
+    // the page on screen first: its arrows show while the rest of the project is still being read
+    const route = parseRoute(window.location.hash);
+    const page =
+      route.view === 'board' || route.view === 'flows'
+        ? (loaded.project.pages.find((p) => p.key === route.page) ?? loaded.project.pages[0])
+        : undefined;
+    const first = page && {
+      ids: pageScreens(page),
+      done: (l: LinkMap) => {
+        if (live) setLinks(l);
+      },
+    };
+
+    probeLinks(loaded.project, stop.signal, first)
       .catch((err: unknown) => {
         // without links the board still shows every screen, only the arrows are missing
         console.error('[orbito] could not read the links of the screens', err);
@@ -38,16 +65,44 @@ const Root = ({ loaded }: { loaded: LoadedProject }) => {
         if (!live) return;
         setLinks(l);
         // read by agents (e.g. to check that every flow step is reachable)
-        (window as unknown as Record<string, unknown>).__orbito = { screens: loaded.project.screens.map(({ component: _c, ...s }) => s), pages: loaded.project.pages, links: l, problems: loaded.problems };
+        (window as unknown as Record<string, unknown>).__orbito = {
+          screens: loaded.project.screens.map(({ component: _c, ...s }) => s),
+          pages: loaded.project.pages,
+          links: l,
+          problems: loaded.problems,
+        };
       });
 
     return () => {
       live = false;
+      stop.abort();
     };
   }, [loaded]);
 
+  // worked out once here, not in every view that asks: every screen by id, and the links read both ways
+  const value = useMemo((): ViewerState => {
+    const screens = new Map(loaded.project.screens.map((s) => [s.id, s]));
+
+    return {
+      project: loaded.project,
+      problems: loaded.problems,
+      ds: loaded.ds,
+      team: loaded.team ?? null,
+      links,
+      sources: links ? linkSources(links) : new Map(),
+      shared: links ? sharedTargets(links) : new Set(),
+      requirements,
+      screens,
+      nameOf: (id) => {
+        const s = screens.get(id);
+
+        return s ? screenName(s) : id;
+      },
+    };
+  }, [loaded, links, requirements]);
+
   return (
-    <ViewerContext.Provider value={{ project: loaded.project, problems: loaded.problems, ds: loaded.ds, team: loaded.team ?? null, links, requirements }}>
+    <ViewerContext.Provider value={value}>
       <MessagesContext.Provider value={MESSAGES}>
         <ShellProvider>
           {/* the last line of defence: a message instead of an empty page */}
@@ -65,17 +120,23 @@ export const mount = (loaded: LoadedProject, container: HTMLElement | null = doc
   if (!container) throw new Error('orbito: no #root element');
   registerParents(loaded.project.screens);
   // tokens.json -> CSS variables, so screens and the catalog read the same values
-  const style = document.getElementById('pd-tokens') ?? document.head.appendChild(Object.assign(document.createElement('style'), { id: 'pd-tokens' }));
+  const style =
+    document.getElementById('pd-tokens') ??
+    document.head.appendChild(Object.assign(document.createElement('style'), { id: 'pd-tokens' }));
 
   style.textContent = loaded.ds.css;
   // the typefaces the tokens name (design-system/fonts.css), shared with the static export
-  const fonts = document.getElementById('pd-fonts') ?? document.head.appendChild(Object.assign(document.createElement('style'), { id: 'pd-fonts' }));
+  const fonts =
+    document.getElementById('pd-fonts') ??
+    document.head.appendChild(Object.assign(document.createElement('style'), { id: 'pd-fonts' }));
 
   fonts.textContent = loaded.ds.fonts ?? '';
   initStatuses(loaded.statuses, loaded.dev);
   initComments(loaded.comments, loaded.dev);
   setFavicon();
-  loaded.problems.forEach((p) => console[p.level === 'error' ? 'error' : 'warn'](`[orbito] ${p.file ? `${p.file}: ` : ''}${p.message}`));
+  loaded.problems.forEach((p) =>
+    console[p.level === 'error' ? 'error' : 'warn'](`[orbito] ${p.file ? `${p.file}: ` : ''}${p.message}`),
+  );
   const root = createRoot(container);
 
   root.render(

@@ -27,7 +27,8 @@ export type ScreenComment = {
   note?: string;
 };
 
-export const isCommentStatus = (v: unknown): v is CommentStatus => typeof v === 'string' && (COMMENT_STATUSES as readonly string[]).includes(v);
+export const isCommentStatus = (v: unknown): v is CommentStatus =>
+  typeof v === 'string' && (COMMENT_STATUSES as readonly string[]).includes(v);
 
 /** Reads one comment file; `null` when it is not one (no front matter, an unknown status). */
 export const parseComment = (id: string, markdown: string): ScreenComment | null => {
@@ -56,7 +57,17 @@ export const parseComment = (id: string, markdown: string): ScreenComment | null
 
 /** Writes one comment file. */
 export const formatComment = (c: ScreenComment): string =>
-  ['---', `status: ${c.status}`, ...(c.author ? [`author: ${c.author}`] : []), `created: ${c.createdAt}`, ...(c.note ? [`note: ${c.note}`] : []), '---', c.text.trim(), ''].join('\n');
+  [
+    '---',
+    `status: ${c.status}`,
+    ...(c.author ? [`author: ${c.author}`] : []),
+    `created: ${c.createdAt}`,
+    ...(c.note ? [`note: ${c.note}`] : []),
+    '---',
+    c.text.trim(),
+    '',
+  ].join('\n');
 
 /** Oldest first, the order a conversation reads in. */
-export const byCreated = (a: ScreenComment, b: ScreenComment) => a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
+export const byCreated = (a: ScreenComment, b: ScreenComment) =>
+  a.createdAt.localeCompare(b.createdAt) || a.id.localeCompare(b.id);
