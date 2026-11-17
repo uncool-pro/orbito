@@ -1,6 +1,7 @@
 {
   "name": "demo-leafy",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",

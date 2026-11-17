@@ -1,4 +1,6 @@
-# Builds the Orbito image for a release tag (v0.9.6) and publishes it, for Windows/Intel and for Apple Silicon.
+# Builds the Orbito image for a release tag (v0.9.6) and publishes it, for Windows/Intel and for Apple Silicon:
+# always to ghcr.io, and to Docker Hub too once the repository variable DOCKERHUB_REPO (e.g. "uncoolpro/orbito")
+# and the secrets DOCKERHUB_USERNAME and DOCKERHUB_TOKEN (a Docker Hub access token, write only) are set.
 # Only a release tag publishes: a run started by hand from a branch would otherwise replace `latest` with work in progress.
 name: Image
 on:
@@ -15,6 +17,8 @@ jobs:
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      DOCKERHUB_REPO: ${{ vars.DOCKERHUB_REPO }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -30,6 +34,21 @@ jobs:
             exit 1
           fi
           echo "value=$version" >> "$GITHUB_OUTPUT"
+      # the same image under every name it is published as
+      - id: tags
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          {
+            echo 'list<<EOF'
+            echo "ghcr.io/uncool-pro/orbito:$VERSION"
+            echo "ghcr.io/uncool-pro/orbito:latest"
+            if [ -n "$DOCKERHUB_REPO" ]; then
+              echo "docker.io/$DOCKERHUB_REPO:$VERSION"
+              echo "docker.io/$DOCKERHUB_REPO:latest"
+            fi
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
       - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
@@ -37,6 +56,11 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - if: env.DOCKERHUB_REPO != ''
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       # with a record of where the image comes from (provenance) and of what is inside it (SBOM), both attached to it
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
@@ -45,6 +69,4 @@ jobs:
           push: true
           provenance: mode=max
           sbom: true
-          tags: |
-            ghcr.io/uncool-pro/orbito:${{ steps.version.outputs.value }}
-            ghcr.io/uncool-pro/orbito:latest
+          tags: ${{ steps.tags.outputs.list }}
