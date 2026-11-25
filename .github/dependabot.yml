@@ -1,15 +1,27 @@
 # Weekly pull requests for newer versions. Nothing merges by itself: each one passes CI and the security audit first.
+# A version must be out for 7 days before it is proposed: a freshly published package is where attacks on the supply
+# chain usually land, and they are mostly caught within days. Major versions are a decision, not a weekly chore: they
+# are not proposed (Node in the image moves from one long-term-support line to the next by hand).
 version: 2
 updates:
   - package-ecosystem: npm
     directory: /
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
     open-pull-requests-limit: 5
     groups:
       minor-and-patch: { update-types: [minor, patch] }
+    ignore:
+      - dependency-name: '*'
+        update-types: [version-update:semver-major]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
   - package-ecosystem: docker
     directory: /
     schedule: { interval: weekly }
+    cooldown: { default-days: 7 }
+    ignore:
+      - dependency-name: node
+        update-types: [version-update:semver-major]

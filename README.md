@@ -35,7 +35,7 @@ Not sure about the technical words? You do not need them. Tell Claude you are no
 1. Clone Orbito into a folder that stays where it is — projects link to it, and updates come from it:
    ```sh
    git clone https://github.com/uncool-pro/orbito
-   cd orbito && npm install
+   cd orbito && npm ci
    ```
 2. In the folder where the project should live, create it (ask the person for the name, the platform — `web`, `mobile` or `both` — and the language of the tool, `en` or `pl`; no other questions, the design questions come with `/orbito-init`):
    ```sh
@@ -43,7 +43,7 @@ Not sure about the technical words? You do not need them. Tell Claude you are no
    ```
    It copies the project template, installs it, and checks it. Never move or rename the `orbito` folder afterwards.
 
-   No git? Download [the ZIP](https://github.com/uncool-pro/orbito/archive/refs/heads/main.zip), unpack it, rename the folder to `orbito` and carry on from `npm install`. You still need Node.js. Such a folder cannot fetch updates by itself: `npm run update` then tells you how to replace it.
+   No git? Download [the ZIP](https://github.com/uncool-pro/orbito/archive/refs/heads/main.zip), unpack it, rename the folder to `orbito` and carry on from `npm ci`. You still need Node.js. Such a folder cannot fetch updates by itself: `npm run update` then tells you how to replace it.
 3. Tell the person to put their material into `my-product/raw/`, open Claude Code in `my-product/` and type `/orbito-init`.
 
 ## What you see

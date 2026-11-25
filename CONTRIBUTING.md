@@ -9,7 +9,7 @@ You need Node.js 22.18 or newer, git, and Chrome for the browser tests.
 ```sh
 git clone https://github.com/uncool-pro/orbito
 cd orbito
-npm install
+npm ci
 npm run dev        # the demo project on http://localhost:5190
 ```
 
@@ -26,7 +26,7 @@ There is no build step: Node and Vite run the TypeScript sources directly.
 | `npm run build` | the demo builds as a static site | yes |
 | `npm run test:e2e` | real clicks in Chrome, and the whole road of a new project | yes |
 | `ORBITO_IMAGE=orbito:dev npx playwright test e2e/docker.spec.ts` | the image works and its seal holds (after `docker build -t orbito:dev .`) | yes |
-| `npm audit --omit=dev` | known holes in what reaches people's computers | yes, high and critical fail the build |
+| `npm audit` | known holes in every package, dev ones too (the image runs Vite and its plugins) | yes, high and critical fail the build |
 
 Before you open a pull request: `npm run typecheck`, `npm run lint`, `npm test` and `npm run check:ds` pass, and you have looked at the board in the browser.
 

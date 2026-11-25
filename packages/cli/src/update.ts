@@ -1,8 +1,8 @@
 /**
  * `orbito update` — brings a project up to date with the Orbito it is linked to.
  *
- * 1. With `--pull`: updates the tool itself (`git pull --ff-only` in the Orbito folder, then `npm install` there, with
- *    the install scripts of packages switched off, as in CI and in the image). The code running now is then the old
+ * 1. With `--pull`: updates the tool itself (`git pull --ff-only` in the Orbito folder, then `npm ci` there: exactly
+ *    the versions in its lockfile, with the install scripts of packages switched off, as in CI and in the image). The code running now is then the old
  *    version, so the new version does step 2: its migrations work on the first run.
  * 2. Refreshes what Orbito owns inside the project (`install.ts`).
  * The project's own work (screens, flows, design system, process and status files, raw/) is never touched; template
@@ -76,7 +76,7 @@ export const updateProject = ({
           `    2. download the new version to the same path, either way:\n` +
           `         git clone https://github.com/uncool-pro/orbito "${tool}"   (later updates then work by themselves)\n` +
           `         or unpack https://github.com/uncool-pro/orbito/archive/refs/heads/main.zip there\n` +
-          `    3. npm install --prefix "${tool}"\n` +
+          `    3. npm ci --prefix "${tool}"\n` +
           `    4. in your project, run: npx --no orbito update`,
       );
     }
@@ -92,10 +92,11 @@ export const updateProject = ({
         .split('\n')
         .filter(Boolean);
       if (install) {
-        // no install scripts: a package that comes with an update gets no chance to run code of its own while installing
-        const r = npm(tool, ['install', '--ignore-scripts', '--no-audit', '--no-fund']);
+        // exactly the versions in the lockfile (npm ci never rewrites it), and no install scripts: a package that comes
+        // with an update gets no chance to run code of its own while installing
+        const r = npm(tool, ['ci', '--ignore-scripts', '--no-audit', '--no-fund']);
 
-        if (r.status) throw new Error('npm install failed in the Orbito folder');
+        if (r.status) throw new Error('npm ci failed in the Orbito folder');
       }
     }
   }
