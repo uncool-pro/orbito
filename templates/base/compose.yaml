@@ -71,13 +71,22 @@ services:
       - ./tsconfig.json:/project/tsconfig.json:ro
       - ./site:/project/site
 
-  # the whole project, writable, no network: only for what you start by hand
+  # the whole project, writable, no network: only for what you start by hand (update, models). It never sees the
+  # project's git history, raw/ or .env files: `orbito update` covers each of them that exists in this project.
+  # During an update it runs the image of the version to move to (DOCKER.md, "Update"), otherwise this project's.
   admin:
     <<: *sealed
+    image: ${ORBITO_UPDATE_IMAGE:-ghcr.io/uncool-pro/orbito:{{version}}}
     profiles: [tools]
     network_mode: none
+    environment:
+      ORBITO_IMAGE_DIGEST: ${ORBITO_IMAGE_DIGEST:-}
+    tmpfs:
+      - /tmp
+      # {{admin-hidden-folders}}
     volumes:
       - .:/project
+      # {{admin-hidden-files}}
 
 networks:
   sealed:

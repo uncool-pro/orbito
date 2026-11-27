@@ -75,19 +75,41 @@ The board as a static site (`npm run build`) is available only from the code for
 
 ## Update
 
-Download the new image and let it refresh the project. `latest` is the newest stable version; for the newest beta use `beta`, for a given version its number (`0.9.70`), the same way in both lines:
+Download the new image and let it refresh the project, in the project folder. `latest` is the newest stable version; for the newest beta use `beta`, for a given version its number (`0.9.70`), in the first line.
+
+In PowerShell (Windows):
+
+```powershell
+$env:ORBITO_UPDATE_IMAGE = 'ghcr.io/uncool-pro/orbito:latest'
+docker pull $env:ORBITO_UPDATE_IMAGE
+$env:ORBITO_IMAGE_DIGEST = docker inspect --format '{{index .RepoDigests 0}}' $env:ORBITO_UPDATE_IMAGE
+docker compose run --rm admin update
+docker compose up -d
+```
+
+In a Mac or Linux terminal:
 
 ```sh
-docker pull ghcr.io/uncool-pro/orbito:latest
-docker run --rm --network none -v "${PWD}:/project" ghcr.io/uncool-pro/orbito:latest update
+export ORBITO_UPDATE_IMAGE=ghcr.io/uncool-pro/orbito:latest
+docker pull "$ORBITO_UPDATE_IMAGE"
+export ORBITO_IMAGE_DIGEST="$(docker inspect --format '{{index .RepoDigests 0}}' "$ORBITO_UPDATE_IMAGE")"
+docker compose run --rm admin update
 docker compose up -d
+```
+
+The update runs in the project's `admin` container, which has no network and never sees the project's git history, `raw/` or `.env` files (each one the project has is covered; added a new `.env` file since? the next update covers it too). It pins the exact image in `compose.yaml`: the version and the image's digest, so the number always means the same image.
+
+Projects on 0.9.69 or older, and projects moving to Docker, have no such `admin` yet: the first time, run the update straight from the image, after the `docker pull` line:
+
+```sh
+docker run --rm --network none -v "${PWD}:/project" -e "ORBITO_IMAGE_DIGEST=$(docker inspect --format '{{index .RepoDigests 0}}' ghcr.io/uncool-pro/orbito:latest)" ghcr.io/uncool-pro/orbito:latest update
 ```
 
 The update changes the same things as always (Orbito's skills, agents and commands in `.claude/`, `.orbito/models.json`, `.orbito/managed.json`) plus `compose.yaml`, which pins the new version. Your screens, flows and design system are not touched. `docker compose up -d` then restarts the board on the new version. Each project keeps the exact version number in its `compose.yaml` until you update it, so a team stays in step by committing that file, and going back is an update with the older number.
 
 ## Move an existing project to Docker
 
-Run the two update commands above in the project folder. It adds `compose.yaml` and marks the project as running in Docker (`.orbito/runtime`). The project's `node_modules` is no longer used and can be deleted. To go back, write `local` into `.orbito/runtime` and run `npm install`.
+Run `docker pull` and the first-time update command above in the project folder. It adds `compose.yaml` and marks the project as running in Docker (`.orbito/runtime`). The project's `node_modules` is no longer used and can be deleted. To go back, write `local` into `.orbito/runtime` and run `npm install`.
 
 ## When something does not work
 

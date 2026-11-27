@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { adminHidden, fillCompose, pinnedImage } from '../src/install';
 import { pickRelease } from '../src/releases';
 import { fingerprint, MANIFEST, updateProject } from '../src/update';
 
@@ -188,6 +189,39 @@ describe('orbito update', () => {
 
     expect(r.backedUp).toEqual(['.orbito/backup/2026-10-26/.claude/skills/landing-page']);
     expect(read(join(root, '.orbito/backup/2026-10-26/.claude/skills/landing-page/SKILL.md'))).toBe('mine');
+  });
+
+  it('hides from the admin container only what this project has: git history, raw/ and .env files', () => {
+    expect(adminHidden(root)).toEqual({ folders: [], files: [] });
+    mkdirSync(join(root, '.git'));
+    mkdirSync(join(root, 'raw'));
+    put(join(root, '.env'), 'KEY=secret');
+    put(join(root, '.env.local'), '');
+    put(join(root, '.envrc'), 'not a key file');
+    expect(adminHidden(root)).toEqual({
+      folders: ['/project/.git', '/project/raw'],
+      files: ['/project/.env', '/project/.env.local'],
+    });
+  });
+
+  it('pins the image by digest when the update is given one, and keeps the pin for the same version', () => {
+    const digest = `sha256:${'a'.repeat(64)}`;
+
+    expect(pinnedImage('0.9.70', `ghcr.io/uncool-pro/orbito@${digest}`, '')).toBe(`0.9.70@${digest}`);
+    expect(pinnedImage('0.9.70', '', `image: ghcr.io/uncool-pro/orbito:0.9.70@${digest}`)).toBe(`0.9.70@${digest}`);
+    // another version, or something that is not a digest: the version alone, never a wrong pin
+    expect(pinnedImage('0.9.71', '', `orbito:0.9.70@${digest}`)).toBe('0.9.71');
+    expect(pinnedImage('0.9.70', 'sha256:not-a-digest', '')).toBe('0.9.70');
+  });
+
+  it('writes the hidden paths into the admin service of compose.yaml, and nothing when there are none', () => {
+    const template =
+      'image: orbito:{{version}}\n    tmpfs:\n      - /tmp\n      # {{admin-hidden-folders}}\n    volumes:\n      - .:/project\n      # {{admin-hidden-files}}\n';
+
+    expect(fillCompose(template, '0.9.70', { folders: ['/project/raw'], files: ['/project/.env'] })).toBe(
+      'image: orbito:0.9.70\n    tmpfs:\n      - /tmp\n      - /project/raw\n    volumes:\n      - .:/project\n      - /dev/null:/project/.env:ro\n',
+    );
+    expect(fillCompose(template, '0.9.70', { folders: [], files: [] })).not.toContain('{{');
   });
 
   it('adds compose.yaml only to a project that runs in a container', () => {

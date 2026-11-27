@@ -15,7 +15,7 @@ Please do not open a public issue. Write to **orbito@uncool.pro** with what you 
 - **Processes:** `git` (your name for comments, and updates), `npm ci --ignore-scripts` in Orbito's folder during an update, and your system's file manager or code editor when you ask for them from the board. All with fixed arguments, never a command built from data.
 - **The dev server** listens on `localhost` only. Its endpoints (`/__orbito/*`, and Vite's `/__open-in-editor`) answer the board itself and refuse requests from other sites open in the same browser.
 
-**In Docker** (see [DOCKER.md](DOCKER.md)) the engine is sealed in a container: no internet, no Linux capabilities, a read-only file system, and only the project folders listed in `compose.yaml`, read-only except statuses and comments. The page it serves cannot call other sites (Content Security Policy), and the board is reachable from this computer only.
+**In Docker** (see [DOCKER.md](DOCKER.md)) the engine is sealed in a container: no internet, no Linux capabilities, a read-only file system, and only the project folders listed in `compose.yaml`, read-only except statuses and comments. The page it serves cannot call other sites (Content Security Policy), and the board is reachable from this computer only. The one container that writes the whole project (`admin`, for updates and the model mode, started by hand) has no network either and never sees the project's git history, `raw/` or `.env` files; `compose.yaml` pins the image by version and digest.
 
 ## Skills and agents
 
