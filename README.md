@@ -27,7 +27,7 @@ Claude follows the steps below and asks you only for the project's name, platfor
 2. Open Claude Code in the project folder and type **`/orbito-init`**. From here Orbito leads: it sorts `raw/`, asks what kind of project this is and proposes the first step.
 3. See the board: `npm run dev` in the project folder, then http://localhost:5190.
 
-Later, `npm run update` in the project brings the newest Orbito (or ask Claude to "update Orbito").
+Later, `npm run update` in the project brings the newest stable Orbito (or ask Claude to "update Orbito"). Betas, for trying a version before it is stable: `npm run update -- --beta`; back to a given version: `npm run update -- --version 0.9.70`.
 
 Not sure about the technical words? You do not need them. Tell Claude you are not a programmer, and it will explain each step and tell you what to click.
 
@@ -35,15 +35,18 @@ Not sure about the technical words? You do not need them. Tell Claude you are no
 1. Clone Orbito into a folder that stays where it is — projects link to it, and updates come from it:
    ```sh
    git clone https://github.com/uncool-pro/orbito
-   cd orbito && npm ci
+   cd orbito
+   node packages/cli/src/bin.ts use
+   npm ci
    ```
+   `use` moves the folder to the newest stable release (`--beta` for the newest beta): what is on `main` but not released yet stays out.
 2. In the folder where the project should live, create it (ask the person for the name, the platform — `web`, `mobile` or `both` — and the language of the tool, `en` or `pl`; no other questions, the design questions come with `/orbito-init`):
    ```sh
    node orbito/packages/create/src/index.ts my-product --title "My product" --platform web --locale en
    ```
    It copies the project template, installs it, and checks it. Never move or rename the `orbito` folder afterwards.
 
-   No git? Download [the ZIP](https://github.com/uncool-pro/orbito/archive/refs/heads/main.zip), unpack it, rename the folder to `orbito` and carry on from `npm ci`. You still need Node.js. Such a folder cannot fetch updates by itself: `npm run update` then tells you how to replace it.
+   No git? Download the source code (zip) of [the newest release](https://github.com/uncool-pro/orbito/releases/latest), unpack it, rename the folder to `orbito` and carry on from `npm ci`. You still need Node.js. Such a folder cannot fetch updates by itself: `npm run update` then tells you how to replace it.
 3. Tell the person to put their material into `my-product/raw/`, open Claude Code in `my-product/` and type `/orbito-init`.
 
 ## What you see

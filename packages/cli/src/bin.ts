@@ -5,11 +5,13 @@
  *   orbito check ds [--json] [--root <dir>] [--strict] [--verbose]   design-system rules; exit 1 on errors (--strict: also on warnings); --verbose also lists info
  *   orbito export [<screen-id>] [--out <dir>] [--root <dir>]          one screen as a static site (default: site.screen from orbito.config.ts)
  *   orbito models [optimal|high] [--team] [--root <dir>]               show or switch how the agents use models, for you (or --team: the team's default)
- *   orbito update [--pull] [--no-install] [--json] [--root <dir>]               refresh the project's Orbito skills, agents and commands (--pull: update Orbito from GitHub first)
+ *   orbito update [--pull [--beta | --version <x>]] [--no-install] [--json] [--root <dir>]   refresh the project's Orbito skills, agents and commands (--pull: move Orbito to the newest stable release first; --beta: the newest beta; --version: that release)
+ *   orbito use [--beta | --version <x>]                              move this Orbito folder to a released version (after cloning it), then run npm ci there
  */
 import { resolve } from 'node:path';
 
 import { analyzeProject } from './analyze.ts';
+import { moveToRelease } from './releases.ts';
 import { exportSite } from './export.ts';
 import type { ModelMode } from '@uncool-pro/orbito-core';
 
@@ -75,6 +77,7 @@ const updateCmd = () => {
     const r = updateProject({
       root: resolve(opt('root') ?? process.cwd()),
       pull: flag('pull'),
+      channel: { beta: flag('beta'), version: opt('version') },
       install: !flag('no-install'),
     });
 
@@ -155,15 +158,29 @@ const modelsCmd = (mode: string | undefined) => {
   );
 };
 
-const [cmd, sub] = args.filter((a) => !a.startsWith('--') && a !== opt('root') && a !== opt('out'));
+const useCmd = () => {
+  try {
+    const { tag } = moveToRelease(toolRoot(), { beta: flag('beta'), version: opt('version') });
+
+    console.log(`Orbito folder on ${tag}. Next: npm ci (in ${toolRoot()})`);
+  } catch (e) {
+    console.error(paint(31, 'use failed: ') + (e instanceof Error ? e.message : String(e)));
+    process.exitCode = 1;
+  }
+};
+
+const [cmd, sub] = args.filter(
+  (a) => !a.startsWith('--') && a !== opt('root') && a !== opt('out') && a !== opt('version'),
+);
 
 if (cmd === 'check' && sub === 'ds') checkDs();
 else if (cmd === 'export') await exportCmd(sub);
 else if (cmd === 'update') updateCmd();
 else if (cmd === 'models') modelsCmd(sub);
+else if (cmd === 'use') useCmd();
 else {
   console.log(
-    'Usage: orbito check ds [--json] [--root <dir>] [--strict] [--verbose]\n       orbito export [<screen-id>] [--out <dir>] [--root <dir>]\n       orbito models [optimal|high] [--team] [--root <dir>]\n       orbito update [--pull] [--no-install] [--root <dir>]',
+    'Usage: orbito check ds [--json] [--root <dir>] [--strict] [--verbose]\n       orbito export [<screen-id>] [--out <dir>] [--root <dir>]\n       orbito models [optimal|high] [--team] [--root <dir>]\n       orbito update [--pull [--beta | --version <x>]] [--no-install] [--root <dir>]\n       orbito use [--beta | --version <x>]',
   );
   process.exitCode = cmd ? 1 : 0;
 }
