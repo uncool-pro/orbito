@@ -1,0 +1,103 @@
+# Releases a version once its release pull request is merged, and only after CI has passed on that exact commit:
+#   tag v<version>  →  image (built, scanned, pushed, signed: image.yml)  →  GitHub Release with the changelog notes
+# Nothing happens for a commit whose version already has a tag, so ordinary merges release nothing. A version becomes
+# a release only through a pull request that changes it (scripts/release/prepare.ts); nobody tags by hand.
+# A beta (0.9.70-beta.1) is published as a pre-release and as the `beta` image; a stable version as `latest`.
+name: Release
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  # a green CI run of a push to main in this repository (never a pull request from a fork with a branch named main)
+  detect:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      release: ${{ steps.version.outputs.release }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - id: version
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          case "$version" in *-beta.*) echo "prerelease=true" ;; *) echo "prerelease=false" ;; esac >> "$GITHUB_OUTPUT"
+          if gh api "repos/$REPO/git/ref/tags/v$version" > /dev/null 2>&1; then
+            echo "v$version is already released: nothing to do"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  tag:
+    needs: detect
+    if: needs.detect.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          VERSION: ${{ needs.detect.outputs.version }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: gh api "repos/$REPO/git/refs" -f "ref=refs/tags/v$VERSION" -f "sha=$SHA"
+
+  image:
+    needs: [detect, tag]
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    uses: ./.github/workflows/image.yml
+    with:
+      version: ${{ needs.detect.outputs.version }}
+      sha: ${{ github.event.workflow_run.head_sha }}
+      prerelease: ${{ needs.detect.outputs.prerelease == 'true' }}
+    secrets: inherit
+
+  release:
+    needs: [detect, image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          VERSION: ${{ needs.detect.outputs.version }}
+          PRERELEASE: ${{ needs.detect.outputs.prerelease }}
+          DIGEST: ${{ needs.image.outputs.digest }}
+        run: |
+          node scripts/release/notes.ts "$VERSION" "$DIGEST" > notes.md
+          flag=""
+          if [ "$PRERELEASE" = "true" ]; then flag="--prerelease"; else flag="--latest"; fi
+          gh release create "v$VERSION" --repo "$REPO" --verify-tag --title "Orbito $VERSION" --notes-file notes.md $flag
