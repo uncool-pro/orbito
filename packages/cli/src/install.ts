@@ -50,6 +50,55 @@ export const toolVersion = (root: string) => {
   }
 };
 
+/**
+ * What the `admin` container (the one that writes the whole project: update, models) must not see: the git history
+ * (a planted hook would run on the person's computer), `raw/` (often confidential) and `.env` files (keys). Each is
+ * covered only if this project has it: covering a path that does not exist would make Docker create it, an empty
+ * folder in the person's project. Inside the container, a covered path still exists (an empty folder, or an empty
+ * file for `.env` and a `.git` file), so the next update keeps covering it.
+ */
+export const adminHidden = (root: string): { folders: string[]; files: string[] } => {
+  const folders: string[] = [];
+  const files: string[] = [];
+  const add = (name: string) => {
+    const path = join(root, name);
+
+    if (!existsSync(path)) return;
+    (statSync(path).isDirectory() ? folders : files).push(`/project/${name}`);
+  };
+
+  add('.git');
+  add('raw');
+  for (const name of readdirSync(root).sort()) if (/^\.env(\..+)?$/.test(name)) add(name);
+
+  return { folders, files };
+};
+
+/**
+ * The image a project's compose.yaml pins: the version, and the image digest when the update was given one
+ * (`ORBITO_IMAGE_DIGEST`, read by the update command from the image it pulled), so the number always means exactly
+ * that image. Without a new digest, the one already pinned for the same version is kept.
+ */
+export const pinnedImage = (version: string, digest: string | undefined, current: string): string => {
+  const given = /(?:^|@)(sha256:[0-9a-f]{64})$/.exec(digest?.trim() ?? '')?.[1];
+  const kept = new RegExp(`orbito:${version.replaceAll('.', '\\.')}@(sha256:[0-9a-f]{64})`).exec(current)?.[1];
+  const pin = given ?? kept;
+
+  return pin ? `${version}@${pin}` : version;
+};
+
+/** compose.yaml for this project, from Orbito's template. */
+export const fillCompose = (template: string, image: string, hidden: { folders: string[]; files: string[] }): string =>
+  template
+    .split('{{version}}')
+    .join(image)
+    .replace(/^( *)# \{\{admin-hidden-folders\}\}\r?\n/m, (_, indent: string) =>
+      hidden.folders.map((p) => `${indent}- ${p}\n`).join(''),
+    )
+    .replace(/^( *)# \{\{admin-hidden-files\}\}\r?\n/m, (_, indent: string) =>
+      hidden.files.map((p) => `${indent}- /dev/null:${p}:ro\n`).join(''),
+    );
+
 /** The list of what Orbito installed, or `null` in a project made before the list existed. */
 const readManifest = (file: string): Manifest | null => {
   if (!existsSync(file)) return null;
@@ -194,7 +243,14 @@ export const installTeam = ({
     const dir = mkdtempSync(join(tmpdir(), 'orbito-'));
     const filled = join(dir, 'compose.yaml');
 
-    writeFileSync(filled, readFileSync(composeTemplate, 'utf8').split('{{version}}').join(toolVersion(tool)));
+    const composeFile = join(root, 'compose.yaml');
+    const image = pinnedImage(
+      toolVersion(tool),
+      process.env.ORBITO_IMAGE_DIGEST,
+      existsSync(composeFile) ? readFileSync(composeFile, 'utf8') : '',
+    );
+
+    writeFileSync(filled, fillCompose(readFileSync(composeTemplate, 'utf8'), image, adminHidden(root)));
     copy(filled, join(root, 'compose.yaml'), 'compose.yaml');
     rmSync(dir, { recursive: true, force: true });
     // every folder compose.yaml mounts must exist: a missing one would be created by Docker, owned by root on Linux

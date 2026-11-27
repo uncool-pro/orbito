@@ -249,4 +249,35 @@ test.describe
       expect(existsSync(join(project, '.orbito/backup'))).toBe(false);
       expect(readFileSync(join(project, 'raw/poufne.md'), 'utf8')).toBe('tajne');
     });
+
+    test('the tool that writes the project never sees raw/ or .env, and nothing is added for what the project lacks', () => {
+      const compose = readFileSync(join(project, 'compose.yaml'), 'utf8');
+
+      expect(compose).toContain('- /project/raw');
+      expect(compose).toContain('- /dev/null:/project/.env:ro');
+      // this project has no git history: covering one would leave an empty .git folder behind
+      expect(compose).not.toContain('/project/.git');
+      expect(existsSync(join(project, '.git'))).toBe(false);
+      const admin = (...args: string[]) => docker(project, 'compose', 'run', '--rm', '--entrypoint', ...args);
+
+      expect(admin('cat', 'admin', '/project/.env')).toBe('');
+      expect(admin('ls', 'admin', '-A', '/project/raw').trim()).toBe('');
+      expect(readFileSync(join(project, '.env'), 'utf8')).toBe('KLUCZ=tajny');
+    });
+
+    // last: the project then names an image digest that exists only in this test
+    test('updates through compose with the image of the new version, and pins its digest', () => {
+      const digest = `sha256:${'b'.repeat(64)}`;
+
+      execFileSync('docker', ['compose', 'run', '--rm', 'admin', 'update'], {
+        cwd: project,
+        env: { ...ENV, ORBITO_UPDATE_IMAGE: IMAGE!, ORBITO_IMAGE_DIGEST: `ghcr.io/uncool-pro/orbito@${digest}` },
+        encoding: 'utf8',
+        stdio: 'pipe',
+        timeout: 180_000,
+      });
+      expect(readFileSync(join(project, 'compose.yaml'), 'utf8')).toContain(`orbito:${VERSION}@${digest}`);
+      expect(readFileSync(join(project, 'raw/poufne.md'), 'utf8')).toBe('tajne');
+      expect(readFileSync(join(project, '.env'), 'utf8')).toBe('KLUCZ=tajny');
+    });
   });
