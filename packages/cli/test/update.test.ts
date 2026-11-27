@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { pickRelease } from '../src/releases';
 import { fingerprint, MANIFEST, updateProject } from '../src/update';
 
 let base: string;
@@ -31,39 +32,92 @@ beforeEach(() => {
 });
 afterEach(() => rmSync(base, { recursive: true, force: true }));
 
+describe('which release an update from the code moves to', () => {
+  const tags = ['v0.9.68', 'v0.9.69', 'v0.9.70-beta.1', 'v0.9.70-beta.2', 'v0.9.10', 'not-a-release'];
+
+  it('takes the newest stable version by default, comparing numbers, not text', () => {
+    expect(pickRelease(tags, {})).toBe('v0.9.69');
+  });
+  it('takes the newest beta when asked, and a stable version over its own betas', () => {
+    expect(pickRelease(tags, { beta: true })).toBe('v0.9.70-beta.2');
+    expect(pickRelease([...tags, 'v0.9.70'], { beta: true })).toBe('v0.9.70');
+  });
+  it('takes a version named exactly, also an older one, and says what exists when it is not released', () => {
+    expect(pickRelease(tags, { version: '0.9.68' })).toBe('v0.9.68');
+    expect(pickRelease(tags, { version: 'v0.9.70-beta.1' })).toBe('v0.9.70-beta.1');
+    expect(() => pickRelease(tags, { version: '0.9.71' })).toThrow(/no released version 0\.9\.71; released: v0\.9\.68/);
+  });
+  it('says so when nothing has been released yet', () => {
+    expect(() => pickRelease(['v0.9.70-beta.1'], {})).toThrow(/no stable version/);
+  });
+});
+
 describe('orbito update', () => {
-  it('lets the version it just pulled finish the update, so new migrations work on the first run', () => {
+  const g = (cwd: string, ...args: string[]) =>
+    execFileSync('git', ['-C', cwd, ...args], { stdio: 'pipe', encoding: 'utf8' });
+  /** A repository with the released 0.9.4, a released 0.9.5 that finishes updates itself, and unreleased work. */
+  const releases = () => {
     const remote = join(base, 'remote');
-    const g = (cwd: string, ...args: string[]) =>
-      execFileSync('git', ['-C', cwd, ...args], { stdio: 'pipe', encoding: 'utf8' });
 
     put(join(remote, 'package.json'), '{ "version": "0.9.4" }');
     put(join(remote, 'skills/wireframes/SKILL.md'), 'wireframes');
     put(join(remote, 'agents/models.json'), '{}');
-    mkdirSync(join(base, 'empty'));
     g(remote, 'init', '-q', '-b', 'main');
     g(remote, 'config', 'user.email', 'test@example.com');
     g(remote, 'config', 'user.name', 'Test');
     g(remote, 'add', '-A');
     g(remote, 'commit', '-q', '-m', 'first');
+    g(remote, 'tag', 'v0.9.4');
     const clone = join(base, 'clone');
 
     g(base, 'clone', '-q', remote, clone);
     // the next version knows something the running code does not
-    put(join(remote, 'package.json'), '{ "version": "0.9.5" }');
-    put(
-      join(remote, 'packages/cli/src/bin.ts'),
-      "process.stdout.write(JSON.stringify({ added: ['done by the new version'], updated: [], removed: [], conflicts: [], backedUp: [] }));",
-    );
-    g(remote, 'add', '-A');
-    g(remote, 'commit', '-q', '-m', 'second');
+    const next = (version: string, message: string) => {
+      put(join(remote, 'package.json'), `{ "version": "${version}" }`);
+      put(
+        join(remote, 'packages/cli/src/bin.ts'),
+        `process.stdout.write(JSON.stringify({ added: ['done by ${version}'], updated: [], removed: [], conflicts: [], backedUp: [] }));`,
+      );
+      g(remote, 'add', '-A');
+      g(remote, 'commit', '-q', '-m', message);
+    };
 
+    next('0.9.5', 'second');
+    g(remote, 'tag', 'v0.9.5');
+    next('0.9.6-beta.1', 'third');
+    g(remote, 'tag', 'v0.9.6-beta.1');
+    next('0.9.6-beta.2', 'not released yet');
+
+    return clone;
+  };
+
+  it('moves to the newest stable release, never the tip of main, and lets that version finish the update', () => {
+    const clone = releases();
     const r = updateProject({ root, tool: clone, pull: true, install: false });
 
-    expect(r.added).toEqual(['done by the new version']);
+    expect(r.added).toEqual(['done by 0.9.5']);
     expect(r.tool.to).toContain('0.9.5');
     expect(r.tool.commits).toEqual(['second']);
     // real git and a new Node process: a slow Windows runner can take longer than vitest's default 5 s
+  }, 30_000);
+
+  it('moves to the newest beta with --beta, and back to a named version with --version', () => {
+    const clone = releases();
+
+    expect(updateProject({ root, tool: clone, pull: true, channel: { beta: true }, install: false }).added).toEqual([
+      'done by 0.9.6-beta.1',
+    ]);
+    expect(
+      updateProject({ root, tool: clone, pull: true, channel: { version: '0.9.5' }, install: false }).tool.to,
+    ).toContain('0.9.5');
+  }, 30_000);
+
+  it('leaves an Orbito folder with changes of its own where it is', () => {
+    const clone = releases();
+
+    put(join(clone, 'package.json'), '{ "version": "0.9.4", "mine": true }');
+    expect(() => updateProject({ root, tool: clone, pull: true, install: false })).toThrow(/changes of its own/);
+    expect(read(join(clone, 'package.json'))).toContain('"mine": true');
   }, 30_000);
 
   it('installs Orbito items and lists them in the manifest', () => {

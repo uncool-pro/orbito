@@ -1,9 +1,11 @@
 /**
  * `orbito update` — brings a project up to date with the Orbito it is linked to.
  *
- * 1. With `--pull`: updates the tool itself (`git pull --ff-only` in the Orbito folder, then `npm ci` there: exactly
- *    the versions in its lockfile, with the install scripts of packages switched off, as in CI and in the image). The code running now is then the old
- *    version, so the new version does step 2: its migrations work on the first run.
+ * 1. With `--pull`: updates the tool itself. The Orbito folder moves to a released version (`releases.ts`): the newest
+ *    stable one, with `--beta` the newest beta, with `--version <x>` that version; never the tip of `main`. Then
+ *    `npm ci` there: exactly the versions in its lockfile, with the install scripts of packages switched off, as in CI
+ *    and in the image. The code running now is then the old version, so the new version does step 2: its migrations
+ *    work on the first run.
  * 2. Refreshes what Orbito owns inside the project (`install.ts`).
  * The project's own work (screens, flows, design system, process and status files, raw/) is never touched; template
  * changes such as new base components are listed in CHANGELOG.md for Orbito to apply on request.
@@ -14,6 +16,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { installTeam, toolVersion } from './install.ts';
+import { moveToRelease } from './releases.ts';
+import type { Channel } from './releases.ts';
 import type { InstallResult } from './install.ts';
 import { fingerprint, MANIFEST } from './manifest.ts';
 
@@ -49,12 +53,14 @@ const refreshWithNewVersion = (tool: string, root: string): InstallResult => {
 export const updateProject = ({
   root,
   pull,
+  channel = {},
   install = true,
   tool = toolRoot(),
   today,
 }: {
   root: string;
   pull?: boolean;
+  channel?: Channel;
   install?: boolean;
   tool?: string;
   today?: string;
@@ -75,15 +81,12 @@ export const updateProject = ({
           `    1. move or rename the folder\n` +
           `    2. download the new version to the same path, either way:\n` +
           `         git clone https://github.com/uncool-pro/orbito "${tool}"   (later updates then work by themselves)\n` +
-          `         or unpack https://github.com/uncool-pro/orbito/archive/refs/heads/main.zip there\n` +
+          `         or unpack the source code of the newest release there: https://github.com/uncool-pro/orbito/releases/latest\n` +
           `    3. npm ci --prefix "${tool}"\n` +
           `    4. in your project, run: npx --no orbito update`,
       );
     }
-    const before = git(tool, ['rev-parse', 'HEAD']);
-
-    git(tool, ['pull', '--ff-only']);
-    const after = git(tool, ['rev-parse', 'HEAD']);
+    const { before, after } = moveToRelease(tool, channel);
 
     toolChange = { from: `${from} (${before.slice(0, 7)})`, to: `${toolVersion(tool)} (${after.slice(0, 7)})` };
     if (before !== after) {

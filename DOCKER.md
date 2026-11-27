@@ -75,7 +75,7 @@ The board as a static site (`npm run build`) is available only from the code for
 
 ## Update
 
-Download the new image and let it refresh the project:
+Download the new image and let it refresh the project. `latest` is the newest stable version; for the newest beta use `beta`, for a given version its number (`0.9.70`), the same way in both lines:
 
 ```sh
 docker pull ghcr.io/uncool-pro/orbito:latest
@@ -83,7 +83,7 @@ docker run --rm --network none -v "${PWD}:/project" ghcr.io/uncool-pro/orbito:la
 docker compose up -d
 ```
 
-The update changes the same things as always (Orbito's skills, agents and commands in `.claude/`, `.orbito/models.json`, `.orbito/managed.json`) plus `compose.yaml`, which pins the new version. Your screens, flows and design system are not touched. `docker compose up -d` then restarts the board on the new version. Each project keeps the version in its `compose.yaml` until you update it, so a team stays in step by committing that file.
+The update changes the same things as always (Orbito's skills, agents and commands in `.claude/`, `.orbito/models.json`, `.orbito/managed.json`) plus `compose.yaml`, which pins the new version. Your screens, flows and design system are not touched. `docker compose up -d` then restarts the board on the new version. Each project keeps the exact version number in its `compose.yaml` until you update it, so a team stays in step by committing that file, and going back is an update with the older number.
 
 ## Move an existing project to Docker
 
