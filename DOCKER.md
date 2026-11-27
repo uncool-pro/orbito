@@ -26,6 +26,8 @@ A container is a sealed box on your computer, with its own system and its own fi
 
 **What is inside, and under which licences.** Orbito's own code is MIT. Its npm packages are under permissive licences (MIT, ISC, BSD, Apache-2.0), plus `lightningcss` under MPL-2.0, used unchanged. The image is built on the official `node:24-trixie-slim` image (Node 24 LTS on Debian 13, without npm or other package managers once Orbito is installed), a small Debian system whose packages keep their own licences, some of them GPL or LGPL; they are the system's tools, not part of Orbito, and Debian publishes their sources. Every image carries a full list of what is inside (an SBOM): `docker buildx imagetools inspect ghcr.io/uncool-pro/orbito:latest --format '{{ json .SBOM }}'`.
 
+**Where an image comes from.** Every released image is built by this repository's release workflow from the commit of its version, only after the tests pass and a vulnerability scan finds nothing high or critical that already has a fix, and it carries a signed record of that. Check it with the GitHub CLI: `gh attestation verify oci://ghcr.io/uncool-pro/orbito:<version> --owner uncool-pro`. Stable versions are also tagged `latest`; betas, for trying out before a stable release, `beta`.
+
 ## How it fits together
 
 ```

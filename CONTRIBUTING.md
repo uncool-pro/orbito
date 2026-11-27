@@ -69,7 +69,7 @@ The commit that formatted the whole codebase is listed in `.git-blame-ignore-rev
 
 - Every change goes through a branch and a pull request with green CI; nothing is pushed to `main` directly. One pull request per change, with what it changes for people and how you checked it.
 - Every change people notice gets a line under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md), written for the people who use Orbito: what changes for them and what, if anything, they must do. CI checks it: a pull request that touches `packages/`, `skills/`, `agents/`, `templates/`, `docker/` or the `Dockerfile` without a changelog line fails, unless the maintainer adds the label `no-changelog` (for changes nobody notices).
-- A release is a version in `package.json` and a tag `v<version>`; the tag publishes the Docker image (`.github/workflows/image.yml`), which refuses a tag that does not match the version. Only the maintainer releases.
+- Only the maintainer releases, and always through a pull request: `node scripts/release/prepare.ts beta|stable [--minor]` sets the version (`0.9.70-beta.1`, then `0.9.70`), dates the changelog for a stable release and opens the release pull request. Merging it releases: once CI is green on the merged commit, `.github/workflows/release.yml` tags it, builds the image, scans it (a high or critical vulnerability with a fix stops the release), pushes it with an SBOM, signs its provenance, and writes the GitHub Release from the changelog. A beta is a pre-release and the `beta` image; a stable version is `latest`. A tag pushed by hand publishes nothing.
 
 ## Sign your commits (DCO)
 

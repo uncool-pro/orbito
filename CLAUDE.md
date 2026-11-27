@@ -50,7 +50,7 @@ People's projects depend on how the board, the flows diagram and the prototype b
 - Never push to `main`: every change goes on a branch and through a pull request with green CI. Jakub merges.
 - Every commit is signed off (`git commit -s`, DCO, see `CONTRIBUTING.md`); CI fails a pull request with an unsigned commit.
 - Every pull request that changes something people notice adds a line under `## Unreleased` in `CHANGELOG.md`, for the people who use Orbito; CI fails one that touches `packages/`, `skills/`, `agents/`, `templates/`, `docker/` or the `Dockerfile` without it, unless Jakub labels it `no-changelog`.
-- Never create a release tag by hand. Releasing is Jakub's call; until the release workflow exists, prepare the version and changelog in a pull request and leave tagging to him.
+- Never create a release tag by hand. Releasing is Jakub's call: when he asks for one, run `node scripts/release/prepare.ts beta|stable [--minor]` on a clean, current `main`; it opens the release pull request, and his merge releases it (`.github/workflows/release.yml` tags, builds, scans, signs and publishes once CI is green). Day-to-day work is betas; a stable release is a beta Jakub has checked.
 - Orbito is MIT, all of it. Nothing under another licence goes into this repository; paid add-ons live in separate repositories.
 
 ## Docker
