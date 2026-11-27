@@ -10,9 +10,9 @@ Please do not open a public issue. Write to **orbito@uncool.pro** with what you 
 
 **From the code** (`npm run dev` in a project), Orbito runs with the permissions of your user account, like any development tool. What it does with them:
 
-- **Network:** none. No telemetry, no analytics, nothing loaded from other sites. The only connection Orbito makes is `git pull` on its own folder when you run `orbito update --pull`.
+- **Network:** no telemetry, no analytics, nothing loaded from other sites, and the board and its dev server connect nowhere. Two commands you run yourself go online: creating a project from the code (`packages/create`) installs its packages from the npm registry (`npm install`), and `orbito update --pull` runs `git pull` on Orbito's own folder and then `npm ci` there. In Docker neither happens: the image already holds everything and runs without a network.
 - **Files:** it reads the project folder. It writes only `.orbito/status.json` (statuses), `comments/<screen>/<comment>.md` (comments) and, on your command, `site/` (`orbito export`) and what `orbito update` installs into `.claude/`. Every path that comes from the browser is checked to be inside the project, also once links are followed.
-- **Processes:** `git` (your name for comments, and updates), `npm install --ignore-scripts` in Orbito's folder during an update, and your system's file manager or code editor when you ask for them from the board. All with fixed arguments, never a command built from data.
+- **Processes:** `git` (your name for comments, and updates), `npm ci --ignore-scripts` in Orbito's folder during an update, and your system's file manager or code editor when you ask for them from the board. All with fixed arguments, never a command built from data.
 - **The dev server** listens on `localhost` only. Its endpoints (`/__orbito/*`, and Vite's `/__open-in-editor`) answer the board itself and refuse requests from other sites open in the same browser.
 
 **In Docker** (see [DOCKER.md](DOCKER.md)) the engine is sealed in a container: no internet, no Linux capabilities, a read-only file system, and only the project folders listed in `compose.yaml`, read-only except statuses and comments. The page it serves cannot call other sites (Content Security Policy), and the board is reachable from this computer only.

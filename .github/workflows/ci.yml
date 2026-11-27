@@ -53,7 +53,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run test:e2e
 
-  # the packages: known holes in what reaches people's computers stop the build (dev tools are reported only), and
+  # the packages: a known high or critical hole in any package stops the build, and
   # every package must carry the registry's signature, so what was installed is what its authors published
   audit:
     runs-on: ubuntu-latest
@@ -67,9 +67,8 @@ jobs:
           node-version: '24'
       - run: npm ci --ignore-scripts
       - run: npm audit signatures
-      - run: npm audit --omit=dev --audit-level=high
-      - run: npm audit
-        continue-on-error: true
+      # all packages, dev ones too: the image runs Vite and its plugins, which are dev dependencies here
+      - run: npm audit --audit-level=high
 
   # the sealed image builds, the whole road works inside it and the seal holds
   image:

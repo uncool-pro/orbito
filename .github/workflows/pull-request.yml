@@ -1,0 +1,29 @@
+# The two rules every pull request keeps (CONTRIBUTING.md): every commit signed off (DCO), and a changelog line under
+# `## Unreleased` for a change people notice (the label `no-changelog` lets a change nobody notices through).
+# Its own workflow, so adding or removing that label re-checks only this, not the whole CI.
+name: Pull request rules
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+      # values from the event go through the environment, never straight into the command line
+      - env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: node scripts/ci/pull-request.ts "$BASE" "$HEAD" "$LABELS"

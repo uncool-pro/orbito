@@ -9,7 +9,7 @@ You need Node.js 22.18 or newer, git, and Chrome for the browser tests.
 ```sh
 git clone https://github.com/uncool-pro/orbito
 cd orbito
-npm install
+npm ci
 npm run dev        # the demo project on http://localhost:5190
 ```
 
@@ -26,7 +26,7 @@ There is no build step: Node and Vite run the TypeScript sources directly.
 | `npm run build` | the demo builds as a static site | yes |
 | `npm run test:e2e` | real clicks in Chrome, and the whole road of a new project | yes |
 | `ORBITO_IMAGE=orbito:dev npx playwright test e2e/docker.spec.ts` | the image works and its seal holds (after `docker build -t orbito:dev .`) | yes |
-| `npm audit --omit=dev` | known holes in what reaches people's computers | yes, high and critical fail the build |
+| `npm audit` | known holes in every package, dev ones too (the image runs Vite and its plugins) | yes, high and critical fail the build |
 
 Before you open a pull request: `npm run typecheck`, `npm run lint`, `npm test` and `npm run check:ds` pass, and you have looked at the board in the browser.
 
@@ -67,10 +67,20 @@ The commit that formatted the whole codebase is listed in `.git-blame-ignore-rev
 
 ## Changes and releases
 
-- One pull request per change, with what it changes for people and how you checked it.
-- Every change people notice gets a line in [CHANGELOG.md](CHANGELOG.md), written for the people who use Orbito: what changes for them and what, if anything, they must do.
-- A release is a version in `package.json` and a tag `v<version>`; the tag publishes the Docker image (`.github/workflows/image.yml`), which refuses a tag that does not match the version.
+- Every change goes through a branch and a pull request with green CI; nothing is pushed to `main` directly. One pull request per change, with what it changes for people and how you checked it.
+- Every change people notice gets a line under `## Unreleased` in [CHANGELOG.md](CHANGELOG.md), written for the people who use Orbito: what changes for them and what, if anything, they must do. CI checks it: a pull request that touches `packages/`, `skills/`, `agents/`, `templates/`, `docker/` or the `Dockerfile` without a changelog line fails, unless the maintainer adds the label `no-changelog` (for changes nobody notices).
+- A release is a version in `package.json` and a tag `v<version>`; the tag publishes the Docker image (`.github/workflows/image.yml`), which refuses a tag that does not match the version. Only the maintainer releases.
+
+## Sign your commits (DCO)
+
+Every commit carries a sign-off line, the [Developer Certificate of Origin](https://developercertificate.org/): by adding it you state that you wrote the change, or otherwise have the right to give it to the project under its licence. Add it with `git commit -s`, which appends:
+
+```
+Signed-off-by: Your Name <you@example.com>
+```
+
+The name and email must match the commit's author. CI checks every commit of a pull request and fails on one without it; to fix the last commit, `git commit --amend -s`, for several, `git rebase --signoff main` and push again.
 
 ## Licence
 
-By contributing you agree that your contribution is released under the MIT licence of the project. The Orbito name and logo are not covered by it (see the README).
+Orbito is MIT, all of it, and stays so: contributions go to this repository under the same licence, never under another one. By contributing you agree that your contribution is released under the MIT licence of the project. The Orbito name and logo are not covered by it (see the README).

@@ -2,6 +2,13 @@
 
 How to update a project: `npm run update` in the project (or `/orbito-update` in Claude Code). It pulls the newest Orbito and refreshes the skills, agents and commands in `.claude/`; your screens, flows and design system are never changed. Entries marked **template** add something to new projects only: ask Orbito to bring it into an existing one.
 
+## Unreleased
+- **Updating from the code installs exactly the released versions.** `orbito update --pull` installs Orbito's packages with `npm ci`, the versions in its lockfile, instead of `npm install`, which could pick newer ones. Nothing to do.
+- **SECURITY.md is precise about the network:** the board and its dev server connect nowhere; creating a project from the code installs packages from npm, and `orbito update --pull` fetches Orbito with git and npm. In Docker neither happens.
+- **For developers:** one Node requirement everywhere (22.18 or newer) and an `.nvmrc`; the blocking package audit in CI covers dev packages too, since the image runs Vite; Dependabot proposes a version only after 7 days and no major versions; every change goes through a pull request with a changelog line under `## Unreleased` (CI checks it) and signed-off commits (DCO, see CONTRIBUTING.md).
+- **What is inside the image, and under which licences.** `DOCKER.md` says it: Orbito's code is MIT, its npm packages are under permissive licences (plus `lightningcss` under MPL-2.0, used unchanged), the base system is Debian with its own licences, and every image carries its full list (SBOM).
+- **For developers:** the image workflow can also publish to Docker Hub, next to ghcr.io, once the repository variable `DOCKERHUB_REPO` and the secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` are set; without them nothing changes. The demo package declares its MIT licence.
+
 ## 0.9.69 — 12 November 2026
 The board on a big project, and a promise: Orbito never changes how your screens look. Measured on 360 screens, a page of 84 cards.
 - **Zooming and panning are smooth, also with frosted glass in the screens and the whole page in view.** Every element with `backdrop-filter` (a glass tab bar, a card) is a layer of its own for the browser, and each move of the board made it arrange all of them again: with a hundred screens in view, panning dropped to about 10 frames a second. The camera now moves the board the one way the browser does not redo that work for. Measured in a window the size of a 5K display, the whole page swept left and right: 84 screens, 202 stutters before and none now; 336 screens, 213 before and 15 now. Your screens are drawn exactly as before, glass included.
