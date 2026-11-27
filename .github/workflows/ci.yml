@@ -66,6 +66,8 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci --ignore-scripts
+      # every package in the lockfile carries its checksum, so npm verifies it got exactly what was checked
+      - run: node scripts/ci/lockfile.ts
       - run: npm audit signatures
       # all packages, dev ones too: the image runs Vite and its plugins, which are dev dependencies here
       - run: npm audit --audit-level=high
