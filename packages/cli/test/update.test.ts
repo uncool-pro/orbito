@@ -283,6 +283,17 @@ describe('a project made by create', () => {
     expect(read(join(target, MANIFEST))).toBe('<<<<<<< HEAD\n{}');
   });
 
+  it('made in a container, has its compose.yaml from the install, so nothing is saved as a copy', () => {
+    const target = join(base, 'in-docker');
+
+    execFileSync(process.execPath, [create, target, '--platform', 'web', '--locale', 'en', '--no-install'], {
+      stdio: 'ignore',
+      env: { ...process.env, ORBITO_CONTAINER: '1' },
+    });
+    expect(read(join(target, 'compose.yaml'))).toContain('- /project/raw');
+    expect(existsSync(join(target, '.orbito/backup'))).toBe(false);
+  });
+
   it('has no compose.yaml when it runs without a container', () => {
     expect(existsSync(join(make(), 'compose.yaml'))).toBe(false);
   });

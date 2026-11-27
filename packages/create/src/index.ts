@@ -99,14 +99,16 @@ const main = async () => {
     '{{version}}': version,
   };
 
-  ['CLAUDE.md', 'README.md', '.orbito/process.md', 'compose.yaml'].forEach((f) => fill(f, values));
+  ['CLAUDE.md', 'README.md', '.orbito/process.md'].forEach((f) => fill(f, values));
   // the name is the person's text: in a page it goes in as text, in code as a string, whatever characters it has
   fill('index.html', {
     ...values,
     '{{title}}': title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
   });
   writeFileSync(join(target, '.orbito', 'runtime'), DOCKER ? 'docker\n' : 'local\n');
-  if (!DOCKER) rmSync(join(target, 'compose.yaml'), { force: true });
+  // compose.yaml is Orbito's: the install below writes it for a project in Docker (pinned version, what the admin
+  // container must not see), the same way every update does; the template's copy would only be saved as a backup
+  rmSync(join(target, 'compose.yaml'), { force: true });
   // what Orbito installed is recorded from the first moment: later updates must be able to tell the person's own items from Orbito's
   installTeam({ root: target, tool: TOOL });
   fill('orbito.config.ts', {
